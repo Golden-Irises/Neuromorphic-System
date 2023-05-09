@@ -22,7 +22,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{1fd91fa8-62f9-48c9-9a61-1af265748e1f}</ProjectGuid>
+    <ProjectGuid>{955e8105-22ed-4552-998a-81a4b5fb88c0}</ProjectGuid>
     <RootNamespace>TensorLabLite</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>

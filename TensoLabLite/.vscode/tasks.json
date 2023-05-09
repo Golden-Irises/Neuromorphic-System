@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "shell: cl.exe build active file",
+            "command": "cl.exe",
+            "args": [
+                // "/O2",
+                "/std:c++20",
+                "/Zi",
+                "/EHsc",
+                "/Fe:",
+                "${workspaceFolder}\\.vscode\\debug\\bin\\${fileBasenameNoExtension}.exe",
+                "${file}",
+                "/Fd:",
+                "${workspaceFolder}\\.vscode\\debug\\bin\\vc140.pdb",
+                "/Fo:",
+                "${workspaceFolder}\\.vscode\\debug\\obj\\${fileBasenameNoExtension}.obj"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": "build"
+        }
+    ]
+}

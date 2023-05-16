@@ -55,8 +55,26 @@ initial begin
      in16 <= 1'b 1;
      in17 <= 1'b 0;
      in18 <= 1'b 0;
-#C_TIME  uart_start <= 1'b 0;
-#(B_TIME * 20)
+#(B_TIME * 32)
+     in1  <= 1'b 1;
+     in2  <= 1'b 1;
+     in3  <= 1'b 0;
+     in4  <= 1'b 0;
+     in5  <= 1'b 1;
+     in6  <= 1'b 0;
+     in7  <= 1'b 0;
+     in8  <= 1'b 0;
+     in9  <= 1'b 1;
+     in10 <= 1'b 1;
+     in11 <= 1'b 0;
+     in12 <= 1'b 0;
+     in13 <= 1'b 1;
+     in14 <= 1'b 1;
+     in15 <= 1'b 0;
+     in16 <= 1'b 0;
+     in17 <= 1'b 1;
+     in18 <= 1'b 0;
+#(B_TIME * 32) uart_start <= 1'b 0;
 #200 $stop;
 end
 
@@ -69,6 +87,7 @@ uart_tx I(
     .uart_done(uart_done),
     .uart_txd(uart_txd),
     .tx_state(tx_state),
+    .tx_enable(tx_enable),
     .in1(in1), .in2(in2), .in3(in3), .in4(in4), .in5(in5), .in6(in6), .in7(in7), .in8(in8), .in9(in9),
     .in10(in10), .in11(in11), .in12(in12), .in13(in13), .in14(in14), .in15(in15), .in16(in16), .in17(in17), .in18(in18)
 );

@@ -4,16 +4,18 @@ module uart_tx (
     input            in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in11, in12, in13, in14, in15, in16, in17, in18,        //input 18 signals
     output reg       uart_done,               //prompt PC to end receiving data
     output reg       uart_txd,                //output by bits
-    output reg       tx_state
+    output reg       tx_state, tx_enable
 );
     reg[17:0] tx_data;                                   //buffer
     reg[4:0]  bit_cnt;
-    reg[9:0]  clk_cnt;
+    reg[9:0]  clk_cnt_1;
+    reg[9:0]  clk_cnt_2;
+    reg[4:0]  period_cnt;                                //when uart_start is high level, sending data by this period(32 * BIT_TIME)
 always@(posedge sys_clk or posedge sys_reset) begin      //registor : when staring, regist in 1~18
     if(sys_reset)begin
       tx_data <= 18'b 000000000000000000;
     end
-    else if(uart_start)begin
+    else if(tx_enable)begin
       tx_data[0]  <= in1;
       tx_data[1]  <= in2;
       tx_data[2]  <= in3;
@@ -37,14 +39,43 @@ always@(posedge sys_clk or posedge sys_reset) begin      //registor : when stari
       tx_data <= tx_data;
     end
 end
+always@(posedge sys_clk or posedge sys_reset) begin      //period conut
+    if(sys_reset)begin
+      clk_cnt_2 <= 1'b 0;
+      period_cnt <= 1'b 0;
+    end
+    else if(clk_cnt_2 < 10'b 1000111111)begin
+      clk_cnt_2 <= clk_cnt_2 + 10'b 0000000001;
+      period_cnt <= period_cnt;
+    end
+    else begin
+      clk_cnt_2 <= 10'b 0000000000;
+      period_cnt <= period_cnt + 5'b 00001;
+    end
+end
+always@(posedge sys_clk) begin                           //continuous sending
+    if(uart_start == 1'b 1)begin
+      if(period_cnt == 5'b 00001)begin
+        tx_enable <= 1'b 1;
+      end
+      else if(period_cnt == 5'b 00010)begin
+        tx_enable <= 1'b 0;
+      end
+    end
+    else begin
+      tx_enable <= 1'b 0;
+      clk_cnt_2 <= 1'b 0;
+      period_cnt <= 1'b 0;
+    end
+end
 always@(posedge sys_clk or posedge sys_reset) begin      //sending controller
     if(sys_reset)begin
       tx_state <= 1'b 0;
     end
-    else if(uart_start)begin
+    else if(tx_enable)begin
       tx_state <= 1'b 1;
     end
-    else if((bit_cnt == 5'b 10011) && (clk_cnt == 10'b 1000111111))begin
+    else if((bit_cnt == 5'b 10011) && (clk_cnt_1 == 10'b 1000111111))begin
       tx_state <= 1'b 0;
     end
     else begin
@@ -54,21 +85,21 @@ end
 always@(posedge sys_clk or posedge sys_reset) begin      //clock count and bit count
     if(sys_reset)begin
       bit_cnt <= 5'b 00000;
-      clk_cnt <= 10'b 0000000000;
+      clk_cnt_1 <= 10'b 0000000000;
     end
     else if(tx_state)begin                               //transporting
-      if(clk_cnt < 10'b 1000111111)begin                 //Baut Rate 19200
-        clk_cnt <= clk_cnt + 10'b 0000000001;
+      if(clk_cnt_1 < 10'b 1000111111)begin                 //Baut Rate 19200
+        clk_cnt_1 <= clk_cnt_1 + 10'b 0000000001;
         bit_cnt <= bit_cnt;
       end
       else begin                                         // 1/19200, 1 bit is sent
-        clk_cnt <= 10'b 0000000000;
+        clk_cnt_1 <= 10'b 0000000000;
         bit_cnt <= bit_cnt + 5'b 00001;
       end
     end
     else begin
       bit_cnt <= 5'b 00000;
-      clk_cnt <= 10'b 0000000000;
+      clk_cnt_1 <= 10'b 0000000000;
     end
 end
 always@(posedge sys_clk or posedge sys_reset) begin      //sending program
@@ -76,7 +107,7 @@ always@(posedge sys_clk or posedge sys_reset) begin      //sending program
       uart_txd <= 1'b 1;
     end
     else if(tx_state)begin
-      if(clk_cnt == 10'b 0000000001)begin
+      if(clk_cnt_1 == 10'b 0000000001)begin
         case(bit_cnt)
           5'b 00000: uart_txd <= 1'b 0;                  //start bit 1'b0
           5'b 00001: uart_txd <= tx_data[0];
@@ -98,6 +129,7 @@ always@(posedge sys_clk or posedge sys_reset) begin      //sending program
           5'b 10001: uart_txd <= tx_data[16];
           5'b 10010: uart_txd <= tx_data[17];
           5'b 10011: uart_txd <= 1'b 1;                  //end bit 1'b1
+          default: uart_txd <= 1'b 0; //ERROR
         endcase
       end
       else begin
@@ -112,7 +144,7 @@ always@(posedge sys_clk or posedge sys_reset) begin      //prompting a batch of 
     if(sys_reset)begin
       uart_done <= 1'b 0;
     end
-    else if((bit_cnt == 5'b 10011) && (clk_cnt == 10'b 1000111111))begin
+    else if((bit_cnt == 5'b 10011) && (clk_cnt_1 == 10'b 1000111111))begin
       uart_done <= 1'b 1;
     end
     else begin

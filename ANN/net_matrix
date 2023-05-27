@@ -1,0 +1,13 @@
+#pragma once
+
+#ifndef __NET_MATRIX__
+#define __NET_MATRIX__
+
+#define NEUNET_BEGIN    namespace neunet {
+#define NEUNET_END      }
+
+#define neunet_byte_sz  0x0008
+
+#include "net_matrix.hpp"
+
+#endif

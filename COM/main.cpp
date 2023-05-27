@@ -1,3 +1,6 @@
+#pragma once
+#pragma comment(lib, "user32.lib")
+
 #include <iostream>
 #include <Windows.h>
 
@@ -13,16 +16,16 @@ NS_BEGIN
 bool dcb_open_port(HANDLE h_port, int idx = NULL) {
     if (h_port) return false;
     // buffer
-    wchar_t com_name[128];
-    wsprintf(com_name, TEXT("\\\\.\\COM%d"), idx);
+    char com_name[128];
+    wsprintfA(com_name, "\\\\.\\COM%d", idx);
     // create handle of COM in Windows
-    h_port = CreateFile(com_name,
-                        GENERIC_READ | GENERIC_WRITE,
-                        NULL,
-                        NULL,
-                        OPEN_EXISTING,
-                        NULL,
-                        NULL);
+    h_port = CreateFileA(com_name,
+                         GENERIC_READ | GENERIC_WRITE,
+                         NULL,
+                         NULL,
+                         OPEN_EXISTING,
+                         NULL,
+                         NULL);
     if (h_port == INVALID_HANDLE_VALUE) return false;
 
     // timeout interval for IO device (ms)
@@ -119,7 +122,7 @@ int main(int argc, char *argv[], char *envp[]) {
     cout << "hello, world." << endl;
 
     // 端口句柄
-    HANDLE h_port;
+    HANDLE h_port {};
     // 打开端口
     if (!dcb_open_port(h_port)) return EXIT_FAILURE;
 

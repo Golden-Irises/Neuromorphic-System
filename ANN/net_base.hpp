@@ -12,6 +12,4 @@ double AReLU(double src) { return src < 1 ? 0 : src; }
 
 double AReLU_dv(double src) { return src < 1 ? 0 : 1; }
 
-double AReLU_grad(double AReLU_in, double AReLU_out, double orgn) { return std::abs(orgn - AReLU_out) * AReLU_in; }
-
 NEUNET_END

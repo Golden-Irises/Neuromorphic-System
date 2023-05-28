@@ -1,0 +1,18 @@
+#pragma once
+
+#ifndef __NET_SET__
+#define __NET_SET__
+
+#define NEUNET_BEGIN    namespace neunet {
+#define NEUNET_END      }
+
+#define neunet_null_ref(type)       *(type*)nullptr
+
+#define neunet_pure_type(type)      std::remove_reference_t<type>
+#define neunet_copy_assert(type)    static_assert(std::is_copy_assignable_v<type>, "Type is not copy assignable.")
+#define neunet_chrono_time_point    std::chrono::time_point_cast<std::chrono::milliseconds>(\
+                                    std::chrono::system_clock::now()).time_since_epoch().count()
+
+#include "net_set.hpp"
+
+#endif

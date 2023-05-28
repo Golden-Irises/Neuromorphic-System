@@ -1,12 +1,21 @@
 #pragma once
 
+#include <intrin.h>
+#include <numeric>
+
+#include "net_set"
+
 #ifndef __NET_MATRIX__
 #define __NET_MATRIX__
 
-#define NEUNET_BEGIN    namespace neunet {
-#define NEUNET_END      }
+#ifndef neunet_eps
+#define neunet_eps 1e-8
+#endif
 
-#define neunet_byte_sz  0x0008
+#define neunet_blk_sz   0x0010
+#define neunet_reg_sz   0x0004
+#define nuenet_unroll   neunet_reg_sz
+#define neunet_byte_sz  0x0002 * neunet_reg_sz
 
 #include "net_matrix.hpp"
 

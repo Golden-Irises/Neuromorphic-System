@@ -1,8 +1,9 @@
 #pragma once
+
+#define neunet_eps  1e-8
+
 #include <iostream>
 #include "net_base"
-
-#include <array>
 
 using namespace std;
 using namespace neunet;
@@ -16,9 +17,9 @@ int main(int argc, char *argv[], char *envp[]) {
     auto chrono_begin = neunet_chrono_time_point;
     cout << "hello, world." << endl;
 
-    double tmp[][2] = {{1, 2},
-                       {3, 4}};
-    test(tmp);
+    net_matrix test {{1, 2, 3},
+                     {3, 4, 5}};
+    cout << test << endl;
 
     cout << neunet_chrono_time_point - chrono_begin << "ms" << endl;
     return EXIT_SUCCESS;

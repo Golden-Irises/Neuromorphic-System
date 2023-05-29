@@ -41,7 +41,7 @@ net_set<uint64_t> im2col_pad_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, co
     for (auto i = 0ull; i < in_ln_cnt; ++i) for (auto j = 0ull; j < in_col_cnt; ++j) {
         auto im2col_ln = ((top_cnt + i * (ln_dist + 1)) * ans_col_cnt + left_cnt + j * (col_dist + 1)) * in.column_count;
         auto in_index  = (i * in_col_cnt + j) * in.column_count;
-        for (auto k = 0ull; k < in.column_count; ++k) ans[im2col_ln + k] = in_index + k;
+        for (auto k = 0ull; k < in.column_count; ++k) ans[im2col_ln + k] = in_index + k + 1;
     }
     return ans;
 }

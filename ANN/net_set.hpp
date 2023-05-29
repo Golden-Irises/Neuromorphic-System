@@ -43,7 +43,7 @@ public:
             reset();
             return;
         }
-        auto tmp = new arg [alloc_size];
+        auto tmp = new arg [alloc_size](arg {});
         if (remain) std::copy(ptr, ptr + std::min(len, alloc_size), tmp);
         reset();
         ptr = tmp;

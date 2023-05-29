@@ -17,9 +17,10 @@ int main(int argc, char *argv[], char *envp[]) {
     auto chrono_begin = neunet_chrono_time_point;
     cout << "hello, world." << endl;
 
-    net_matrix test {{1, 2, 3},
-                     {3, 4, 5}};
-    cout << test << endl;
+    net_matrix fst {967, 717}, snd {717, 813};
+    fst.rand_elem();
+    snd.rand_elem();
+    cout << (fst * snd == net_matrix::mul(fst, snd)) << endl;
 
     cout << neunet_chrono_time_point - chrono_begin << "ms" << endl;
     return EXIT_SUCCESS;

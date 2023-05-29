@@ -14,8 +14,8 @@
 
 #define neunet_blk_sz   0x0010
 #define neunet_reg_sz   0x0004
-#define nuenet_unroll   neunet_reg_sz
-#define neunet_byte_sz  0x0002 * neunet_reg_sz
+#define neunet_unroll   neunet_reg_sz
+#define neunet_byte_sz  (0x0002 * neunet_reg_sz)
 
 #include "net_matrix.hpp"
 

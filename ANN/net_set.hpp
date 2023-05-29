@@ -35,12 +35,15 @@ public:
     net_set(net_set &&src) { value_move(std::move(src)); }
 
     void init(uint64_t alloc_size, bool remain = true) {
-        if (len == alloc_size) return;
+        if (len == alloc_size) {
+            if (!remain) clear();
+            return;
+        }
         if (!alloc_size) {
             reset();
             return;
         }
-        auto tmp = new double [alloc_size];
+        auto tmp = new arg [alloc_size];
         if (remain) std::copy(ptr, ptr + std::min(len, alloc_size), tmp);
         reset();
         ptr = tmp;

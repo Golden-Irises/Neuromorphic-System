@@ -125,15 +125,15 @@ void matrix_mul(net_matrix_base &ans, const net_matrix_base &fst, const net_matr
     if (fst_ln_blk > fst.ln_cnt) fst_ln_blk = fst.ln_cnt;
     if (fst_col_blk > fst.col_cnt) fst_col_blk = fst.col_cnt;
 	for (auto i = fst_ln; i < fst_ln_blk; ++i) if (blk_flag) for (auto j = snd_col; j < snd_col_blk; j += neunet_blk_sz) {
-		__m256d ans_reg[nuenet_unroll];
-		for (auto x = 0; x < nuenet_unroll; ++x) ans_reg[x] = _mm256_load_pd(ans.ptr + i * snd.col_cnt + j + x * neunet_reg_sz);
+		__m256d ans_reg[neunet_unroll];
+		for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_load_pd(ans.ptr + i * snd.col_cnt + j + x * neunet_reg_sz);
 
 		for (auto k = fst_col; k < fst_col_blk; ++k) {
 			__m256d fst_reg = _mm256_broadcast_sd(fst.ptr + i * fst.col_cnt + k);
-			for (auto x = 0; x < nuenet_unroll; ++x) ans_reg[x] = _mm256_add_pd(ans_reg[x], _mm256_mul_pd(fst_reg, _mm256_load_pd(snd.ptr + k * snd.col_cnt + j + x * neunet_reg_sz)));
+			for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_add_pd(ans_reg[x], _mm256_mul_pd(fst_reg, _mm256_load_pd(snd.ptr + k * snd.col_cnt + j + x * neunet_reg_sz)));
 		}
 
-		for (auto x = 0; x < nuenet_unroll; ++x) _mm256_store_pd(ans.ptr + i * snd.col_cnt + j + x * neunet_reg_sz, ans_reg[x]);
+		for (auto x = 0; x < neunet_unroll; ++x) _mm256_store_pd(ans.ptr + i * snd.col_cnt + j + x * neunet_reg_sz, ans_reg[x]);
 	} else for (auto j = fst_col; j < fst_col_blk; ++j) {
         auto coe = fst[i][j];
         for (auto k = snd_col; k < snd_col_blk; ++k) ans[i][k] += coe * snd[j][k];
@@ -145,12 +145,12 @@ void matrix_mul(net_matrix_base &ans, const net_matrix_base &fst, const net_matr
     
     auto blk_ln_cnt = fst.ln_cnt / neunet_byte_sz;
     
-    for(ln = 0; ln < blk_ln_cnt; ++ln) {
+    for(ln = 0ull; ln < blk_ln_cnt; ++ln) {
         double blk_val[neunet_byte_sz] = {};
         
         auto curr_ln = ln * neunet_byte_sz;
         
-        for(col = 0; col < fst.col_cnt; ++col) for (auto x = 0; x < neunet_byte_sz; ++x) blk_val[x] += fst.ptr[(curr_ln + x) * fst.col_cnt + col] * snd_vect.ptr[col];
+        for(col = 0ull; col < fst.col_cnt; ++col) for (auto x = 0ull; x < neunet_byte_sz; ++x) blk_val[x] += fst.ptr[(curr_ln + x) * fst.col_cnt + col] * snd_vect.ptr[col];
         
         for (auto x = 0; x < neunet_byte_sz; ++x) ans.ptr[curr_ln + x] += blk_val[x];
     }
@@ -249,6 +249,52 @@ public:
     template <bool times = true>
     void elem_wise_pow(double src) { matrix_elem_pow<times>(proto, src); }
 
+    double &index(uint64_t idx) const { return proto.ptr[idx]; }
+
+    static net_matrix mul(const net_matrix &fst, const net_matrix &snd) {
+        net_matrix ans {fst.proto.ln_cnt, snd.proto.col_cnt};
+        for (auto i = 0ull; i < fst.proto.ln_cnt; ++i) for (auto j = 0ull; j < fst.proto.col_cnt; ++j) {
+            auto coe = fst.proto[i][j];
+            for (auto k = 0ull; k < snd.proto.col_cnt; ++k) ans.proto[i][k] += coe * snd.proto[j][k];
+        }
+        return ans;
+    }
+
+    static net_matrix sigma(const net_set<net_matrix> &src) {
+        net_matrix ans;
+        ans.proto.ln_cnt   = src[0].proto.ln_cnt;
+        ans.proto.col_cnt  = src[0].proto.col_cnt;
+        ans.proto.elem_cnt = src[0].proto.elem_cnt;
+
+        __m256d ans_reg[neunet_unroll];
+        auto ans_ptr  = new double [ans.proto.elem_cnt];
+        auto idx_temp = 0ull;
+        while (idx_temp < ans.proto.elem_cnt) {
+            auto idx_next = idx_temp + neunet_blk_sz;
+
+            if (idx_next > ans.proto.elem_cnt) {
+                for (auto i = idx_temp; i < ans.proto.elem_cnt; ++i) {
+                    ans_ptr[i] = src[0].proto.ptr[i];
+                    for (auto j = 1ull; j < src.length; ++j) ans_ptr[i] += src[j].proto.ptr[i];
+                }
+                break;
+            }
+
+            for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_load_pd(src[0].proto.ptr + idx_temp + x * neunet_reg_sz);
+
+            for (auto i = 1ull; i < src.length; ++i) for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_add_pd(ans_reg[x], _mm256_load_pd(src[i].proto.ptr + idx_temp + x * neunet_reg_sz));
+
+            for (auto x = 0; x < neunet_unroll; ++x) _mm256_store_pd(ans_ptr + idx_temp + x * neunet_reg_sz, ans_reg[x]);
+
+            idx_temp = idx_next;
+        }
+
+        ans.proto.ptr = ans_ptr;
+        ans_ptr       = nullptr;
+        
+        return ans;
+    }
+
 protected: net_matrix_base proto;
 
 public:
@@ -287,6 +333,8 @@ public:
     void operator*=(const net_matrix &src) { *this = *this * src; }
 
     bool operator==(const net_matrix &src) const { return proto == src.proto; }
+
+    double *operator[](uint64_t ln) const { return proto[ln]; }
 
     friend std::ostream &operator<<(std::ostream &os, const net_matrix &src) {
         os << src.proto;

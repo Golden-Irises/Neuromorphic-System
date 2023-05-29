@@ -2,10 +2,12 @@ module uart_tx (
     input            sys_clk, sys_reset,      //system variables, high level reset
     input            uart_start,              //user control the start signal
     input            in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in11, in12, in13, in14, in15, in16, in17, in18,        //input 18 signals
-    output reg       uart_done,               //prompt PC to end receiving data
-    output reg       uart_txd,                //output by bits
+    output reg       uart_txd,                 //output by bits
     output reg       tx_state, tx_enable
 );
+    reg       uart_done;                                 //prompt PC to end receiving data
+    //reg       tx_state;
+    //reg       tx_enable;
     reg[17:0] tx_data;                                   //buffer
     reg[4:0]  bit_cnt;
     reg[9:0]  clk_cnt_1;
@@ -39,33 +41,38 @@ always@(posedge sys_clk or posedge sys_reset) begin      //registor : when stari
       tx_data <= tx_data;
     end
 end
-always@(posedge sys_clk or posedge sys_reset) begin      //period conut
+always@(posedge sys_clk or posedge sys_reset) begin      //period conut & continuous sending
     if(sys_reset)begin
-      clk_cnt_2 <= 1'b 0;
-      period_cnt <= 1'b 0;
+      clk_cnt_2  <= 10'b 0000000000;
+      period_cnt <= 5'b 00000;
+      tx_enable  <= 1'b 0;
     end
-    else if(clk_cnt_2 < 10'b 1000111111)begin
-      clk_cnt_2 <= clk_cnt_2 + 10'b 0000000001;
-      period_cnt <= period_cnt;
-    end
-    else begin
-      clk_cnt_2 <= 10'b 0000000000;
-      period_cnt <= period_cnt + 5'b 00001;
-    end
-end
-always@(posedge sys_clk) begin                           //continuous sending
-    if(uart_start == 1'b 1)begin
-      if(period_cnt == 5'b 00001)begin
-        tx_enable <= 1'b 1;
+    else if(uart_start == 1'b 1)begin
+      if(clk_cnt_2 < 10'b 1000111111)begin
+        clk_cnt_2 <= clk_cnt_2 + 10'b 0000000001;
+        period_cnt <= period_cnt;
       end
-      else if(period_cnt == 5'b 00010)begin
-        tx_enable <= 1'b 0;
+      else begin
+        if(period_cnt == 5'b 00000)begin
+          tx_enable <= 1'b 1;
+          clk_cnt_2 <= 10'b 0000000000;
+          period_cnt <= period_cnt + 5'b 00001;
+        end
+        else if(period_cnt == 5'b 00001)begin
+          tx_enable <= 1'b 0;
+          clk_cnt_2 <= 10'b 0000000000;
+          period_cnt <= period_cnt + 5'b 00001;
+        end
+        else begin
+          clk_cnt_2 <= 10'b 0000000000;
+          period_cnt <= period_cnt + 5'b 00001;
+        end
       end
     end
     else begin
       tx_enable <= 1'b 0;
-      clk_cnt_2 <= 1'b 0;
-      period_cnt <= 1'b 0;
+      clk_cnt_2 <= 10'b 0000000000;
+      period_cnt <= 5'b 00000;
     end
 end
 always@(posedge sys_clk or posedge sys_reset) begin      //sending controller

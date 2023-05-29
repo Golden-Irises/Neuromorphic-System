@@ -7,7 +7,7 @@
 #define NS_NAME     nms
 #define NS_BEGIN    namespace NS_NAME {
 #define NS_END      }
-#define NS_MSG      false
+#define NS_MSG      true
 #define DCB_FLAG    true
 #define DCB_BUF_LEN 0x0010
 
@@ -124,7 +124,7 @@ int main(int argc, char *argv[], char *envp[]) {
     // 端口句柄
     HANDLE h_port {};
     // 打开端口
-    if (!dcb_open_port(h_port)) return EXIT_FAILURE;
+    if (!dcb_open_port(h_port, 3)) return EXIT_FAILURE;
 
     // 端口参数
     if (!dcb_port_params(h_port,    // 端口句柄
@@ -139,6 +139,7 @@ int main(int argc, char *argv[], char *envp[]) {
         // 端口数据
         char buffer [DCB_BUF_LEN];
         dcb_read(h_port, buffer, DCB_BUF_LEN);
+        cout << buffer << endl;
         // 休眠 1s
         _sleep(1000);
     }

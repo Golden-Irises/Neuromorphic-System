@@ -79,4 +79,92 @@ net_set<net_matrix> im2col_to_tensor(const net_matrix &src, uint64_t ln_cnt, uin
     return ans;
 }
 
+void net_train_progress(int curr_prog, int prog, double acc, double rc, int dur) { std::printf("\r[Train][%d/%d][Acc/Rc][%.2f/%.2f][%dms]", curr_prog, prog, acc, rc, dur); }
+
+void net_epoch_status(int epoch, double acc, double rc, int dur) {
+    std::printf("\r[Epoch][%d][Acc/Rc][%.4f/%.4f][%dms]", epoch, acc, rc, dur);
+    std::cout << std::endl;
+}
+
+net_matrix net_lbl_orgn(uint64_t lbl_val, uint64_t type_cnt) {
+    net_matrix ans(type_cnt, 1);
+    ans.index(lbl_val) = 1;
+    return ans;
+}
+net_set<net_matrix> net_lbl_orgn(const net_set<uint64_t> &lbl_set, uint64_t type_cnt) {
+    net_set<net_matrix> ans(lbl_set.length);
+    for (auto i = 0ull; i < ans.length; ++i) ans[i] = net_lbl_orgn(lbl_set[i], type_cnt);
+    return ans;
+}
+
+void net_out_acc_rc(const net_matrix &output, long double train_acc, uint64_t lbl, std::atomic_uint64_t &acc_cnt, std::atomic_uint64_t &rc_cnt) {
+    if (output.index(lbl) > 0.5) ++acc_cnt;
+    if (output.index(lbl) > (1 - train_acc)) ++rc_cnt;
+}
+
+struct net_counter {
+    std::atomic_uint64_t cnt = 0;
+
+    net_counter() = default;
+    net_counter(const net_counter &src) { cnt = (uint64_t)src.cnt; }
+    net_counter &operator=(const net_counter &src) {
+        cnt = (uint64_t)src.cnt;
+        return *this;
+    }
+};
+
+struct ada_delta final {
+public: void delta(net_matrix &grad) {
+    grad.elem_wise_mul(grad);
+    if (exp_grad.verify) {
+        exp_grad *= rho;
+        exp_grad += grad * (1 - rho);
+    } else exp_grad = grad * (1 - rho);
+
+    auto tmp_grad = exp_grad;
+    tmp_grad.broadcast_add(neunet_eps);
+    if (exp_delta.verify) {
+        auto tmp = std::move(tmp_grad);
+        tmp_grad = exp_delta;
+        tmp_grad.broadcast_add(neunet_eps);
+        tmp_grad.elem_wise_div(tmp);
+    } else tmp_grad.elem_wise_div<false>(neunet_eps);
+    grad.elem_wise_mul(tmp_grad);
+
+    if (exp_delta.verify) {
+        exp_delta *= rho;
+        exp_delta += grad * (1 - rho);
+    } else exp_delta = grad * (1 - rho);
+
+    grad.elem_wise_pow(0.5);
+}
+
+private: net_matrix exp_grad, exp_delta;
+
+public: double rho = 0.95;
+};
+
+struct ada_nesterov final {
+public:
+    net_matrix weight(const net_matrix &curr_weight) const {
+        if (velocity.verify) return curr_weight - rho * velocity;
+        else return curr_weight;
+    }
+
+    void momentum(net_matrix &curr_grad, double learn_rate) {
+        curr_grad *= learn_rate;
+        if (!velocity.verify) {
+            velocity = curr_grad;
+            return;
+        }
+        velocity *= rho;
+        velocity += curr_grad;
+        curr_grad = velocity;
+    }
+
+private: net_matrix velocity;
+
+public: double rho = 0.9;
+};
+
 NEUNET_END

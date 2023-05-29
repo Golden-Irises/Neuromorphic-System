@@ -1,0 +1,11 @@
+#pragma once
+
+#pragma once
+#ifndef __NEUNET__
+#define __NEUNET__
+
+#include <net_base>
+
+#include "net_fc.hpp"
+
+#endif

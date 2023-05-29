@@ -3,6 +3,7 @@
         "net_base": "cpp",
         "net_matrix": "cpp",
         "*.vt": "verilog",
-        "net_set": "cpp"
+        "net_set": "cpp",
+        "neunet": "cpp"
     }
 }

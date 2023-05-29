@@ -1,9 +1,9 @@
 #pragma once
 
-#define neunet_eps  1e-8
+#define neunet_eps  DBL_EPSILON
 
 #include <iostream>
-#include "net_base"
+#include "neunet"
 
 using namespace std;
 using namespace neunet;

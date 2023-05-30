@@ -167,4 +167,15 @@ private: net_matrix velocity;
 public: double rho = 0.9;
 };
 
+void ada_update(net_matrix &grad, net_matrix &weight, net_matrix &weight_n, double learn_rate, ada_delta &adad, ada_nesterov &adan) {
+    if (learn_rate) {
+        adan.momentum(grad, learn_rate);
+        weight  -= grad;
+        weight_n = adan.weight(weight);
+    } else {
+        adad.delta(grad);
+        weight -= grad;
+    }
+}
+
 NEUNET_END

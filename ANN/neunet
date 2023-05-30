@@ -4,10 +4,12 @@
 #ifndef __NEUNET__
 #define __NEUNET__
 
-#include "net_base"
 
+
+#include "net_base"
 #include "net_fc.hpp"
 #include "net_conv.hpp"
 #include "net_bn.hpp"
+#include "net_layer.hpp"
 
 #endif

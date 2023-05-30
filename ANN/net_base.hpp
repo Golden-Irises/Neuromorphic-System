@@ -29,7 +29,7 @@ uint64_t samp_output_dir_cnt(uint64_t input_dir_cnt, uint64_t filter_dir_cnt, ui
 
 uint64_t samp_input_dir_cnt(uint64_t output_dir_cnt, uint64_t filter_dir_cnt, uint64_t dir_stride, uint64_t dir_dilate) { return (output_dir_cnt - 1) * dir_stride + samp_block_cnt(filter_dir_cnt, dir_dilate); }
 
-net_set<uint64_t> im2col_pad_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, const net_matrix &in, uint64_t in_ln_cnt, uint64_t in_col_cnt, uint64_t top_cnt, uint64_t right_cnt, uint64_t bottom_cnt, uint64_t left_cnt, uint64_t ln_dist, uint64_t col_dist) {
+net_set<uint64_t> im2col_pad_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, uint64_t in_ln_cnt, uint64_t in_col_cnt, uint64_t in_chann_cnt, uint64_t top_cnt, uint64_t right_cnt, uint64_t bottom_cnt, uint64_t left_cnt, uint64_t ln_dist, uint64_t col_dist) {
     if (!(top_cnt || right_cnt || bottom_cnt || left_cnt || ln_dist || col_dist)) {
         ans_ln_cnt  = in_ln_cnt;
         ans_col_cnt = in_col_cnt;
@@ -37,16 +37,16 @@ net_set<uint64_t> im2col_pad_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, co
     }
     if (!ans_ln_cnt) ans_ln_cnt = matrix_pad_dir_cnt(top_cnt, bottom_cnt, in_ln_cnt, ln_dist);
     if (!ans_col_cnt) ans_col_cnt = matrix_pad_dir_cnt(left_cnt, right_cnt, in_col_cnt, col_dist);
-    net_set<uint64_t> ans(ans_ln_cnt * ans_col_cnt * in.column_count);
+    net_set<uint64_t> ans(ans_ln_cnt * ans_col_cnt * in_chann_cnt);
     for (auto i = 0ull; i < in_ln_cnt; ++i) for (auto j = 0ull; j < in_col_cnt; ++j) {
-        auto im2col_ln = ((top_cnt + i * (ln_dist + 1)) * ans_col_cnt + left_cnt + j * (col_dist + 1)) * in.column_count;
-        auto in_index  = (i * in_col_cnt + j) * in.column_count;
-        for (auto k = 0ull; k < in.column_count; ++k) ans[im2col_ln + k] = in_index + k + 1;
+        auto im2col_ln = ((top_cnt + i * (ln_dist + 1)) * ans_col_cnt + left_cnt + j * (col_dist + 1)) * in_chann_cnt;
+        auto in_index  = (i * in_col_cnt + j) * in_chann_cnt;
+        for (auto k = 0ull; k < in_chann_cnt; ++k) ans[im2col_ln + k] = in_index + k + 1;
     }
     return ans;
 }
 
-net_set<uint64_t> im2col_crop_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, const net_matrix &in, uint64_t in_ln_cnt, uint64_t in_col_cnt, uint64_t top_cnt, uint64_t right_cnt, uint64_t bottom_cnt, uint64_t left_cnt, uint64_t ln_dist, uint64_t col_dist) {
+net_set<uint64_t> im2col_crop_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, uint64_t in_ln_cnt, uint64_t in_col_cnt, uint64_t in_chann_cnt, uint64_t top_cnt, uint64_t right_cnt, uint64_t bottom_cnt, uint64_t left_cnt, uint64_t ln_dist, uint64_t col_dist) {
     if (!(top_cnt || right_cnt || bottom_cnt || left_cnt || ln_dist || col_dist)) {
         ans_ln_cnt  = in_ln_cnt;
         ans_col_cnt = in_col_cnt;
@@ -54,11 +54,11 @@ net_set<uint64_t> im2col_crop_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, c
     }
     if (!ans_ln_cnt) ans_ln_cnt = matrix_crop_dir_cnt(top_cnt, bottom_cnt, in_ln_cnt, ln_dist);
     if (!ans_col_cnt) ans_col_cnt = matrix_crop_dir_cnt(left_cnt, right_cnt, in_col_cnt, col_dist);
-    net_set<uint64_t> ans(ans_ln_cnt * ans_col_cnt * in.column_count);
+    net_set<uint64_t> ans(ans_ln_cnt * ans_col_cnt * in_chann_cnt);
     for (auto i = 0ull; i < ans_ln_cnt; ++i) for (auto j = 0ull; j < ans_col_cnt; ++j) {
-        auto im2col_ln = (i * in_col_cnt + j) * in.column_count;
-        auto in_index  = ((top_cnt + i * (ln_dist + 1)) * in_col_cnt + left_cnt + j * (col_dist + 1)) * in.column_count;
-        for (auto k = 0ull; k < in.column_count; ++k) ans[im2col_ln + k] = in_index + k;
+        auto im2col_ln = (i * in_col_cnt + j) * in_chann_cnt;
+        auto in_index  = ((top_cnt + i * (ln_dist + 1)) * in_col_cnt + left_cnt + j * (col_dist + 1)) * in_chann_cnt;
+        for (auto k = 0ull; k < in_chann_cnt; ++k) ans[im2col_ln + k] = in_index + k;
     }
     return ans;
 }

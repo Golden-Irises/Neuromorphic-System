@@ -74,7 +74,7 @@ struct LayerAct : LayerIn {
         Deduce(vecIn);
     }
 
-    void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) const { switch(iFnType) {
+    void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) const { switch(iActFnType) {
         case neunet_sigmoid:
             neunet_traverse(setIn[iBatSzIdx], sigmoid_dv);
             vecGrad.elem_wise_mul(setIn[iBatSzIdx]);
@@ -87,7 +87,7 @@ struct LayerAct : LayerIn {
     } }
 
     void Deduce(net_matrix &vecIn) const {
-        switch(iFnType) {
+        switch(iActFnType) {
         case neunet_sigmoid: neunet_traverse(vecIn, sigmoid); break;
         case neunet_ReLU: neunet_traverse(vecIn, ReLU); break;
         case neunet_softmax: softmax(vecIn); break;

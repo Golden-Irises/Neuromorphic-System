@@ -4,19 +4,33 @@
 #ifndef __NEUNET__
 #define __NEUNET__
 
-#define neunet_layer_null   0x0000
-#define neunet_layer_bias   0x0001
-#define neunet_layer_act    0x0002
-#define neunet_layer_pc     0x0003
+#define neunet_null     0x0000
+#define neunet_bias     0x0001
+#define neunet_act      0x0002
+#define neunet_pc       0x0003
+#define neunet_flat     0x0004
+#define neunet_fc       0x0005
+#define neunet_conv     0x0006
+#define neunet_pool     0x0007
+#define neunet_bn       0x0008
 
-#define neunet_softmax      0x0001
-#define neunet_ReLU         0x0002
-#define neunet_sigmoid      0x0003
+#define neunet_softmax  0x0001
+#define neunet_ReLU     0x0002
+#define neunet_sigmoid  0x0003
+
+#define neunet_avg_pool 0x0000
+#define neunet_max_pool 0x0001
+#define neunet_gag_pool 0x0002
+
+#define neunet_if(expr)     if constexpr (expr)
+#define neunet_elif(expr)   else if constexpr (expr)
+#define neunet_else         else
 
 #include "net_base"
 #include "net_fc.hpp"
 #include "net_conv.hpp"
 #include "net_bn.hpp"
+#include "net_async.hpp"
 #include "net_layer.hpp"
 
 #endif

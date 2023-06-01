@@ -204,7 +204,7 @@ public:
         if (proto.elem_cnt != elem_cnt) proto.reset();
     }
 
-    void rand_elem(double fst_rng = -1, double snd_rng = 1) { matrix_rand(proto, fst_rng, snd_rng); }
+    void elem_rand(double fst_rng = -1, double snd_rng = 1) { matrix_rand(proto, fst_rng, snd_rng); }
 
     uint64_t ln_cnt() const { return proto.ln_cnt; }
 

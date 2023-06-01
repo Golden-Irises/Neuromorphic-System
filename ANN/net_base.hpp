@@ -29,38 +29,38 @@ uint64_t samp_output_dir_cnt(uint64_t input_dir_cnt, uint64_t filter_dir_cnt, ui
 
 uint64_t samp_input_dir_cnt(uint64_t output_dir_cnt, uint64_t filter_dir_cnt, uint64_t dir_stride, uint64_t dir_dilate) { return (output_dir_cnt - 1) * dir_stride + samp_block_cnt(filter_dir_cnt, dir_dilate); }
 
-net_set<uint64_t> im2col_pad_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, uint64_t in_ln_cnt, uint64_t in_col_cnt, uint64_t in_chann_cnt, uint64_t top_cnt, uint64_t right_cnt, uint64_t bottom_cnt, uint64_t left_cnt, uint64_t ln_dist, uint64_t col_dist) {
+net_set<uint64_t> im2col_pad_in_idx( uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, uint64_t in_ln_cnt, uint64_t in_col_cnt, uint64_t in_chann_cnt, uint64_t top_cnt, uint64_t right_cnt, uint64_t bottom_cnt, uint64_t left_cnt, uint64_t ln_dist, uint64_t col_dist) {
     if (!(top_cnt || right_cnt || bottom_cnt || left_cnt || ln_dist || col_dist)) {
         ans_ln_cnt  = in_ln_cnt;
         ans_col_cnt = in_col_cnt;
         return {};
     }
-    if (!ans_ln_cnt) ans_ln_cnt = matrix_pad_dir_cnt(top_cnt, bottom_cnt, in_ln_cnt, ln_dist);
-    if (!ans_col_cnt) ans_col_cnt = matrix_pad_dir_cnt(left_cnt, right_cnt, in_col_cnt, col_dist);
-    net_set<uint64_t> ans(ans_ln_cnt * ans_col_cnt * in_chann_cnt);
+    ans_ln_cnt  = matrix_pad_dir_cnt(top_cnt, bottom_cnt, in_ln_cnt, ln_dist);
+    ans_col_cnt = matrix_pad_dir_cnt(left_cnt, right_cnt, in_col_cnt, col_dist);
+    net_set<uint64_t> in_idx_set(in_ln_cnt * in_col_cnt * in_chann_cnt);
     for (auto i = 0ull; i < in_ln_cnt; ++i) for (auto j = 0ull; j < in_col_cnt; ++j) {
         auto im2col_ln = ((top_cnt + i * (ln_dist + 1)) * ans_col_cnt + left_cnt + j * (col_dist + 1)) * in_chann_cnt;
         auto in_index  = (i * in_col_cnt + j) * in_chann_cnt;
-        for (auto k = 0ull; k < in_chann_cnt; ++k) ans[im2col_ln + k] = in_index + k + 1;
+        for (auto k = 0ull; k < in_chann_cnt; ++k) in_idx_set[in_index + k] = im2col_ln + k;
     }
-    return ans;
+    return in_idx_set;
 }
 
-net_set<uint64_t> im2col_crop_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, uint64_t in_ln_cnt, uint64_t in_col_cnt, uint64_t in_chann_cnt, uint64_t top_cnt, uint64_t right_cnt, uint64_t bottom_cnt, uint64_t left_cnt, uint64_t ln_dist, uint64_t col_dist) {
+net_set<uint64_t> im2col_crop_out_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cnt, uint64_t in_ln_cnt, uint64_t in_col_cnt, uint64_t in_chann_cnt, uint64_t top_cnt, uint64_t right_cnt, uint64_t bottom_cnt, uint64_t left_cnt, uint64_t ln_dist, uint64_t col_dist) {
     if (!(top_cnt || right_cnt || bottom_cnt || left_cnt || ln_dist || col_dist)) {
         ans_ln_cnt  = in_ln_cnt;
         ans_col_cnt = in_col_cnt;
-        return {};
+        return;
     }
-    if (!ans_ln_cnt) ans_ln_cnt = matrix_crop_dir_cnt(top_cnt, bottom_cnt, in_ln_cnt, ln_dist);
-    if (!ans_col_cnt) ans_col_cnt = matrix_crop_dir_cnt(left_cnt, right_cnt, in_col_cnt, col_dist);
-    net_set<uint64_t> ans(ans_ln_cnt * ans_col_cnt * in_chann_cnt);
+    ans_ln_cnt  = matrix_crop_dir_cnt(top_cnt, bottom_cnt, in_ln_cnt, ln_dist);
+    ans_col_cnt = matrix_crop_dir_cnt(left_cnt, right_cnt, in_col_cnt, col_dist);
+    net_set<uint64_t> out_idx_set(ans_ln_cnt * ans_col_cnt * in_chann_cnt);
     for (auto i = 0ull; i < ans_ln_cnt; ++i) for (auto j = 0ull; j < ans_col_cnt; ++j) {
-        auto im2col_ln = (i * in_col_cnt + j) * in_chann_cnt;
+        auto im2col_ln = (i * ans_col_cnt + j) * in_chann_cnt;
         auto in_index  = ((top_cnt + i * (ln_dist + 1)) * in_col_cnt + left_cnt + j * (col_dist + 1)) * in_chann_cnt;
-        for (auto k = 0ull; k < in_chann_cnt; ++k) ans[im2col_ln + k] = in_index + k;
+        for (auto k = 0ull; k < in_chann_cnt; ++k) out_idx_set[im2col_ln + k] = in_index + k;
     }
-    return ans;
+    return out_idx_set;
 }
 
 net_matrix im2col_from_tensor(const net_set<net_matrix> &src) {
@@ -113,37 +113,43 @@ struct net_counter {
     }
 };
 
+template <double rho = 0.9>
 struct ada_delta final {
-public: void delta(net_matrix &grad) {
-    grad.elem_wise_mul(grad);
-    if (exp_grad.verify) {
-        exp_grad *= rho;
-        exp_grad += grad * (1 - rho);
-    } else exp_grad = grad * (1 - rho);
+public:
+    void delta(net_matrix &grad) {
+        grad.elem_wise_mul(grad);
+        if (exp_grad.verify) {
+            exp_grad *= rho;
+            exp_grad += grad * (1 - rho);
+        } else exp_grad = grad * (1 - rho);
 
-    auto tmp_grad = exp_grad;
-    tmp_grad.broadcast_add(neunet_eps);
-    if (exp_delta.verify) {
-        auto tmp = std::move(tmp_grad);
-        tmp_grad = exp_delta;
+        auto tmp_grad = exp_grad;
         tmp_grad.broadcast_add(neunet_eps);
-        tmp_grad.elem_wise_div(tmp);
-    } else tmp_grad.elem_wise_div<false>(neunet_eps);
-    grad.elem_wise_mul(tmp_grad);
+        if (exp_delta.verify) {
+            auto tmp = std::move(tmp_grad);
+            tmp_grad = exp_delta;
+            tmp_grad.broadcast_add(neunet_eps);
+            tmp_grad.elem_wise_div(tmp);
+        } else tmp_grad.elem_wise_div<false>(neunet_eps);
+        grad.elem_wise_mul(tmp_grad);
 
-    if (exp_delta.verify) {
-        exp_delta *= rho;
-        exp_delta += grad * (1 - rho);
-    } else exp_delta = grad * (1 - rho);
+        if (exp_delta.verify) {
+            exp_delta *= rho;
+            exp_delta += grad * (1 - rho);
+        } else exp_delta = grad * (1 - rho);
 
-    grad.elem_wise_pow(0.5);
-}
+        grad.elem_wise_pow(0.5);
+    }
+
+    void update(net_matrix &curr_weight, net_matrix &grad) {
+        delta(grad);
+        curr_weight -= grad;
+    }
 
 private: net_matrix exp_grad, exp_delta;
-
-public: double rho = 0.95;
 };
 
+template <double learn_rate = .1, double rho = 0.9>
 struct ada_nesterov final {
 public:
     net_matrix weight(const net_matrix &curr_weight) const {
@@ -151,7 +157,7 @@ public:
         else return curr_weight;
     }
 
-    void momentum(net_matrix &curr_grad, double learn_rate) {
+    void momentum(net_matrix &curr_grad) {
         curr_grad *= learn_rate;
         if (!velocity.verify) {
             velocity = curr_grad;
@@ -162,20 +168,13 @@ public:
         curr_grad = velocity;
     }
 
-private: net_matrix velocity;
-
-public: double rho = 0.9;
-};
-
-void ada_update(net_matrix &grad, net_matrix &weight, net_matrix &weight_n, double learn_rate, ada_delta &adad, ada_nesterov &adan) {
-    if (learn_rate) {
-        adan.momentum(grad, learn_rate);
-        weight  -= grad;
-        weight_n = adan.weight(weight);
-    } else {
-        adad.delta(grad);
-        weight -= grad;
+    void update (net_matrix &curr_weight, net_matrix &nesterov_weight, net_matrix &grad) {
+        momentum(grad);
+        curr_weight    -= grad;
+        nesterov_weight = weight(curr_weight);
     }
-}
+
+private: net_matrix velocity;
+};
 
 NEUNET_END

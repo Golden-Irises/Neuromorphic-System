@@ -32,7 +32,7 @@ net_matrix CaffeGradIn(const net_matrix &vecGradOut, const net_set<uint64_t> &se
 
 net_matrix ConvInitKernel(uint64_t iQty, uint64_t iChannCnt, uint64_t iLnCnt, uint64_t iColCnt, double dFstRng = -1, double dSndRng = 1) {
     net_matrix vecAns {iLnCnt * iColCnt * iChannCnt, iQty};
-    vecAns.rand_elem(dFstRng, dSndRng);
+    vecAns.elem_rand(dFstRng, dSndRng);
     return vecAns;
 }
 
@@ -70,8 +70,8 @@ net_matrix PoolAvg(const net_matrix vecIn, const net_set<uint64_t> setCaffeIdx, 
     return vecAns;
 }
 
-net_matrix PoolGradAvgIn(const net_matrix &vecGradOut, const net_set<uint64_t> &setCaffeIdx, uint64_t iFilterElemCnt, uint64_t iChannElemCnt) {
-    net_matrix vecAns {iChannElemCnt, vecGradOut.column_count};
+net_matrix PoolGradAvgIn(const net_matrix &vecGradOut, const net_set<uint64_t> &setCaffeIdx, uint64_t iFilterElemCnt, uint64_t iSampInElemCnt) {
+    net_matrix vecAns {iSampInElemCnt, vecGradOut.column_count};
     uint64_t iCaffeDataCnt = 0;
     for (auto i = 0ull; i < vecGradOut.element_count; ++i) {
         auto dGradElem = vecGradOut.index(i) / iFilterElemCnt;
@@ -113,8 +113,8 @@ net_matrix PoolMax(const net_matrix &vecIn, const net_set<uint64_t> &setCaffeIdx
     return vecAns;
 }
 
-net_matrix PoolGradMaxIn(const net_matrix &vecGradOut, uint64_t iChannElemCnt, const net_set<net_set<uint64_t>> &setElemIdx) {
-    net_matrix vecAns(iChannElemCnt, vecGradOut.column_count);
+net_matrix PoolGradMaxIn(const net_matrix &vecGradOut, uint64_t iSampInElemCnt, const net_set<net_set<uint64_t>> &setElemIdx) {
+    net_matrix vecAns(iSampInElemCnt, vecGradOut.column_count);
     for(auto i = 0ull; i < setElemIdx.length; ++i) for (auto j = 0ull; j < setElemIdx[i][0]; ++j) vecAns.index(setElemIdx[i][j + 1]) += vecGradOut.index(i);
     return vecAns;
 }

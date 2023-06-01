@@ -1,39 +1,11 @@
 NEUNET_BEGIN
 
-struct BNBetaGamma final {
-    net_matrix vecBeta, vecBetaN,
-               vecGamma, vecGammaN;
-    
-    ada_delta adaBeta, adaGamma;
-
-    ada_nesterov adnBeta, adnGamma;
-
-    double dBetaLearnRate  = 0,
-           dGammaLearnRate = 0;
-};
-
-net_matrix BNBetaGammaInit(uint64_t iChannCnt, double dPlaceholder = 0) {
+template <double dPlaceholder = 0.>
+net_matrix BNBetaGammaInit(uint64_t iChannCnt) {
     net_matrix vecAns {1, iChannCnt};
-    if (dPlaceholder) for (auto i = 0ull; i < iChannCnt; ++i) vecAns.index(i) = dPlaceholder;
+    if constexpr (dPlaceholder != 0) for (auto i = 0ull; i < iChannCnt; ++i) vecAns.index(i) = dPlaceholder;
     return vecAns;
 }
-
-void BNBetaGammaInit(BNBetaGamma &BbgData, uint64_t iChannCnt, double dBeta = 0, double dGamma = 1) {
-    BbgData.vecBeta   = BNBetaGammaInit(iChannCnt, dBeta);
-    BbgData.vecBetaN  = BbgData.vecBeta;
-    BbgData.vecGamma  = BNBetaGammaInit(iChannCnt, dGamma);
-    BbgData.vecGammaN = BbgData.vecGamma;
-}
-
-// call after BNGradIn
-void BNUpdate(BNBetaGamma &BbgData) {
-    ada_update(BbgData.vecBetaN, BbgData.vecBeta, BbgData.vecBetaN, BbgData.dBetaLearnRate, BbgData.adaBeta, BbgData.adnBeta);
-    ada_update(BbgData.vecGammaN, BbgData.vecGamma, BbgData.vecGammaN, BbgData.dGammaLearnRate, BbgData.adaGamma, BbgData.adnGamma);
-}
-
-const net_matrix &BNBeta(const BNBetaGamma &BbgData) { return BbgData.dBetaLearnRate ? BbgData.vecBetaN : BbgData.vecBeta; }
-
-const net_matrix &BNGamma(const BNBetaGamma &BbgData) { return BbgData.dGammaLearnRate ? BbgData.vecGammaN : BbgData.vecGamma; }
 
 struct BNData final {
     net_matrix vecMuBeta, vecSigmaSqr,
@@ -56,7 +28,7 @@ void BNDataInit(BNData &BdData, uint64_t iTrainBatchSize, uint64_t iTrainBatchBa
     BdData.setDist.init(iTrainBatchSize, false);
 }
 
-void BNOut(net_set<net_matrix> &setIn, BNBetaGamma &BbgData, BNData &BdData) {
+void BNOut(net_set<net_matrix> &setIn, BNData &BdData, const net_matrix &vecBeta, const net_matrix &vecGamma) {
     BdData.vecMuBeta  = net_matrix::sigma(setIn);
     BdData.vecMuBeta *= BdData.dCoeBatSz;
     for (auto i = 0ull; i < setIn.length; ++i) {
@@ -74,20 +46,21 @@ void BNOut(net_set<net_matrix> &setIn, BNBetaGamma &BbgData, BNData &BdData) {
         setIn[i].elem_wise_div(BdData.vecSigmaEps);
         BdData.setBarX[i] = setIn[i];
         for (auto j = 0ull; j < setIn[i].line_count; ++j) for (auto k = 0ull; k < setIn[i].column_count; ++k) {
-            setIn[i][j][k] *= BNGamma(BbgData).index(k);
-            setIn[i][j][k] += BNBeta(BbgData).index(k);
+            setIn[i][j][k] *= vecGamma.index(k);
+            setIn[i][j][k] += vecBeta.index(k);
         }
     }
 }
 
 // call after BNOut
-void BNMovAvg(BNData &BdData, double dDecay = .9) {
-    auto dHalfDecay     = 1 - dDecay;
-    BdData.vecMuBeta   *= dHalfDecay;
-    BdData.vecSigmaSqr *= dHalfDecay;
+template <double dMovAvgDecay = .9>
+void BNMovAvg(BNData &BdData) {
+    constexpr auto dDcy = 1 - dMovAvgDecay;
+    BdData.vecMuBeta   *= dDcy;
+    BdData.vecSigmaSqr *= dDcy;
     if (BdData.vecExpMuBeta.verify && BdData.vecExpSigmaSqr.verify) {
-        BdData.vecExpMuBeta   *= dDecay;
-        BdData.vecExpSigmaSqr *= dDecay;
+        BdData.vecExpMuBeta   *= dMovAvgDecay;
+        BdData.vecExpSigmaSqr *= dMovAvgDecay;
         BdData.vecExpMuBeta   += BdData.vecMuBeta;
         BdData.vecExpSigmaSqr += BdData.vecSigmaSqr;
     } else {
@@ -101,13 +74,15 @@ void BNMovAvg(BNData &BdData, double dDecay = .9) {
     }
 }
 
-void BNGradIn(net_set<net_matrix> &setGradOut, BNBetaGamma &BbgData, BNData &BdData) {
+void BNGradIn(net_set<net_matrix> &setGradOut, BNData &BdData, net_matrix &vecGradBeta, net_matrix &vecGradGamma, const net_matrix &vecGamma) {
     BdData.vecExpSigmaEps = net_matrix::sigma(setGradOut);
-    for (auto i = 0ull; i < BdData.vecExpSigmaEps.line_count; ++i) for (auto j = 0ull; j < BdData.vecExpSigmaEps.column_count; ++j) BbgData.vecBetaN.index(j) += BdData.vecExpSigmaEps[i][j];
+    if (!vecGradBeta.verify) vecGradBeta = {1, vecGamma.element_count};
+    for (auto i = 0ull; i < BdData.vecExpSigmaEps.line_count; ++i) for (auto j = 0ull; j < BdData.vecExpSigmaEps.column_count; ++j) vecGradBeta.index(j) += BdData.vecExpSigmaEps[i][j];
     for (auto i = 0ull; i < setGradOut.length; ++i) BdData.setBarX[i].elem_wise_mul(setGradOut[i]);
     BdData.vecExpSigmaEps = net_matrix::sigma(BdData.setBarX);
-    for (auto i = 0ull; i < setGradOut.length; ++i) for (auto j = 0ull; j < setGradOut[i].line_count; ++j) for (auto k = 0ull; k < setGradOut[i].column_count; ++k) setGradOut[i][j][k] *= BNGamma(BbgData).index(k);
-    for (auto i = 0ull; i < BdData.vecExpSigmaEps.line_count; ++i) for (auto j = 0ull; j < BdData.vecExpSigmaEps.column_count; ++j) BbgData.vecGammaN.index(j) += BdData.vecExpSigmaEps[i][j];
+    for (auto i = 0ull; i < setGradOut.length; ++i) for (auto j = 0ull; j < setGradOut[i].line_count; ++j) for (auto k = 0ull; k < setGradOut[i].column_count; ++k) setGradOut[i][j][k] *= vecGamma.index(k);
+    if (!vecGradGamma.verify) vecGradGamma = {1, vecGamma.element_count};
+    for (auto i = 0ull; i < BdData.vecExpSigmaEps.line_count; ++i) for (auto j = 0ull; j < BdData.vecExpSigmaEps.column_count; ++j) vecGradGamma.index(j) += BdData.vecExpSigmaEps[i][j];
     BdData.setBarX = setGradOut;
     for (auto i = 0ull; i < setGradOut.length; ++i) BdData.setBarX[i].elem_wise_mul(BdData.setDist[i]);
     BdData.vecSigmaSqr = net_matrix::sigma(BdData.setBarX);

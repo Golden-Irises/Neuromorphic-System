@@ -267,17 +267,72 @@ struct LayerPool : LayerCaffe<iFilterLnCnt, iFilterColCnt, iLnStride, iColStride
     virtual constexpr uint64_t LayerType() const { return neunet_pool; }
 };
 
-struct LayerBN {
-    virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {}
+template <double dShift = 0., double dScale = 1., double dShiftLearnRate = 0., double dScaleLearnRate = 0., double dShiftGradDecay = .9, double dScaleGradDecay = .9, double dMovAvgDecay = .9>
+struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
+    net_counter iBackBatSzCnt;
+
+    net_matrix vecScale, vecScaleN;
+
+    ada_delta<dScaleGradDecay> AdaDScale;
+
+    ada_nesterov<dScaleLearnRate, dScaleGradDecay> AdaNScale;
+
+    async_controller asyForCtrl, asyBackCtrl;
+
+    BNData BdData;
+
+    const net_matrix &BNTrainScale() {
+        if constexpr (dScaleLearnRate) return vecScaleN;
+        else return vecScale;
+    }
+
+    const net_matrix &BNTrainShift() {
+        if constexpr (dShiftLearnRate) return this->vecWeightN;
+        else return this->vecWeight;
+    }
+
+    virtual void Batch(uint64_t iBatSz, uint64_t iBatCnt) {
+        LayerIO::Batch(iBatSz, iBatCnt);
+        BNDataInit(BdData, iBatSz, iBatCnt);
+    }
+
+    virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
+        this->vecWeight = BNBetaGammaInit<dShift>(iInChannCnt);
+        vecScale        = BNBetaGammaInit<dScale>(iInChannCnt);
+        if constexpr (dScaleLearnRate) vecScaleN = vecScale.transpose;
+        if constexpr (dShiftLearnRate) this->vecWeightN = this->vecWeight;
+    }
+
+    virtual void Update() {
+        if constexpr (dScaleLearnRate) AdaNScale.update(vecScale, vecScaleN, vecScaleN);
+        else AdaDScale.update(vecScale, vecScaleN);
+        if constexpr (dShiftLearnRate) this->AdaN.update(this->vecWeight, this->vecWeightN, this->vecWeightT);
+        else this->AdaD.update(this->vecWeight, this->vecWeightN);
+    }
     
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
+        this->setIO[iBatSzIdx] = std::move(vecIn);
+        if (this->iBackBatSzCnt.cnt++ == this->setIO.length) {
+            BNOut(this->setIO, BdData, BNTrainShift(), BNTrainScale());
+            this->iBackBatSzCnt.cnt = 0;
+            asyForCtrl.thread_wake_all();
+            BNMovAvg<dMovAvgDecay>(BdData);
+        } else while (this->iBackBatSzCnt.cnt) asyForCtrl.thread_sleep(1000);
+        vecIn = std::move(this->setIO[iBatSzIdx]);
     }
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
+        this->setIO[iBatSzIdx] = std::move(vecGrad);
+        if (++iBackBatSzCnt.cnt == this->setIO.length) {
+            BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNTrainScale());
+            iBackBatSzCnt.cnt = 0;
+            asyBackCtrl.thread_wake_all();
+            Update();
+        } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep(1000);
+        vecGrad = std::move(this->setIn[iBatSzIdx]);
     }
 
-    virtual void Deduce(net_matrix &vecIn) {
-    }
+    virtual void Deduce(net_matrix &vecIn) { BNOut(vecIn, BdData, this->vecWeight, vecScale); }
 
     virtual constexpr uint64_t LayerType() const { return neunet_bn; }
 };

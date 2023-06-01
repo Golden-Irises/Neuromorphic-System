@@ -10,8 +10,7 @@ net_matrix BNBetaGammaInit(uint64_t iChannCnt) {
 struct BNData final {
     net_matrix vecMuBeta, vecSigmaSqr,
                vecSigmaEps, vecSigmaSqrEps,
-               vecExpMuBeta, vecExpSigmaSqr,
-               vecExpSigmaEps;
+               vecExpMuBeta, vecExpSigmaSqr, vecExpSigmaEps;
 
     uint64_t iTrnBatCnt = 0,
              iTrnBatIdx = 0;
@@ -28,6 +27,7 @@ void BNDataInit(BNData &BdData, uint64_t iTrainBatchSize, uint64_t iTrainBatchBa
     BdData.setDist.init(iTrainBatchSize, false);
 }
 
+// Train
 void BNOut(net_set<net_matrix> &setIn, BNData &BdData, const net_matrix &vecBeta, const net_matrix &vecGamma) {
     BdData.vecMuBeta  = net_matrix::sigma(setIn);
     BdData.vecMuBeta *= BdData.dCoeBatSz;
@@ -97,6 +97,16 @@ void BNGradIn(net_set<net_matrix> &setGradOut, BNData &BdData, net_matrix &vecGr
         BdData.setDist[i].elem_wise_mul(BdData.vecSigmaSqr);
         setGradOut[i] -= BdData.setDist[i];
         setGradOut[i] += BdData.vecMuBeta;
+    }
+}
+
+// Deduce
+void BNOut(net_matrix &vecIn, BNData &BdData, const net_matrix &vecBeta, const net_matrix &vecGamma) {
+    vecIn -= BdData.vecExpMuBeta;
+    vecIn.elem_wise_div(BdData.vecExpSigmaEps);
+    for (auto i = 0ull; i < vecIn.line_count; ++i) for (auto j = 0ull; j < vecIn.column_count; ++j) {
+        vecIn[i][j] *= vecGamma.index(j);
+        vecIn[i][j] += vecBeta.index(j);
     }
 }
 

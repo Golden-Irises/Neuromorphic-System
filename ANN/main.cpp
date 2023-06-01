@@ -17,26 +17,30 @@ int main(int argc, char *argv[], char *envp[]) {
     auto chrono_begin = neunet_chrono_time_point;
     cout << "hello, world." << endl;
 
-    net_matrix in = {{1, 0, 1},
-                     {2, 2, 2},
-                     {0, 1, 1},
-                     {1, 0, 0},
-                     {1, 3, 1},
-                     {3, 2, 3},
-                     {0, 1, 3},
-                     {2, 1, 3},
-                     {2, 0, 2}};
-    cout << im2col_to_tensor(in, 3, 3) << endl << endl;
-    uint64_t pad_ln = 0, pad_col = 0;
-    auto pad_idx = im2col_pad_in_idx(pad_ln, pad_col, 3, 3, 3, 1, 2, 3, 4, 1, 2);
-    net_matrix pad_ans {pad_ln * pad_col, 3};
-    for (auto i = 0ull; i < pad_idx.length; ++i) pad_ans.index(pad_idx[i]) = in.index(i);
-    cout << im2col_to_tensor(pad_ans, pad_ln, pad_col) << endl << endl;
-    uint64_t crop_ln = 0, crop_col = 0;
-    auto crop_idx = im2col_crop_out_idx(crop_ln, crop_col, pad_ln, pad_col, 3, 1, 2, 3, 4, 1, 2);
-    net_matrix crop_ans {crop_ln * crop_col, 3};
-    for (auto i = 0ull; i < pad_idx.length; ++i) crop_ans.index(i) = pad_ans.index(crop_idx[i]);
-    cout << im2col_to_tensor(crop_ans, crop_ln, crop_col) << endl;
+    int cnt = 6;
+
+    net_matrix sum {2, 2};
+    net_queue<net_matrix> test;
+
+    async_controller ctrl;
+
+    async_pool pool {2};
+
+    pool.add_task([&test, &sum, &ctrl, cnt] {
+        for (auto i = 0; i < cnt; ++i) sum += test.de_queue();
+        ctrl.thread_wake_one();
+    });
+
+    pool.add_task([&test, cnt] {
+        for (auto i = 0; i < cnt; ++i) {
+            net_matrix tmp {2, 2};
+            for (auto j = 0; j < tmp.element_count; ++j) tmp.index(j) = i + 1;
+            test.en_queue(tmp);
+        }
+    });
+
+    ctrl.thread_sleep();
+    cout << sum << endl;
 
     cout << neunet_chrono_time_point - chrono_begin << "ms" << endl;
     return EXIT_SUCCESS;

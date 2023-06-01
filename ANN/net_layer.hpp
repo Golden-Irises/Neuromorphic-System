@@ -23,7 +23,7 @@ struct LayerIO : virtual Layer {
 };
 
 template <double dLearnRate = 0., double dGradDecay = 0.9>
-struct LayerWeight : virtual Layer {
+struct LayerWeight : virtual LayerIO {
     net_counter iBatSzCnt;
 
     net_matrix vecWeight, vecWeightT, vecWeightN;
@@ -126,8 +126,8 @@ struct LayerPC : LayerChann{
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         net_matrix vecAns {iElemCnt, iChannCnt};
         for (auto i = 0ull; i < setElemIdx.length; ++i)
-            if constexpr (bPad1Crop0) vecIn.index(i) = vecAns.index(setElemIdx[i]);
-            else vecIn.index(setElemIdx[i]) = vecAns.index(i);
+            if constexpr (bPad1Crop0) vecGrad.index(i) = vecAns.index(setElemIdx[i]);
+            else vecGrad.index(setElemIdx[i]) = vecAns.index(i);
         vecGrad = std::move(vecAns);
     }
 
@@ -244,7 +244,7 @@ struct LayerPool : LayerCaffe<iFilterLnCnt, iFilterColCnt, iLnStride, iColStride
             LayerChann::Shape(iInLnCnt, iInColCnt, iInChannCnt);
             iInLnCnt  = 1;
             iInColCnt = 1;
-        } else LayerCaffe<iKernelLnCnt, iKernelColCnt, iLnStride, iColStride, iLnDilate, iColDilate>::Shape(iInLnCnt, iInColCnt, iInChannCnt);
+        } else LayerCaffe<iFilterLnCnt, iFilterColCnt, iLnStride, iColStride, iLnDilate, iColDilate>::Shape(iInLnCnt, iInColCnt, iInChannCnt);
     }
     
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
@@ -254,8 +254,8 @@ struct LayerPool : LayerCaffe<iFilterLnCnt, iFilterColCnt, iLnStride, iColStride
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         if constexpr (iPoolType == neunet_gag_pool) vecGrad = PoolGradGlbAvgIn(vecGrad, this->iElemCnt, this->iChannCnt);
-        else if constexpr (iPoolType == neunet_avg_pool) vecIn = PoolGradAvgIn(vecGrad, this->setCaffeIdx, iFilterElemCnt, this->iElemCnt);
-        else if constexpr (iPoolType == neunet_max_pool) vecIn = PoolGradMaxIn(vecGrad, this->iElemCnt, setElemIdx[iBatSzIdx]);
+        else if constexpr (iPoolType == neunet_avg_pool) vecGrad = PoolGradAvgIn(vecGrad, this->setCaffeIdx, iFilterElemCnt, this->iElemCnt);
+        else if constexpr (iPoolType == neunet_max_pool) vecGrad = PoolGradMaxIn(vecGrad, this->iElemCnt, setElemIdx[iBatSzIdx]);
     }
 
     virtual void Deduce(net_matrix &vecIn) {

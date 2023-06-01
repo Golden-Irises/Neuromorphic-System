@@ -50,7 +50,7 @@ net_set<uint64_t> im2col_crop_out_idx(uint64_t &ans_ln_cnt, uint64_t &ans_col_cn
     if (!(top_cnt || right_cnt || bottom_cnt || left_cnt || ln_dist || col_dist)) {
         ans_ln_cnt  = in_ln_cnt;
         ans_col_cnt = in_col_cnt;
-        return;
+        return {};
     }
     ans_ln_cnt  = matrix_crop_dir_cnt(top_cnt, bottom_cnt, in_ln_cnt, ln_dist);
     ans_col_cnt = matrix_crop_dir_cnt(left_cnt, right_cnt, in_col_cnt, col_dist);

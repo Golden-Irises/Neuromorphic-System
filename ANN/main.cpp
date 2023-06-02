@@ -1,47 +1,38 @@
 #pragma once
 
 #define neunet_eps  DBL_EPSILON
+#define MNIST_MSG   false
 
 #include <iostream>
 #include "neunet"
 
+#include "..\SRC\MNIST\mnist.h"
+
 using namespace std;
 using namespace neunet;
 
-template <uint64_t col_cnt> void test(double src[][col_cnt]) {
-    constexpr auto ln_cnt = sizeof(src) / sizeof(src[0]);
-    for (auto i = 0ull; i < ln_cnt; ++i) for (auto j = 0ull; j < col_cnt; ++j) cout << src[i][j] << endl;
-}
-
 int main(int argc, char *argv[], char *envp[]) {
     auto chrono_begin = neunet_chrono_time_point;
-    cout << "hello, world." << endl;
+     cout << "hello, world." << endl;
 
-    int cnt = 6;
+     mnist_data data;
+     mnist_stream stream;
 
-    net_matrix sum {2, 2};
-    net_queue<net_matrix> test;
+     std::string root = "E:\\VS Code project data\\MNIST\\";
+     auto train_elem  = root + "train-images.idx3-ubyte",
+          train_lbl   = root + "train-labels.idx1-ubyte",
+          test_elem   = root + "t10k-images.idx3-ubyte",
+          test_lbl    = root + "t10k-labels.idx1-ubyte";
 
-    async_controller ctrl;
+     if (mnist_open(&stream, test_elem.c_str(), test_lbl.c_str())) std::printf("MNIST opened.\n");
+     if (mnist_magic_verify(&stream)) std::printf("MNIST magic is valid.\n");
+     if (mnist_qty_verify(&stream, &data)) std::printf("MNIST quatity is valid.\n");
+     auto ln_cnt  = mnist_ln_cnt(&stream),
+          col_cnt = mnist_col_cnt(&stream);
+     mnist_read(&stream, &data, ln_cnt, col_cnt);
+     mnist_close(&stream);
+     mnist_save_image("SRC\\MNIST\\IMG", &data, 10);
 
-    async_pool pool {2};
-
-    pool.add_task([&test, &sum, &ctrl, cnt] {
-        for (auto i = 0; i < cnt; ++i) sum += test.de_queue();
-        ctrl.thread_wake_one();
-    });
-
-    pool.add_task([&test, cnt] {
-        for (auto i = 0; i < cnt; ++i) {
-            net_matrix tmp {2, 2};
-            for (auto j = 0; j < tmp.element_count; ++j) tmp.index(j) = i + 1;
-            test.en_queue(tmp);
-        }
-    });
-
-    ctrl.thread_sleep();
-    cout << sum << endl;
-
-    cout << neunet_chrono_time_point - chrono_begin << "ms" << endl;
-    return EXIT_SUCCESS;
+     cout << neunet_chrono_time_point - chrono_begin << "ms" << endl;
+     return EXIT_SUCCESS;
 }

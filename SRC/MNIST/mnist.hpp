@@ -118,11 +118,11 @@ bool mnist_save_image(const char *dir, mnist_data *src, int expe_save_qty = 0) {
             status = gph_img.DrawLine(&curr_pen, int(k), int(j), int(k + 1), int(j + 1));
             if (status != Gdiplus::Ok) goto status_err;
         }
-        auto path_tmp = path + "\\[" + std::to_string(i) + ']' + std::to_string(src->lbl[i]) + ".png";
+        auto path_tmp = mnist_s2ws(path + "\\[" + std::to_string(i) + ']' + std::to_string(src->lbl[i]) + ".png");
         #if MNIST_MSG
         std::wcout << mnist_s2ws(path_tmp) << std::endl;
         #endif
-        status = bitmap.Save(mnist_s2ws(path_tmp).c_str(), &clsid);
+        status = bitmap.Save(path_tmp.c_str(), &clsid);
         if (status != Gdiplus::Ok) break;
     } } status_err: Gdiplus::GdiplusShutdown(gph_token);
     return status == Gdiplus::Ok;

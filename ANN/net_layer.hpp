@@ -60,8 +60,8 @@ struct LayerBias : LayerWeight<dLearnRate, dGradDecay> {
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = vecGrad;
-        if (++this->iBatSzCnt.cnt == this->setIO.length) {
-            this->iBatSzCnt.cnt = 0;
+        if (++this->iBatSzCnt == this->setIO.length) {
+            this->iBatSzCnt = 0;
             this->Update();
         }
     }
@@ -176,8 +176,8 @@ struct LayerFC : LayerWeight<dLearnRate, dGradDecay> {
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = FCGradWeight(vecGrad, this->setIO[iBatSzIdx]);
         vecGrad                = FCGradIn(vecGrad, this->vecWeightT);
-        if (++this->iBatSzCnt.cnt == this->setIO.length) {
-            this->iBatSzCnt.cnt = 0;
+        if (++this->iBatSzCnt == this->setIO.length) {
+            this->iBatSzCnt = 0;
             LayerWeight<dLearnRate, dGradDecay>::Update();
         }
     }
@@ -220,8 +220,8 @@ struct LayerConv : LayerWeight<dLearnRate, dGradDecay>, LayerCaffe<iKernelLnCnt,
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = ConvGradKernel(vecGrad, this->setIO[iBatSzIdx]);
         vecGrad                = CaffeGradIn(ConvGradCaffeOut(vecGrad, this->vecWeightT), this->setCaffeIdx, this->iElemCnt, this->iChannCnt);
-        if (++this->iBatSzCnt.cnt == this->setIO.length) {
-            this->iBatSzCnt.cnt = 0;
+        if (++this->iBatSzCnt == this->setIO.length) {
+            this->iBatSzCnt = 0;
             LayerWeight<dLearnRate, dGradDecay>::Update();
         }
     }
@@ -312,24 +312,24 @@ struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
     
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
         this->setIO[iBatSzIdx] = std::move(vecIn);
-        if (this->iBackBatSzCnt.cnt++ == this->setIO.length) {
+        if (++this->iBatSzCnt == this->setIO.length) {
             BNOut(this->setIO, BdData, BNTrainShift(), BNTrainScale());
-            this->iBackBatSzCnt.cnt = 0;
+            this->iBatSzCnt = 0;
             asyForCtrl.thread_wake_all();
             BNMovAvg<dMovAvgDecay>(BdData);
-        } else while (this->iBackBatSzCnt.cnt) asyForCtrl.thread_sleep(1000);
+        } else while (this->iBatSzCnt) asyForCtrl.thread_sleep(1000);
         vecIn = std::move(this->setIO[iBatSzIdx]);
     }
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = std::move(vecGrad);
-        if (++iBackBatSzCnt.cnt == this->setIO.length) {
+        if (++iBackBatSzCnt == this->setIO.length) {
             BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNTrainScale());
             iBackBatSzCnt.cnt = 0;
             asyBackCtrl.thread_wake_all();
             Update();
         } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep(1000);
-        vecGrad = std::move(this->setIn[iBatSzIdx]);
+        vecGrad = std::move(this->setIO[iBatSzIdx]);
     }
 
     virtual void Deduce(net_matrix &vecIn) { BNOut(vecIn, BdData, this->vecWeight, vecScale); }

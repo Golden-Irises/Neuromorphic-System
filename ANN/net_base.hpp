@@ -107,10 +107,18 @@ struct net_counter {
 
     net_counter() = default;
     net_counter(const net_counter &src) { cnt = (uint64_t)src.cnt; }
-    net_counter &operator=(const net_counter &src) {
+    net_counter(uint64_t src) { cnt = src; }
+
+    uint64_t operator=(const net_counter &src) {
         cnt = (uint64_t)src.cnt;
-        return *this;
+        return cnt;
     }
+    uint64_t operator=(uint64_t src) { return cnt = src; }
+
+    operator uint64_t() { return cnt; }
+
+    uint64_t operator++() { return ++cnt; }
+    uint64_t operator++(int) { return cnt++; }
 };
 
 template <double rho = 0.9>

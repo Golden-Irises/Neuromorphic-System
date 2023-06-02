@@ -75,24 +75,31 @@ void BNMovAvg(BNData &BdData) {
 }
 
 void BNGradIn(net_set<net_matrix> &setGradOut, BNData &BdData, net_matrix &vecGradBeta, net_matrix &vecGradGamma, const net_matrix &vecGamma) {
+    // shift gradient
     BdData.vecExpSigmaEps = net_matrix::sigma(setGradOut);
     if (!vecGradBeta.verify) vecGradBeta = {1, vecGamma.element_count};
-    for (auto i = 0ull; i < BdData.vecExpSigmaEps.line_count; ++i) for (auto j = 0ull; j < BdData.vecExpSigmaEps.column_count; ++j) vecGradBeta.index(j) += BdData.vecExpSigmaEps[i][j];
+    for (auto i = 0ull; i < BdData.vecExpSigmaEps.line_count; ++i) for (auto j = 0ull; j < vecGradBeta.element_count; ++j) vecGradBeta.index(j) += BdData.vecExpSigmaEps[i][j];
+    // scale gradient tensor
     for (auto i = 0ull; i < setGradOut.length; ++i) BdData.setBarX[i].elem_wise_mul(setGradOut[i]);
     BdData.vecExpSigmaEps = net_matrix::sigma(BdData.setBarX);
+    // bar x gradient
     for (auto i = 0ull; i < setGradOut.length; ++i) for (auto j = 0ull; j < setGradOut[i].line_count; ++j) for (auto k = 0ull; k < setGradOut[i].column_count; ++k) setGradOut[i][j][k] *= vecGamma.index(k);
+    // scale gradient
     if (!vecGradGamma.verify) vecGradGamma = {1, vecGamma.element_count};
-    for (auto i = 0ull; i < BdData.vecExpSigmaEps.line_count; ++i) for (auto j = 0ull; j < BdData.vecExpSigmaEps.column_count; ++j) vecGradGamma.index(j) += BdData.vecExpSigmaEps[i][j];
+    for (auto i = 0ull; i < BdData.vecExpSigmaEps.line_count; ++i) for (auto j = 0ull; j < vecGradGamma.element_count; ++j) vecGradGamma.index(j) += BdData.vecExpSigmaEps[i][j];
+    // variant gradient
     BdData.setBarX = setGradOut;
     for (auto i = 0ull; i < setGradOut.length; ++i) BdData.setBarX[i].elem_wise_mul(BdData.setDist[i]);
     BdData.vecSigmaSqr = net_matrix::sigma(BdData.setBarX);
     for (auto i = 0; i < 3; ++i) BdData.vecSigmaSqr.elem_wise_div(BdData.vecSigmaEps);
     BdData.vecSigmaSqr *= BdData.dCoeBatSz;
+    // expectation gradient
     for (auto i = 0ull; i < setGradOut.length; ++i) setGradOut[i].elem_wise_div(BdData.vecSigmaEps);
     BdData.vecMuBeta = net_matrix::sigma(BdData.setDist);
     BdData.vecMuBeta.elem_wise_mul(BdData.vecSigmaSqr);
     BdData.vecMuBeta -= net_matrix::sigma(setGradOut);
     BdData.vecMuBeta *= BdData.dCoeBatSz;
+    // input gradient
     for (auto i = 0ull; i < setGradOut.length; ++i) {
         BdData.setDist[i].elem_wise_mul(BdData.vecSigmaSqr);
         setGradOut[i] -= BdData.setDist[i];

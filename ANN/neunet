@@ -6,6 +6,10 @@
 
 #include <future>
 
+#ifndef neunet_eps
+#define neunet_eps DBL_EPSILON
+#endif
+
 #include "net_base"
 #include "net_fc.hpp"
 #include "net_conv.hpp"
@@ -33,5 +37,7 @@
 
 #include "net_async.hpp"
 #include "net_layer.hpp"
+
+#include "neunet.hpp"
 
 #endif

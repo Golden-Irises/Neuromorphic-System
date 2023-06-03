@@ -10,6 +10,9 @@
 #include "ANN/neunet"
 #include "SRC/MNIST/mnist.h"
 
+#define LEARN_RATE       .4
+#define BN_LEARN_RATE    1e-5
+
 using namespace std;
 using namespace neunet;
 
@@ -17,29 +20,52 @@ int main(int argc, char *argv[], char *envp[]) {
     auto chrono_begin = neunet_chrono_time_point;
     cout << "hello, world." << endl;
 
-    constexpr auto dNormLearnRate = .4,
-                   dBNLearnRate   = 1e-5;
-
     NeunetCore net_core {80, 80};
-    NeunetAddLayer(net_core, LayerConv<20, 5, 5, 1, 1, 0, 0, dNormLearnRate> {});
-    
-    mnist_data data;
-    mnist_stream stream;
-    
+
+    NeunetAddLayer(net_core, LayerConv<20, 5, 5, 1, 1, 0, 0, LEARN_RATE> {});
+    NeunetAddLayer(net_core, LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE> {});
+    NeunetAddLayer(net_core, LayerAct<neunet_ReLU> {});
+    NeunetAddLayer(net_core, LayerPool<neunet_avg_pool, 2, 2, 2, 2> {});
+    NeunetAddLayer(net_core, LayerConv<50, 5, 5, 1, 1, 0, 0, LEARN_RATE> {});
+    NeunetAddLayer(net_core, LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE> {});
+    NeunetAddLayer(net_core, LayerAct<neunet_ReLU> {});
+    NeunetAddLayer(net_core, LayerPool<neunet_avg_pool, 2, 2, 2, 2> {});
+    NeunetAddLayer(net_core, LayerFlat {});
+    NeunetAddLayer(net_core, LayerFC<500, LEARN_RATE> {});
+    NeunetAddLayer(net_core, LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE> {});
+    NeunetAddLayer(net_core, LayerAct<neunet_sigmoid> {});
+    NeunetAddLayer(net_core, LayerFC<10, LEARN_RATE> {});
+    NeunetAddLayer(net_core, LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE> {});
+    NeunetAddLayer(net_core, LayerAct<neunet_softmax> {});
+
     std::string root = "E:\\VS Code project data\\MNIST\\";
     auto train_elem  = root + "train-images.idx3-ubyte",
          train_lbl   = root + "train-labels.idx1-ubyte",
          test_elem   = root + "t10k-images.idx3-ubyte",
          test_lbl    = root + "t10k-labels.idx1-ubyte";
+
+    mnist_stream train_file, test_file;
+	mnist_data train_data, test_data;
+
+	mnist_open(&train_file, test_elem.c_str(), test_lbl.c_str());
+    mnist_magic_verify(&train_file);
+    mnist_qty_verify(&train_file, &train_data);
+    auto ln_cnt  = mnist_ln_cnt(&train_file),
+         col_cnt = mnist_col_cnt(&train_file);
+    mnist_read(&train_file, &train_data, ln_cnt, col_cnt);
+    mnist_close(&train_file);
+	auto train_idx = mnist_idx(&train_data);
     
-    if (mnist_open(&stream, test_elem.c_str(), test_lbl.c_str())) std::printf("MNIST opened.\n");
-    if (mnist_magic_verify(&stream)) std::printf("MNIST magic is valid.\n");
-    if (mnist_qty_verify(&stream, &data)) std::printf("MNIST quatity is valid.\n");
-    auto ln_cnt  = mnist_ln_cnt(&stream),
-         col_cnt = mnist_col_cnt(&stream);
-    mnist_read(&stream, &data, ln_cnt, col_cnt);
-    mnist_close(&stream);
-    // mnist_save_image("SRC/MNIST/IMG", &data, 10);    
+    mnist_open(&test_file, test_elem.c_str(), test_lbl.c_str());
+    mnist_magic_verify(&test_file);
+    mnist_qty_verify(&test_file, &test_data);
+    mnist_ln_cnt(&test_file),
+    mnist_col_cnt(&test_file);
+    mnist_read(&test_file, &test_data, ln_cnt, col_cnt);
+    mnist_close(&test_file);
+    
+    NeunetInit(net_core, train_data.lbl.length, test_data.lbl.length, ln_cnt, col_cnt, 1);
+	NeunetRun(net_core, train_data.elem, train_data.lbl, train_idx, test_data .elem, test_data.lbl, MNIST_ORGN_SZ);
     
     cout << neunet_chrono_time_point - chrono_begin << "ms" << endl;
     return EXIT_SUCCESS;

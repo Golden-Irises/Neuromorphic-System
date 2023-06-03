@@ -50,6 +50,23 @@ void NeunetInit(NeunetCore &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCn
         netSrc.setLayers[i]->Batch(netSrc.iTrainBatSz, netSrc.iTrainBatCnt);
         netSrc.setLayers[i]->Shape(iInLnCnt, iInColCnt, iChannCnt);
     }
+    double   dRcRt  = 0;
+    uint64_t iEpCnt = 0;
+    while (dRcRt < 1) {
+        auto cEpTmPt = neunet_chrono_time_point;
+        // train
+        for (auto i = 0ull; i < netSrc.iTrainBatCnt; ++i) {
+            auto cTrnTmPt = neunet_chrono_time_point;
+            auto dAcc     = netSrc.queTrainAcc.de_queue() / (netSrc.iTrainBatSz * 1.);
+                 dRcRt    = netSrc.queTrainRc.de_queue() / (netSrc.iTrainBatSz * 1.);
+            net_train_progress((i + 1), netSrc.iTrainBatCnt, dAcc, dRcRt, (neunet_chrono_time_point - cTrnTmPt));
+        }
+        // test
+        std::printf("\r[Deducing]...");
+        auto dAcc  = netSrc.queTestAcc.de_queue() / (iTestDataCnt * 1.);
+             dRcRt = netSrc.queTestRc.de_queue() / (iTestDataCnt * 1.);
+        net_epoch_status(++iEpCnt, dAcc, dRcRt, (neunet_chrono_time_point - cEpTmPt));
+    }
 }
 
 bool NeunetAbort(NeunetCore &netSrc) {
@@ -64,8 +81,9 @@ bool NeunetAbort(NeunetCore &netSrc) {
 
 bool NeunetStopVerify(NeunetCore &netSrc) { return netSrc.iStatus == neunet_fin || netSrc.iStatus == neunet_err; }
 
-void NeunetRunThread(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, const net_set<uint64_t> &setTrainLbl, net_set<uint64_t> &setTrainDataIdx, const net_set<net_matrix> &setTestData, const net_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == neunet_ok) {
+void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, const net_set<uint64_t> &setTrainLbl, net_set<uint64_t> &setTrainDataIdx, const net_set<net_matrix> &setTestData, const net_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == neunet_ok) {
     uint64_t iDataIdx = i < netSrc.iTrainBatSz ? i : 0;
+    // train
     if (i < netSrc.iTrainBatSz) while (iDataIdx < setTrainLbl.length) {
         auto iLbl    = setTrainLbl[setTrainDataIdx[iDataIdx]];
         auto vecIn   = setTrianData[setTrainDataIdx[iDataIdx]],
@@ -92,6 +110,7 @@ void NeunetRunThread(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData
         if (NeunetStopVerify(netSrc)) break;
     }
     if (NeunetStopVerify(netSrc)) break;
+    // test
     iDataIdx = i;
     if (i < netSrc.iTestBatSz) while (iDataIdx < setTestLbl.length) {
         auto iLbl  = setTestLbl[iDataIdx];

@@ -136,6 +136,8 @@ public:
         return tsk_ret;
     }
 
+    uint64_t size() const { return thd_set.length; }
+
     ~async_pool() {
         stop = true;
         tsk_que.reset();

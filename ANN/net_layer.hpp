@@ -281,12 +281,12 @@ struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
 
     BNData BdData;
 
-    const net_matrix &BNTrainScale() {
+    const net_matrix &BNScaleRef() {
         if constexpr (dScaleLearnRate) return vecScaleN;
         else return vecScale;
     }
 
-    const net_matrix &BNTrainShift() {
+    const net_matrix &BNShiftRef() {
         if constexpr (dShiftLearnRate) return this->vecWeightN;
         else return this->vecWeight;
     }
@@ -313,7 +313,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
         this->setIO[iBatSzIdx] = std::move(vecIn);
         if (++this->iBatSzCnt == this->setIO.length) {
-            BNOut(this->setIO, BdData, BNTrainShift(), BNTrainScale());
+            BNOut(this->setIO, BdData, BNShiftRef(), BNScaleRef());
             this->iBatSzCnt = 0;
             asyForCtrl.thread_wake_all();
             BNMovAvg<dMovAvgDecay>(BdData);
@@ -324,7 +324,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = std::move(vecGrad);
         if (++iBackBatSzCnt == this->setIO.length) {
-            BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNTrainScale());
+            BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNScaleRef());
             iBackBatSzCnt.cnt = 0;
             asyBackCtrl.thread_wake_all();
             Update();

@@ -12,19 +12,19 @@ struct BNData final {
                vecSigmaEps, vecSigmaSqrEps,
                vecExpMuBeta, vecExpSigmaSqr, vecExpSigmaEps;
 
-    uint64_t iTrnBatCnt = 0,
-             iTrnBatIdx = 0;
+    uint64_t iBatCnt = 0,
+             iBatIdx = 0;
 
     double dCoeBatSz = 0;
 
     net_set<net_matrix> setBarX, setDist;
 };
 
-void BNDataInit(BNData &BdData, uint64_t iTrainBatchSize, uint64_t iTrainBatchBatchCnt) {
-    BdData.iTrnBatCnt = iTrainBatchBatchCnt;
-    BdData.dCoeBatSz  = 1. / iTrainBatchSize;
-    BdData.setBarX.init(iTrainBatchSize, false);
-    BdData.setDist.init(iTrainBatchSize, false);
+void BNDataInit(BNData &BdData, uint64_t iBatchSize, uint64_t iBatchBatchCnt) {
+    BdData.iBatCnt = iBatchBatchCnt;
+    BdData.dCoeBatSz  = 1. / iBatchSize;
+    BdData.setBarX.init(iBatchSize, false);
+    BdData.setDist.init(iBatchSize, false);
 }
 
 // Train
@@ -67,8 +67,8 @@ void BNMovAvg(BNData &BdData) {
         BdData.vecExpMuBeta   = std::move(BdData.vecMuBeta);
         BdData.vecExpSigmaSqr = std::move(BdData.vecSigmaSqr);
     }
-    if (++BdData.iTrnBatIdx == BdData.iTrnBatCnt) {
-        BdData.iTrnBatIdx     = 0;
+    if (++BdData.iBatIdx == BdData.iBatCnt) {
+        BdData.iBatIdx        = 0;
         BdData.vecExpSigmaEps = BdData.vecExpSigmaSqr;
         BdData.vecExpSigmaEps.elem_wise_pow(0.5);
     }

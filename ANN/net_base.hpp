@@ -91,13 +91,8 @@ net_matrix net_lbl_orgn(uint64_t lbl_val, uint64_t type_cnt) {
     ans.index(lbl_val) = 1;
     return ans;
 }
-net_set<net_matrix> net_lbl_orgn(const net_set<uint64_t> &lbl_set, uint64_t type_cnt) {
-    net_set<net_matrix> ans(lbl_set.length);
-    for (auto i = 0ull; i < ans.length; ++i) ans[i] = net_lbl_orgn(lbl_set[i], type_cnt);
-    return ans;
-}
 
-void net_out_acc_rc(const net_matrix &output, long double train_acc, uint64_t lbl, std::atomic_uint64_t &acc_cnt, std::atomic_uint64_t &rc_cnt) {
+void net_out_acc_rc(const net_matrix &output, double train_acc, uint64_t lbl, std::atomic_uint64_t &acc_cnt, std::atomic_uint64_t &rc_cnt) {
     if (output.index(lbl) > 0.5) ++acc_cnt;
     if (output.index(lbl) > (1 - train_acc)) ++rc_cnt;
 }

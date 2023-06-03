@@ -96,7 +96,14 @@ std::wstring mnist_s2ws(const std::string &src) {
     return ans;
 }
 
-bool mnist_save_image(const char *dir, mnist_data *src, int expe_save_qty = 0) {
+neunet::net_set<uint64_t> mnist_idx(const mnist_data *src) {
+    neunet::net_set<uint64_t> ans(src->elem.length);
+    for (auto i = 0ull; i < ans.length; ++i) ans[i] = i;
+    ans.shuffle();
+    return ans;
+}
+
+bool mnist_save_image(const char *dir, const mnist_data *src, int expe_save_qty = 0) {
     if (!(src->elem.length && src->elem.length == src->lbl.length)) return false;
     std::string path {dir};
     int ln_cnt  = src->elem[0].line_count,

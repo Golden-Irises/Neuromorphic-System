@@ -1,5 +1,116 @@
 NEUNET_BEGIN
 
+struct NeunetCore {
+    uint64_t iTrainBatSz  = 32,
+             iTrainBatCnt = 0,
+             iTestBatSz   = 32,
+             iTestBatCnt  = 0,
+             iLayersCnt   = 0;
 
+    std::atomic_uint64_t iBatCnt = 0,
+                         iAccCnt = 0,
+                         iRcCnt  = 0,
+                         iStatus = neunet_ok;
+
+    double dTrainPrec = .1;
+
+    net_set<nuenet_layer_ptr> setLayers;
+
+    net_queue<uint64_t> queTrainAcc, queTrainRc, queTestAcc, queTestRc;
+
+    async_controller asyCtrl;
+
+    async_pool asyPool;
+
+    NeunetCore(uint64_t iTrainBatchSize = 32, uint64_t iTestBatchSize = 32, double dTrainPrecision = .1) :
+        iTrainBatSz(iTrainBatchSize),
+        iTestBatSz(iTestBatchSize),
+        dTrainPrec(dTrainPrecision),
+        asyPool(std::max(iTrainBatchSize, iTestBatchSize)) {}
+};
+
+/* Construct the layer
+ * Built-in Layer instance
+ * LayerBias
+ * LayerAct
+ * LayerPC
+ * LayerFC
+ * LayerConv
+ * LayerPool
+ * LayerBN
+ * LayerFlat
+ */
+template <typename LayerType>
+void NeunetAddLayer(NeunetCore &netSrc, LayerType &&lyrSrc) { netSrc.setLayers[netSrc.iLayersCnt++] = std::make_shared<LayerType>(); }
+
+void NeunetInit(NeunetCore &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt) {
+    netSrc.iTrainBatCnt = iTrainDataCnt / netSrc.iTrainBatSz;
+    netSrc.iTestBatCnt  = iTestDataCnt / netSrc.iTestBatSz;
+    for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) {
+        netSrc.setLayers[i]->Batch(netSrc.iTrainBatSz, netSrc.iTrainBatCnt);
+        netSrc.setLayers[i]->Shape(iInLnCnt, iInColCnt, iChannCnt);
+    }
+}
+
+bool NeunetAbort(NeunetCore &netSrc) {
+    if (netSrc.iStatus != neunet_err) return false;
+    netSrc.queTestAcc.reset();
+    netSrc.queTestRc.reset();
+    netSrc.queTrainAcc.reset();
+    netSrc.queTrainRc.reset();
+    netSrc.asyCtrl.thread_wake_all();
+    return true;
+}
+
+bool NeunetStopVerify(NeunetCore &netSrc) { return netSrc.iStatus == neunet_fin || netSrc.iStatus == neunet_err; }
+
+void NeunetRunThread(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, const net_set<uint64_t> &setTrainLbl, net_set<uint64_t> &setTrainDataIdx, const net_set<net_matrix> &setTestData, const net_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == neunet_ok) {
+    uint64_t iDataIdx = i < netSrc.iTrainBatSz ? i : 0;
+    if (i < netSrc.iTrainBatSz) while (iDataIdx < setTrainLbl.length) {
+        auto iLbl    = setTrainLbl[setTrainDataIdx[iDataIdx]];
+        auto vecIn   = setTrianData[setTrainDataIdx[iDataIdx]],
+             vecOrgn = net_lbl_orgn(iLbl, iLblTypeCnt);
+        for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.setLayers[i]->ForProp(vecIn, i);
+        if (!vecIn.verify) netSrc.iStatus = neunet_err;
+        if (NeunetAbort(netSrc)) break;
+        net_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);
+        for (auto i = netSrc.iLayersCnt; i; --i) netSrc.setLayers[i - 1]->BackProp(vecIn, i, vecOrgn);
+        if (!vecIn.verify) netSrc.iStatus = neunet_err;
+        if (NeunetAbort(netSrc)) break;
+        iDataIdx += netSrc.iTrainBatSz;
+        if (++netSrc.iBatCnt == netSrc.iTrainBatSz) {
+            netSrc.queTrainAcc.en_queue(netSrc.iAccCnt);
+            netSrc.queTrainRc.en_queue(netSrc.iRcCnt);
+            netSrc.iAccCnt = 0;
+            netSrc.iRcCnt  = 0;
+            netSrc.iBatCnt = 0;
+            netSrc.asyCtrl.thread_wake_all();
+        } else while (netSrc.iBatCnt) netSrc.asyCtrl.thread_sleep(1000);
+    } else while (iDataIdx < setTrainLbl.length) {
+        iDataIdx += netSrc.iTrainBatSz;
+        netSrc.asyCtrl.thread_sleep();
+        if (NeunetStopVerify(netSrc)) break;
+    }
+    if (NeunetStopVerify(netSrc)) break;
+    iDataIdx = i;
+    if (i < netSrc.iTestBatSz) while (iDataIdx < setTestLbl.length) {
+        auto iLbl  = setTestLbl[iDataIdx];
+        auto vecIn = setTestData[iDataIdx];
+        for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.setLayers[i]->Deduce(vecIn);
+        if (!vecIn.verify) netSrc.iStatus = neunet_err;
+        if (NeunetAbort(netSrc)) break;
+        net_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);
+        iDataIdx += netSrc.iTestBatSz;
+    }
+    if (++netSrc.iBatCnt == netSrc.asyPool.size()) {
+        netSrc.queTestAcc.en_queue(netSrc.iAccCnt);
+        netSrc.queTestRc.en_queue(netSrc.iRcCnt);
+        netSrc.iAccCnt = 0;
+        netSrc.iRcCnt  = 0;
+        netSrc.iBatCnt = 0;
+        netSrc.asyCtrl.thread_wake_all();
+    } else while (netSrc.iBatCnt) netSrc.asyCtrl.thread_sleep(1000);
+    if (NeunetStopVerify(netSrc)) break;
+} }); }
 
 NEUNET_END

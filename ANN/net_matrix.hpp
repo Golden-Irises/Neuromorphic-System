@@ -16,6 +16,7 @@ struct net_matrix_base {
     void value_copy(const net_matrix_base &src) {
         if (this == &src) return;
         if (elem_cnt == src.elem_cnt) {
+            if (!elem_cnt) return;
             ln_cnt  = src.ln_cnt;
             col_cnt = src.col_cnt;
         } else {
@@ -24,7 +25,7 @@ struct net_matrix_base {
             else return;
             ptr = new double[elem_cnt];
         }
-        if (elem_cnt) std::copy(src.ptr, src.ptr + elem_cnt, ptr);
+        std::copy(src.ptr, src.ptr + elem_cnt, ptr);
     }
 
     void value_move(net_matrix_base &&src) {
@@ -45,7 +46,7 @@ struct net_matrix_base {
     net_matrix_base(const net_matrix_base &src) { value_copy(src); }
     net_matrix_base(net_matrix_base &&src) { value_move(std::move(src)); }
 
-    void clear() { std::memset(ptr, 0, elem_cnt * sizeof(double)); }
+    void clear() { for (auto i = 0ull; i < elem_cnt; ++i) ptr[i] = 0; }
 
     bool is_matrix() const { return ptr && ln_cnt && col_cnt; }
 
@@ -90,7 +91,7 @@ void matrix_rand(net_matrix_base &src, double fst_rng = -1, double snd_rng = 1) 
     for (auto i = 0ull; i < src.elem_cnt; ++i) src.ptr[i] = (rng_dif / RAND_MAX) * std::rand() + fst_rng;
 } }
 
-void matrix_abs(net_matrix_base &src) { for (auto i = 0ull; i < src.elem_cnt; ++i) if (src.ptr[i] < 0) src.ptr[i] *= (-1); }
+void matrix_abs(net_matrix_base &src) { for (auto i = 0ull; i < src.elem_cnt; ++i) src.ptr[i] = std::abs(src.ptr[i]); }
 
 uint64_t matrix_pad_dir_cnt(uint64_t prev_pad, uint64_t rear_pad, uint64_t dir_cnt, uint64_t dir_dist) { return prev_pad + rear_pad + dir_cnt + (dir_cnt - 1) * dir_dist; }
 
@@ -109,7 +110,7 @@ void matrix_add(net_matrix_base &src, const net_matrix_base &val) {
 
 template <bool sub = false>
 void matrix_broadcast_add(net_matrix_base &src, double param) {
-    for (auto i = 0ull; i < src.elem_cnt; ++i)if constexpr (sub) src.ptr[i] -= param;
+    for (auto i = 0ull; i < src.elem_cnt; ++i) if constexpr (sub) src.ptr[i] -= param;
     else src.ptr[i] += param;
 }
 
@@ -305,8 +306,8 @@ public:
     __declspec(property(get = transposition)) net_matrix transpose;
 
     friend net_matrix operator+(const net_matrix &fst, const net_matrix &snd) {
-        net_matrix ans = fst;
-        ans += snd;
+        auto ans = fst;
+        ans     += snd;
         return ans;
     }
     void operator+=(const net_matrix &src) { matrix_add(proto, src.proto); }

@@ -3,6 +3,8 @@
 #define neunet_eps  DBL_EPSILON
 #define nuenet_len  0x0080
 
+#define nuenet_arg  false
+
 #define MNIST_MSG   false
 
 #include <iostream>

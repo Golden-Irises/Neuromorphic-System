@@ -1,6 +1,10 @@
 NEUNET_BEGIN
 
+#if nuenet_arg
+#define arg int
+#else
 template <class arg>
+#endif
 class net_set {
 protected:
     static void net_srand() { std::srand(std::time(NULL)); }
@@ -11,7 +15,6 @@ protected:
             reset();
             if (!src.len) return;
             init(src.len);
-            len = src.len;
         }
         std::copy(src.ptr, src.ptr + len, ptr);
     }
@@ -55,22 +58,20 @@ public:
 
     void shuffle() {
         if (!len) return;
-        for (auto i = len; i > 0; --i) std::swap(ptr[i - 1], ptr[std::rand() % i]);
+        for (auto i = len; i; --i) std::swap(ptr[i - 1], ptr[std::rand() % i]);
     }
 
     void reverse() {
-        if (len == 1) return;
-        if (len == 2) {
-            std::swap(ptr[0], ptr[1]);
+        if (len < 3) {
+            if (len == 2) std::swap(ptr[0], ptr[1]);
             return;
         }
-        std::reverse(ptr, ptr + len);    
+        std::reverse(ptr, ptr + len);
     }
 
     void clear() {
         if (!len) return;
-        if constexpr (std::is_arithmetic_v<arg>) std::memset(ptr, 0, len * sizeof(arg));
-        else for (auto i = 0ull; i < len; ++i) ptr[i] = arg {};
+        for (auto i = 0ull; i < len; ++i) ptr[i] = arg {};
     }
 
     void reset() {

@@ -14,6 +14,8 @@ struct Layer {
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {}
 
     virtual constexpr uint64_t LayerType() const = 0;
+
+    virtual ~Layer() {}
 };
 
 struct LayerIO : virtual Layer {
@@ -22,7 +24,8 @@ struct LayerIO : virtual Layer {
     virtual void Batch(uint64_t iBatSz, uint64_t iBatCnt) { setIO.init(iBatSz, false); }
 };
 
-template <double dLearnRate = 0., double dGradDecay = 0.9>
+template <double dLearnRate = 0.,
+          double dGradDecay = 0.9>
 struct LayerWeight : virtual LayerIO {
     net_counter iBatSzCnt;
 
@@ -35,18 +38,22 @@ struct LayerWeight : virtual LayerIO {
     virtual void Update() {
         auto vecGrad = net_matrix::sigma(setIO);
         vecGrad.elem_wise_div(setIO.length);
-        if constexpr (dLearnRate) {
-            AdaN.update(vecWeight, vecWeightN, vecGrad);
-            vecWeightT = vecWeightN.transpose;
-        } else {
+        if constexpr (dLearnRate == 0) {
             AdaD.update(vecWeight, vecGrad);
             vecWeightT = vecWeight.transpose;
-        }
+        } else {
+            AdaN.update(vecWeight, vecWeightN, vecGrad);
+            vecWeightT = vecWeightN.transpose;
+        } 
     }
 };
 
-template <double dLearnRate = 0., double dRandFstRng = -1., double dRandSndRng = 1., double dGradDecay = 0.9>
-struct LayerBias : LayerWeight<dLearnRate, dGradDecay> {
+template <double dLearnRate  = 0.,
+          double dRandFstRng = -1.,
+          double dRandSndRng = 1.,
+          double dGradDecay  = 0.9>
+struct LayerBias : LayerWeight<dLearnRate,
+                               dGradDecay> {
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         this->vecWeight = {iInLnCnt * iInColCnt, iInChannCnt};
         this->vecWeight.elem_rand(dRandFstRng, dRandSndRng);
@@ -98,7 +105,7 @@ struct LayerAct : LayerIO {
     virtual constexpr uint64_t LayerType() const { return neunet_act; }
 };
 
-struct LayerChann : Layer {
+struct LayerChann : virtual Layer {
     uint64_t iChannCnt = 0,
              iElemCnt  = 0;
 
@@ -108,7 +115,13 @@ struct LayerChann : Layer {
     }
 };
 
-template <bool bPad1Crop0 = false, uint64_t iTop = 0, uint64_t iRight = 0, uint64_t iBottom = 0, uint64_t iLeft = 0, uint64_t iLnDist = 0, uint64_t iColDist = 0>
+template <bool bPad1Crop0   = false,
+          uint64_t iTop     = 0,
+          uint64_t iRight   = 0,
+          uint64_t iBottom  = 0,
+          uint64_t iLeft    = 0,
+          uint64_t iLnDist  = 0,
+          uint64_t iColDist = 0>
 struct LayerPC : LayerChann{
     net_set<uint64_t> setElemIdx;
 
@@ -159,18 +172,24 @@ struct LayerFlat : LayerChann{
     virtual constexpr uint64_t LayerType() const { return neunet_flat; }
 };
 
-template <uint64_t iOutLnCnt = 1, double dLearnRate = 0., double dRandFstRng = -1., double dRandSndRng = 1., double dGradDecay = 0.9>
-struct LayerFC : LayerWeight<dLearnRate, dGradDecay> {    
+template <uint64_t iOutLnCnt = 1,
+          double dLearnRate  = 0.,
+          double dRandFstRng = -1.,
+          double dRandSndRng = 1.,
+          double dGradDecay  = 0.9>
+struct LayerFC : LayerWeight<dLearnRate,
+                             dGradDecay> {    
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         this->vecWeight = FCInitWeight(iInLnCnt, iOutLnCnt, dRandFstRng, dRandSndRng);
-        if constexpr (dLearnRate) this->vecWeightN = this->vecWeight;
+        if constexpr (dLearnRate != 0) this->vecWeightN = this->vecWeight;
         this->vecWeightT = this->vecWeight.transpose;
+        iInLnCnt = iOutLnCnt;
     }
     
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
         this->setIO[iBatSzIdx] = vecIn.transpose;
-        if constexpr (dLearnRate) vecIn = FCOut(vecIn, this->vecWeightN);
-        else Deduce(vecIn);
+        if constexpr (dLearnRate == 0) Deduce(vecIn);
+        else vecIn = FCOut(vecIn, this->vecWeightN);
     }
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
@@ -187,7 +206,12 @@ struct LayerFC : LayerWeight<dLearnRate, dGradDecay> {
     virtual constexpr uint64_t LayerType() const { return neunet_fc; }
 };
 
-template <uint64_t iFilterLnCnt = 0, uint64_t iFilterColCnt = 0, uint64_t iLnStride = 0, uint64_t iColStride = 0, uint64_t iLnDilate = 0, uint64_t iColDilate = 0>
+template <uint64_t iFilterLnCnt  = 0,
+          uint64_t iFilterColCnt = 0,
+          uint64_t iLnStride     = 0,
+          uint64_t iColStride    = 0,
+          uint64_t iLnDilate     = 0,
+          uint64_t iColDilate    = 0>
 struct LayerCaffe : virtual LayerChann {
     uint64_t iCaffeLnCnt  = 0,
              iCaffeColCnt = 0;
@@ -200,12 +224,29 @@ struct LayerCaffe : virtual LayerChann {
     }
 };
 
-template <uint64_t iKernelQty = 0, uint64_t iKernelLnCnt = 0, uint64_t iKernelColCnt = 0, uint64_t iLnStride = 0, uint64_t iColStride = 0, uint64_t iLnDilate = 0, uint64_t iColDilate = 0, double dLearnRate = 0., double dRandFstRng = -1., double dRandSndRng = 1., double dGradDecay = .9>
-struct LayerConv : LayerWeight<dLearnRate, dGradDecay>, LayerCaffe<iKernelLnCnt, iKernelColCnt, iLnStride, iColStride, iLnDilate, iColDilate> {
+template <uint64_t iKernelQty    = 0,
+          uint64_t iKernelLnCnt  = 0,
+          uint64_t iKernelColCnt = 0,
+          uint64_t iLnStride     = 0,
+          uint64_t iColStride    = 0,
+          uint64_t iLnDilate     = 0,
+          uint64_t iColDilate    = 0,
+          double   dLearnRate    = 0.,
+          double   dRandFstRng   = -1.,
+          double   dRandSndRng   = 1.,
+          double   dGradDecay    = .9>
+struct LayerConv : LayerWeight<dLearnRate,
+                               dGradDecay>,
+                   LayerCaffe<iKernelLnCnt,
+                              iKernelColCnt,
+                              iLnStride,
+                              iColStride,
+                              iLnDilate,
+                              iColDilate> {
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         this->vecWeight  = ConvInitKernel(iKernelQty, iInChannCnt, iKernelLnCnt, iKernelColCnt, dRandFstRng, dRandSndRng);
         this->vecWeightT = this->vecWeight.transpose;
-        if constexpr (dLearnRate) this->vecWeightN = this->vecWeight;
+        if constexpr (dLearnRate != 0) this->vecWeightN = this->vecWeight;
         LayerCaffe<iKernelLnCnt, iKernelColCnt, iLnStride, iColStride, iLnDilate, iColDilate>::Shape(iInLnCnt, iInColCnt, iInChannCnt);
         iInChannCnt = iKernelQty;
     }
@@ -213,8 +254,8 @@ struct LayerConv : LayerWeight<dLearnRate, dGradDecay>, LayerCaffe<iKernelLnCnt,
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
         vecIn                  = Caffe(vecIn, this->setCaffeIdx, this->iCaffeLnCnt, this->iCaffeColCnt);
         this->setIO[iBatSzIdx] = vecIn.transpose;
-        if constexpr (dLearnRate) vecIn = Conv(vecIn, this->vecWeightN);
-        else vecIn = Conv(vecIn, this->vecWeight);
+        if constexpr (dLearnRate == 0) vecIn = Conv(vecIn, this->vecWeight);
+        else vecIn = Conv(vecIn, this->vecWeightN);
     }
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
@@ -231,8 +272,19 @@ struct LayerConv : LayerWeight<dLearnRate, dGradDecay>, LayerCaffe<iKernelLnCnt,
     virtual constexpr uint64_t LayerType() const { return neunet_conv; }
 };
 
-template <uint64_t iPoolType = neunet_avg_pool, uint64_t iFilterLnCnt = 0, uint64_t iFilterColCnt = 0, uint64_t iLnStride = 0, uint64_t iColStride = 0, uint64_t iLnDilate = 0, uint64_t iColDilate = 0>
-struct LayerPool : LayerCaffe<iFilterLnCnt, iFilterColCnt, iLnStride, iColStride, iLnDilate, iColDilate> {
+template <uint64_t iPoolType     = neunet_avg_pool,
+          uint64_t iFilterLnCnt  = 0,
+          uint64_t iFilterColCnt = 0,
+          uint64_t iLnStride     = 0,
+          uint64_t iColStride    = 0,
+          uint64_t iLnDilate     = 0,
+          uint64_t iColDilate    = 0>
+struct LayerPool : LayerCaffe<iFilterLnCnt,
+                              iFilterColCnt,
+                              iLnStride,
+                              iColStride,
+                              iLnDilate,
+                              iColDilate> {
     static constexpr auto iFilterElemCnt = iFilterLnCnt * iFilterColCnt;
 
     net_set<net_set<net_set<uint64_t>>> setElemIdx;
@@ -267,8 +319,15 @@ struct LayerPool : LayerCaffe<iFilterLnCnt, iFilterColCnt, iLnStride, iColStride
     virtual constexpr uint64_t LayerType() const { return neunet_pool; }
 };
 
-template <double dShift = 0., double dScale = 1., double dShiftLearnRate = 0., double dScaleLearnRate = 0., double dShiftGradDecay = .9, double dScaleGradDecay = .9, double dMovAvgDecay = .9>
-struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
+template <double dShift          = 0.,
+          double dScale          = 1.,
+          double dShiftLearnRate = 0.,
+          double dScaleLearnRate = 0.,
+          double dShiftGradDecay = .9,
+          double dScaleGradDecay = .9,
+          double dMovAvgDecay    = .9>
+struct LayerBN : LayerWeight<dShiftLearnRate,
+                             dShiftGradDecay> {
     net_counter iBackBatSzCnt;
 
     net_matrix vecScale, vecScaleN;
@@ -282,13 +341,13 @@ struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
     BNData BdData;
 
     const net_matrix &BNScaleRef() {
-        if constexpr (dScaleLearnRate) return vecScaleN;
-        else return vecScale;
+        if constexpr (dScaleLearnRate != 0) return vecScale;
+        else return vecScaleN;
     }
 
     const net_matrix &BNShiftRef() {
-        if constexpr (dShiftLearnRate) return this->vecWeightN;
-        else return this->vecWeight;
+        if constexpr (dShiftLearnRate != 0) return this->vecWeight;
+        else return this->vecWeightN;
     }
 
     virtual void Batch(uint64_t iBatSz, uint64_t iBatCnt) {
@@ -299,15 +358,15 @@ struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         this->vecWeight = BNBetaGammaInit<dShift>(iInChannCnt);
         vecScale        = BNBetaGammaInit<dScale>(iInChannCnt);
-        if constexpr (dScaleLearnRate) vecScaleN = vecScale.transpose;
-        if constexpr (dShiftLearnRate) this->vecWeightN = this->vecWeight;
+        if constexpr (dScaleLearnRate != 0) vecScaleN = vecScale.transpose;
+        if constexpr (dShiftLearnRate != 0) this->vecWeightN = this->vecWeight;
     }
 
     virtual void Update() {
-        if constexpr (dScaleLearnRate) AdaNScale.update(vecScale, vecScaleN, vecScaleN);
-        else AdaDScale.update(vecScale, vecScaleN);
-        if constexpr (dShiftLearnRate) this->AdaN.update(this->vecWeight, this->vecWeightN, this->vecWeightT);
-        else this->AdaD.update(this->vecWeight, this->vecWeightN);
+        if constexpr (dScaleLearnRate == 0) AdaDScale.update(vecScale, vecScaleN);
+        else AdaNScale.update(vecScale, vecScaleN, vecScaleN);
+        if constexpr (dShiftLearnRate == 0) this->AdaD.update(this->vecWeight, this->vecWeightN);
+        else this->AdaN.update(this->vecWeight, this->vecWeightN, this->vecWeightT);
     }
     
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
@@ -317,7 +376,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
             this->iBatSzCnt = 0;
             asyForCtrl.thread_wake_all();
             BNMovAvg<dMovAvgDecay>(BdData);
-        } else while (this->iBatSzCnt) asyForCtrl.thread_sleep(1000);
+        } else while (this->iBatSzCnt) asyForCtrl.thread_sleep(200);
         vecIn = std::move(this->setIO[iBatSzIdx]);
     }
 
@@ -328,7 +387,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate, dShiftGradDecay> {
             iBackBatSzCnt.cnt = 0;
             asyBackCtrl.thread_wake_all();
             Update();
-        } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep(1000);
+        } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep(200);
         vecGrad = std::move(this->setIO[iBatSzIdx]);
     }
 

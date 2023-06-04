@@ -1,11 +1,13 @@
 NEUNET_BEGIN
 
 struct NeunetCore {
-    uint64_t iTrainBatSz  = 32,
-             iTrainBatCnt = 0,
-             iTestBatSz   = 32,
-             iTestBatCnt  = 0,
-             iLayersCnt   = 0;
+    uint64_t iTrainBatSz   = 32,
+             iTrainBatCnt  = 0,
+             iTestBatSz    = 32,
+             iTestBatCnt   = 0,
+             iLayersCnt    = 0,
+             iTrainDataCnt = 0,
+             iTestDataCnt  = 0;
 
     std::atomic_uint64_t iBatCnt = 0,
                          iAccCnt = 0,
@@ -14,7 +16,7 @@ struct NeunetCore {
 
     double dTrainPrec = .1;
 
-    net_set<nuenet_layer_ptr> setLayers;
+    nuenet_layer_ptr arrLayers[nuenet_len];
 
     net_queue<uint64_t> queTrainAcc, queTrainRc, queTestAcc, queTestRc;
 
@@ -41,31 +43,16 @@ struct NeunetCore {
  * LayerFlat
  */
 template <typename LayerType>
-void NeunetAddLayer(NeunetCore &netSrc, LayerType &&lyrSrc) { netSrc.setLayers[netSrc.iLayersCnt++] = std::make_shared<LayerType>(); }
+void NeunetAddLayer(NeunetCore &netSrc) { netSrc.arrLayers[netSrc.iLayersCnt++] = std::make_shared<LayerType>(); }
 
 void NeunetInit(NeunetCore &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt) {
-    netSrc.iTrainBatCnt = iTrainDataCnt / netSrc.iTrainBatSz;
-    netSrc.iTestBatCnt  = iTestDataCnt / netSrc.iTestBatSz;
+    netSrc.iTrainBatCnt  = iTrainDataCnt / netSrc.iTrainBatSz;
+    netSrc.iTestBatCnt   = iTestDataCnt / netSrc.iTestBatSz;
+    netSrc.iTrainDataCnt = iTrainDataCnt;
+    netSrc.iTestDataCnt  = iTestDataCnt;
     for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) {
-        netSrc.setLayers[i]->Batch(netSrc.iTrainBatSz, netSrc.iTrainBatCnt);
-        netSrc.setLayers[i]->Shape(iInLnCnt, iInColCnt, iChannCnt);
-    }
-    double   dRcRt  = 0;
-    uint64_t iEpCnt = 0;
-    while (dRcRt < 1) {
-        auto cEpTmPt = neunet_chrono_time_point;
-        // train
-        for (auto i = 0ull; i < netSrc.iTrainBatCnt; ++i) {
-            auto cTrnTmPt = neunet_chrono_time_point;
-            auto dAcc     = netSrc.queTrainAcc.de_queue() / (netSrc.iTrainBatSz * 1.);
-                 dRcRt    = netSrc.queTrainRc.de_queue() / (netSrc.iTrainBatSz * 1.);
-            net_train_progress((i + 1), netSrc.iTrainBatCnt, dAcc, dRcRt, (neunet_chrono_time_point - cTrnTmPt));
-        }
-        // test
-        std::printf("\r[Deducing]...");
-        auto dAcc  = netSrc.queTestAcc.de_queue() / (iTestDataCnt * 1.);
-             dRcRt = netSrc.queTestRc.de_queue() / (iTestDataCnt * 1.);
-        net_epoch_status(++iEpCnt, dAcc, dRcRt, (neunet_chrono_time_point - cEpTmPt));
+        netSrc.arrLayers[i]->Batch(netSrc.iTrainBatSz, netSrc.iTrainBatCnt);
+        netSrc.arrLayers[i]->Shape(iInLnCnt, iInColCnt, iChannCnt);
     }
 }
 
@@ -88,11 +75,19 @@ void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, cons
         auto iLbl    = setTrainLbl[setTrainDataIdx[iDataIdx]];
         auto vecIn   = setTrianData[setTrainDataIdx[iDataIdx]],
              vecOrgn = net_lbl_orgn(iLbl, iLblTypeCnt);
-        for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.setLayers[i]->ForProp(vecIn, i);
+        for (auto j = 0ull; j < netSrc.iLayersCnt; ++j) {
+            netSrc.arrLayers[j]->ForProp(vecIn, i);
+            if (!vecIn.verify)
+            auto pause = true;
+        }
         if (!vecIn.verify) netSrc.iStatus = neunet_err;
         if (NeunetAbort(netSrc)) break;
         net_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);
-        for (auto i = netSrc.iLayersCnt; i; --i) netSrc.setLayers[i - 1]->BackProp(vecIn, i, vecOrgn);
+        for (auto j = netSrc.iLayersCnt; j; --j) {
+            netSrc.arrLayers[j - 1]->BackProp(vecIn, i, vecOrgn);
+            if (!vecIn.verify)
+            auto pause = true;
+        }
         if (!vecIn.verify) netSrc.iStatus = neunet_err;
         if (NeunetAbort(netSrc)) break;
         iDataIdx += netSrc.iTrainBatSz;
@@ -103,7 +98,7 @@ void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, cons
             netSrc.iRcCnt  = 0;
             netSrc.iBatCnt = 0;
             netSrc.asyCtrl.thread_wake_all();
-        } else while (netSrc.iBatCnt) netSrc.asyCtrl.thread_sleep(1000);
+        } else while (netSrc.iBatCnt) netSrc.asyCtrl.thread_sleep(200);
     } else while (iDataIdx < setTrainLbl.length) {
         iDataIdx += netSrc.iTrainBatSz;
         netSrc.asyCtrl.thread_sleep();
@@ -115,7 +110,7 @@ void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, cons
     if (i < netSrc.iTestBatSz) while (iDataIdx < setTestLbl.length) {
         auto iLbl  = setTestLbl[iDataIdx];
         auto vecIn = setTestData[iDataIdx];
-        for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.setLayers[i]->Deduce(vecIn);
+        for (auto j = 0ull; j < netSrc.iLayersCnt; ++j) netSrc.arrLayers[j]->Deduce(vecIn);
         if (!vecIn.verify) netSrc.iStatus = neunet_err;
         if (NeunetAbort(netSrc)) break;
         net_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);
@@ -131,5 +126,25 @@ void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, cons
     } else while (netSrc.iBatCnt) netSrc.asyCtrl.thread_sleep(1000);
     if (NeunetStopVerify(netSrc)) break;
 } }); }
+
+void NeunetResult(NeunetCore &netSrc) {
+    double   dRcRt  = 0;
+    uint64_t iEpCnt = 0;
+    while (dRcRt < 1) {
+        auto cEpTmPt = neunet_chrono_time_point;
+        // train
+        for (auto i = 0ull; i < netSrc.iTrainBatCnt; ++i) {
+            auto cTrnTmPt = neunet_chrono_time_point;
+            auto dAcc     = netSrc.queTrainAcc.de_queue() / (netSrc.iTrainBatSz * 1.);
+                 dRcRt    = netSrc.queTrainRc.de_queue() / (netSrc.iTrainBatSz * 1.);
+            net_train_progress((i + 1), netSrc.iTrainBatCnt, dAcc, dRcRt, (neunet_chrono_time_point - cTrnTmPt));
+        }
+        // test
+        std::printf("\r[Deducing]...");
+        auto dAcc  = netSrc.queTestAcc.de_queue() / (netSrc.iTestDataCnt * 1.);
+             dRcRt = netSrc.queTestRc.de_queue() / (netSrc.iTestDataCnt * 1.);
+        net_epoch_status(++iEpCnt, dAcc, dRcRt, (neunet_chrono_time_point - cEpTmPt));
+    }
+}
 
 NEUNET_END

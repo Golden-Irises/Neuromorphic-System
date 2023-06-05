@@ -7,15 +7,11 @@ struct Layer {
 
     virtual void Deduce(net_matrix &vecIn) = 0;
 
-    virtual void Update() {}
-
     virtual void Batch(uint64_t iBatSz, uint64_t iBatCnt) {}
 
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {}
 
     virtual constexpr uint64_t LayerType() const = 0;
-
-    virtual ~Layer() {}
 };
 
 struct LayerIO : virtual Layer {
@@ -29,22 +25,23 @@ template <double dLearnRate = 0.,
 struct LayerWeight : virtual LayerIO {
     net_counter iBatSzCnt;
 
-    net_matrix vecWeight, vecWeightT, vecWeightN;
+    net_matrix vecWeight, vecWeightN, vecWeightT;
 
     ada_delta<dGradDecay> AdaD;
 
     ada_nesterov<dLearnRate, dGradDecay> AdaN;
 
-    virtual void Update() {
+    template <bool bTranspose = false>
+    void Update() {
         auto vecGrad = net_matrix::sigma(setIO);
         vecGrad.elem_wise_div(setIO.length);
-        if constexpr (dLearnRate == 0) {
+        if constexpr (dLearnRate == 0){
             AdaD.update(vecWeight, vecGrad);
-            vecWeightT = vecWeight.transpose;
+            if constexpr (bTranspose) vecWeightT = vecWeight.transpose;
         } else {
             AdaN.update(vecWeight, vecWeightN, vecGrad);
-            vecWeightT = vecWeightN.transpose;
-        } 
+            if constexpr (bTranspose) vecWeightT = vecWeightN.transpose;
+        }
     }
 };
 
@@ -57,12 +54,12 @@ struct LayerBias : LayerWeight<dLearnRate,
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         this->vecWeight = {iInLnCnt * iInColCnt, iInChannCnt};
         this->vecWeight.elem_rand(dRandFstRng, dRandSndRng);
-        if constexpr (dLearnRate) this->vecWeightN = this->vecWeight;
+        if constexpr (dLearnRate != 0) this->vecWeightN = this->vecWeight;
     }
 
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
-        if (this->dLearnRate) vecIn += this->vecWeightN;
-        else Deduce(vecIn);
+        if constexpr (dLearnRate == 0) Deduce(vecIn);
+        else vecIn += this->vecWeightN;
     }
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
@@ -86,20 +83,21 @@ struct LayerAct : LayerIO {
     }
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
-        constexpr auto fn_sigmoid = iActFnType == neunet_sigmoid,
-                       fn_ReLU    = iActFnType == neunet_ReLU;
-        if constexpr (fn_sigmoid || fn_ReLU) {
-            if constexpr (fn_ReLU) neunet_traverse(setIO[iBatSzIdx], ReLU_dv);
-            else neunet_traverse(setIO[iBatSzIdx], sigmoid_dv);
+        if constexpr (iActFnType == neunet_softmax) softmax_cec_grad(vecGrad, vecOrgn);
+        if constexpr (iActFnType == neunet_ReLU) {
+            neunet_traverse(setIO[iBatSzIdx], ReLU_dv);
             vecGrad.elem_wise_mul(setIO[iBatSzIdx]);
         }
-        if constexpr (iActFnType == neunet_softmax) softmax_cec_grad(vecGrad, vecOrgn);
+        if constexpr (iActFnType == neunet_sigmoid) {
+            neunet_traverse(setIO[iBatSzIdx], sigmoid_dv);
+            vecGrad.elem_wise_mul(setIO[iBatSzIdx]);
+        }
     }
 
     virtual void Deduce(net_matrix &vecIn) {
         if constexpr (iActFnType == neunet_sigmoid) neunet_traverse(vecIn, sigmoid);
-        else if constexpr (iActFnType == neunet_ReLU) neunet_traverse(vecIn, ReLU);
-        else if constexpr (iActFnType == neunet_softmax) softmax(vecIn);
+        if constexpr (iActFnType == neunet_ReLU) neunet_traverse(vecIn, ReLU);
+        if constexpr (iActFnType == neunet_softmax) softmax(vecIn);
     }
 
     virtual constexpr uint64_t LayerType() const { return neunet_act; }
@@ -178,7 +176,7 @@ template <uint64_t iOutLnCnt = 1,
           double dRandSndRng = 1.,
           double dGradDecay  = 0.9>
 struct LayerFC : LayerWeight<dLearnRate,
-                             dGradDecay> {    
+                             dGradDecay> {
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         this->vecWeight = FCInitWeight(iInLnCnt, iOutLnCnt, dRandFstRng, dRandSndRng);
         if constexpr (dLearnRate != 0) this->vecWeightN = this->vecWeight;
@@ -197,7 +195,7 @@ struct LayerFC : LayerWeight<dLearnRate,
         vecGrad                = FCGradIn(vecGrad, this->vecWeightT);
         if (++this->iBatSzCnt == this->setIO.length) {
             this->iBatSzCnt = 0;
-            LayerWeight<dLearnRate, dGradDecay>::Update();
+            this->Update<true>();
         }
     }
 
@@ -263,7 +261,7 @@ struct LayerConv : LayerWeight<dLearnRate,
         vecGrad                = CaffeGradIn(ConvGradCaffeOut(vecGrad, this->vecWeightT), this->setCaffeIdx, this->iElemCnt, this->iChannCnt);
         if (++this->iBatSzCnt == this->setIO.length) {
             this->iBatSzCnt = 0;
-            LayerWeight<dLearnRate, dGradDecay>::Update();
+            this->Update<true>();
         }
     }
 
@@ -362,11 +360,11 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
         if constexpr (dShiftLearnRate != 0) this->vecWeightN = this->vecWeight;
     }
 
-    virtual void Update() {
+    void Update() {
+        if constexpr (dShiftLearnRate == 0) this->AdaD.update(this->vecWeight, this->vecWeightT);
+        else this->AdaN.update(this->vecWeight, this->vecWeightN, this->vecWeightT);
         if constexpr (dScaleLearnRate == 0) AdaDScale.update(vecScale, vecScaleN);
         else AdaNScale.update(vecScale, vecScaleN, vecScaleN);
-        if constexpr (dShiftLearnRate == 0) this->AdaD.update(this->vecWeight, this->vecWeightN);
-        else this->AdaN.update(this->vecWeight, this->vecWeightN, this->vecWeightT);
     }
     
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
@@ -381,6 +379,8 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
     }
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
+        if (vecGrad.column_count == 20)
+        auto pause = true;
         this->setIO[iBatSzIdx] = std::move(vecGrad);
         if (++iBackBatSzCnt == this->setIO.length) {
             BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNScaleRef());

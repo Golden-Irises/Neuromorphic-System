@@ -194,6 +194,8 @@ net_matrix_base matrix_transpose(const net_matrix_base &src) {
     return ans;
 }
 
+void matrix_clear(net_matrix_base &src) { for (auto i = 0ull; i < src.elem_cnt; ++i) src.ptr[i] = 0; }
+
 class net_matrix {
 public:
     net_matrix(uint64_t ln_cnt = 0, uint64_t col_cnt = 0) :
@@ -251,6 +253,8 @@ public:
     void elem_wise_pow(double src) { matrix_elem_pow<times>(proto, src); }
 
     double &index(uint64_t idx) const { return proto.ptr[idx]; }
+
+    void clear() { matrix_clear(proto); }
 
     static net_matrix mul(const net_matrix &fst, const net_matrix &snd) {
         net_matrix ans {fst.proto.ln_cnt, snd.proto.col_cnt};

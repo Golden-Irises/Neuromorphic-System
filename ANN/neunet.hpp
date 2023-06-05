@@ -75,19 +75,11 @@ void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, cons
         auto iLbl    = setTrainLbl[setTrainDataIdx[iDataIdx]];
         auto vecIn   = setTrianData[setTrainDataIdx[iDataIdx]],
              vecOrgn = net_lbl_orgn(iLbl, iLblTypeCnt);
-        for (auto j = 0ull; j < netSrc.iLayersCnt; ++j) {
-            netSrc.arrLayers[j]->ForProp(vecIn, i);
-            if (!vecIn.verify)
-            auto pause = true;
-        }
+        for (auto j = 0ull; j < netSrc.iLayersCnt; ++j) netSrc.arrLayers[j]->ForProp(vecIn, i);
         if (!vecIn.verify) netSrc.iStatus = neunet_err;
         if (NeunetAbort(netSrc)) break;
         net_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);
-        for (auto j = netSrc.iLayersCnt; j; --j) {
-            netSrc.arrLayers[j - 1]->BackProp(vecIn, i, vecOrgn);
-            if (!vecIn.verify)
-            auto pause = true;
-        }
+        for (auto j = netSrc.iLayersCnt; j; --j) netSrc.arrLayers[j - 1]->BackProp(vecIn, i, vecOrgn);
         if (!vecIn.verify) netSrc.iStatus = neunet_err;
         if (NeunetAbort(netSrc)) break;
         iDataIdx += netSrc.iTrainBatSz;
@@ -98,7 +90,7 @@ void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, cons
             netSrc.iRcCnt  = 0;
             netSrc.iBatCnt = 0;
             netSrc.asyCtrl.thread_wake_all();
-        } else while (netSrc.iBatCnt) netSrc.asyCtrl.thread_sleep(200);
+        } else netSrc.asyCtrl.thread_sleep();
     } else while (iDataIdx < setTrainLbl.length) {
         iDataIdx += netSrc.iTrainBatSz;
         netSrc.asyCtrl.thread_sleep();
@@ -122,8 +114,9 @@ void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, cons
         netSrc.iAccCnt = 0;
         netSrc.iRcCnt  = 0;
         netSrc.iBatCnt = 0;
+        setTrainDataIdx.shuffle();
         netSrc.asyCtrl.thread_wake_all();
-    } else while (netSrc.iBatCnt) netSrc.asyCtrl.thread_sleep(1000);
+    } else netSrc.asyCtrl.thread_sleep();
     if (NeunetStopVerify(netSrc)) break;
 } }); }
 

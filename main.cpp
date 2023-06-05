@@ -26,18 +26,22 @@ int main(int argc, char *argv[], char *envp[]) {
 
     NeunetAddLayer<LayerConv<20, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core);
     NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core);
+    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core);
     NeunetAddLayer<LayerAct<neunet_ReLU>>(net_core);
     NeunetAddLayer<LayerPool<neunet_avg_pool, 2, 2, 2, 2>>(net_core);
     NeunetAddLayer<LayerConv<50, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core);
     NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core);
+    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core);
     NeunetAddLayer<LayerAct<neunet_ReLU>>(net_core);
     NeunetAddLayer<LayerPool<neunet_avg_pool, 2, 2, 2, 2>>(net_core);
     NeunetAddLayer<LayerFlat>(net_core);
     NeunetAddLayer<LayerFC<500, LEARN_RATE>>(net_core);
     NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core);
+    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core);
     NeunetAddLayer<LayerAct<neunet_sigmoid>>(net_core);
     NeunetAddLayer<LayerFC<10, LEARN_RATE>>(net_core);
     NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core);
+    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core);
     NeunetAddLayer<LayerAct<neunet_softmax>>(net_core);
 
     std::string root = "D:\\Users\\Aurora\\Documents\\Visual Studio Code Project\\MNIST\\file\\";

@@ -69,9 +69,16 @@ bool NeunetAbort(NeunetCore &netSrc) {
 bool NeunetStopVerify(NeunetCore &netSrc) { return netSrc.iStatus == neunet_fin || netSrc.iStatus == neunet_err; }
 
 void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, const net_set<uint64_t> &setTrainLbl, net_set<uint64_t> &setTrainDataIdx, const net_set<net_matrix> &setTestData, const net_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == neunet_ok) {
-    uint64_t iDataIdx = i < netSrc.iTrainBatSz ? i : 0;
+    auto bTaskVld = i < netSrc.iTrainBatSz;
+    auto iDataIdx = bTaskVld ? i : 0;
     // train
-    if (i < netSrc.iTrainBatSz) while (iDataIdx < setTrainLbl.length) {
+    while (iDataIdx < setTrainLbl.length) {
+        if (!bTaskVld) {
+            iDataIdx += netSrc.iTrainBatSz;
+            netSrc.asyCtrl.thread_sleep();
+            if (NeunetStopVerify(netSrc)) break;
+            else continue;
+        }
         auto iLbl    = setTrainLbl[setTrainDataIdx[iDataIdx]];
         auto vecIn   = setTrianData[setTrainDataIdx[iDataIdx]],
              vecOrgn = net_lbl_orgn(iLbl, iLblTypeCnt);
@@ -91,10 +98,6 @@ void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, cons
             netSrc.iBatCnt = 0;
             netSrc.asyCtrl.thread_wake_all();
         } else netSrc.asyCtrl.thread_sleep();
-    } else while (iDataIdx < setTrainLbl.length) {
-        iDataIdx += netSrc.iTrainBatSz;
-        netSrc.asyCtrl.thread_sleep();
-        if (NeunetStopVerify(netSrc)) break;
     }
     if (NeunetStopVerify(netSrc)) break;
     // test

@@ -64,8 +64,8 @@ struct LayerBias : LayerWeight<dLearnRate,
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = vecGrad;
-        if (++this->iBatSzCnt == this->setIO.length) {
-            this->iBatSzCnt = 0;
+        if (++this->iBatSzCnt.cnt == this->setIO.length) {
+            this->iBatSzCnt.cnt = 0;
             this->Update();
         }
     }
@@ -84,12 +84,10 @@ struct LayerAct : LayerIO {
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         if constexpr (iActFnType == neunet_softmax) softmax_cec_grad(vecGrad, vecOrgn);
-        if constexpr (iActFnType == neunet_ReLU) {
-            neunet_traverse(setIO[iBatSzIdx], ReLU_dv);
-            vecGrad.elem_wise_mul(setIO[iBatSzIdx]);
-        }
-        if constexpr (iActFnType == neunet_sigmoid) {
-            neunet_traverse(setIO[iBatSzIdx], sigmoid_dv);
+        constexpr auto bActReLU = iActFnType == neunet_ReLU;
+        if constexpr (bActReLU || iActFnType == neunet_sigmoid) {
+            if constexpr (bActReLU) neunet_traverse(setIO[iBatSzIdx], ReLU_dv);
+            else neunet_traverse(setIO[iBatSzIdx], sigmoid_dv);
             vecGrad.elem_wise_mul(setIO[iBatSzIdx]);
         }
     }
@@ -181,7 +179,7 @@ struct LayerFC : LayerWeight<dLearnRate,
         this->vecWeight = FCInitWeight(iInLnCnt, iOutLnCnt, dRandFstRng, dRandSndRng);
         if constexpr (dLearnRate != 0) this->vecWeightN = this->vecWeight;
         this->vecWeightT = this->vecWeight.transpose;
-        iInLnCnt = iOutLnCnt;
+        iInLnCnt         = iOutLnCnt;
     }
     
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
@@ -193,8 +191,8 @@ struct LayerFC : LayerWeight<dLearnRate,
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = FCGradWeight(vecGrad, this->setIO[iBatSzIdx]);
         vecGrad                = FCGradIn(vecGrad, this->vecWeightT);
-        if (++this->iBatSzCnt == this->setIO.length) {
-            this->iBatSzCnt = 0;
+        if (++this->iBatSzCnt.cnt == this->setIO.length) {
+            this->iBatSzCnt.cnt = 0;
             this->Update<true>();
         }
     }
@@ -259,8 +257,8 @@ struct LayerConv : LayerWeight<dLearnRate,
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = ConvGradKernel(vecGrad, this->setIO[iBatSzIdx]);
         vecGrad                = CaffeGradIn(ConvGradCaffeOut(vecGrad, this->vecWeightT), this->setCaffeIdx, this->iElemCnt, this->iChannCnt);
-        if (++this->iBatSzCnt == this->setIO.length) {
-            this->iBatSzCnt = 0;
+        if (++this->iBatSzCnt.cnt == this->setIO.length) {
+            this->iBatSzCnt.cnt = 0;
             this->Update<true>();
         }
     }
@@ -304,14 +302,14 @@ struct LayerPool : LayerCaffe<iFilterLnCnt,
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         if constexpr (iPoolType == neunet_gag_pool) vecGrad = PoolGradGlbAvgIn(vecGrad, this->iElemCnt, this->iChannCnt);
-        else if constexpr (iPoolType == neunet_avg_pool) vecGrad = PoolGradAvgIn(vecGrad, this->setCaffeIdx, iFilterElemCnt, this->iElemCnt);
-        else if constexpr (iPoolType == neunet_max_pool) vecGrad = PoolGradMaxIn(vecGrad, this->iElemCnt, setElemIdx[iBatSzIdx]);
+        if constexpr (iPoolType == neunet_avg_pool) vecGrad = PoolGradAvgIn(vecGrad, this->setCaffeIdx, iFilterElemCnt, this->iElemCnt);
+        if constexpr (iPoolType == neunet_max_pool) vecGrad = PoolGradMaxIn(vecGrad, this->iElemCnt, setElemIdx[iBatSzIdx]);
     }
 
     virtual void Deduce(net_matrix &vecIn) {
         if constexpr (iPoolType == neunet_gag_pool) vecIn = PoolGlbAvg(vecIn);
-        else if constexpr (iPoolType == neunet_avg_pool) vecIn = PoolAvg(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt);
-        else if constexpr (iPoolType == neunet_max_pool) vecIn = PoolMax(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt);
+        if constexpr (iPoolType == neunet_avg_pool) vecIn = PoolAvg(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt);
+        if constexpr (iPoolType == neunet_max_pool) vecIn = PoolMax(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt);
     }
 
     virtual constexpr uint64_t LayerType() const { return neunet_pool; }
@@ -369,25 +367,23 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
     
     virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
         this->setIO[iBatSzIdx] = std::move(vecIn);
-        if (++this->iBatSzCnt == this->setIO.length) {
+        if (++this->iBatSzCnt.cnt == this->setIO.length) {
             BNOut(this->setIO, BdData, BNShiftRef(), BNScaleRef());
-            this->iBatSzCnt = 0;
+            this->iBatSzCnt.cnt = 0;
             asyForCtrl.thread_wake_all();
             BNMovAvg<dMovAvgDecay>(BdData);
-        } else while (this->iBatSzCnt) asyForCtrl.thread_sleep(200);
+        } else while (this->iBatSzCnt.cnt) asyForCtrl.thread_sleep(200);
         vecIn = std::move(this->setIO[iBatSzIdx]);
     }
 
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
-        if (vecGrad.column_count == 20)
-        auto pause = true;
         this->setIO[iBatSzIdx] = std::move(vecGrad);
-        if (++iBackBatSzCnt == this->setIO.length) {
+        if (++iBackBatSzCnt.cnt == this->setIO.length) {
             BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNScaleRef());
             iBackBatSzCnt.cnt = 0;
             asyBackCtrl.thread_wake_all();
             Update();
-        } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep(200);
+        } else while (iBackBatSzCnt.cnt) asyBackCtrl.thread_sleep(200);
         vecGrad = std::move(this->setIO[iBatSzIdx]);
     }
 

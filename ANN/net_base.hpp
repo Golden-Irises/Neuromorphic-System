@@ -18,7 +18,8 @@ void softmax_cec_grad(net_matrix &out, net_matrix &orgn) {
     double sum = 0;
     for (auto i = 0ull; i < orgn.element_count; ++i) sum += orgn.index(i) * out.index(i);
     for (auto i = 0ull; i < orgn.element_count; ++i) orgn.index(i) = sum - orgn.index(i);
-    out *= sum;
+    out.elem_wise_mul(orgn);
+    // out *= sum;
 }
 
 uint64_t samp_block_cnt(uint64_t filter_dir_cnt, uint64_t dir_dilate) { return (dir_dilate + 1) * filter_dir_cnt - dir_dilate; }
@@ -102,18 +103,11 @@ struct net_counter {
 
     net_counter() = default;
     net_counter(const net_counter &src) { cnt = (uint64_t)src.cnt; }
-    net_counter(uint64_t src) { cnt = src; }
 
     uint64_t operator=(const net_counter &src) {
         cnt = (uint64_t)src.cnt;
         return cnt;
     }
-    uint64_t operator=(uint64_t src) { return cnt = src; }
-
-    operator uint64_t() { return cnt; }
-
-    uint64_t operator++() { return ++cnt; }
-    uint64_t operator++(int) { return cnt++; }
 };
 
 template <double rho = 0.9>
@@ -171,7 +165,7 @@ public:
         curr_grad = velocity;
     }
 
-    void update (net_matrix &curr_weight, net_matrix &nesterov_weight, net_matrix &grad) {
+    void update(net_matrix &curr_weight, net_matrix &nesterov_weight, net_matrix &grad) {
         momentum(grad);
         curr_weight    -= grad;
         nesterov_weight = weight(curr_weight);

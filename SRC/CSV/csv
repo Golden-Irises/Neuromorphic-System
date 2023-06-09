@@ -1,0 +1,12 @@
+#pragma once
+
+#ifndef __CSV__
+#define __CSV__
+
+#include <fstream>
+#include <sstream>
+
+#include "..\..\ANN\net_set"
+#include "csv.hpp"
+
+#endif

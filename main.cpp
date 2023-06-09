@@ -12,7 +12,7 @@
 #include "ANN/neunet"
 #include "SRC/MNIST/mnist.h"
 
-#define LEARN_RATE       .4
+#define LEARN_RATE       .4     // 1e-5
 #define BN_LEARN_RATE    1e-5
 
 using namespace std;
@@ -44,7 +44,8 @@ int main(int argc, char *argv[], char *envp[]) {
     // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core);
     NeunetAddLayer<LayerAct<neunet_softmax>>(net_core);
 
-    std::string root = "D:\\Users\\Aurora\\Documents\\Visual Studio Code Project\\MNIST\\file\\";
+    std::string root = "..\\MNIST\\";
+    // "D:\\Users\\Aurora\\Documents\\Visual Studio Code Project\\MNIST\\file\\";
     auto train_elem  = root + "train-images.idx3-ubyte",
          train_lbl   = root + "train-labels.idx1-ubyte",
          test_elem   = root + "t10k-images.idx3-ubyte",

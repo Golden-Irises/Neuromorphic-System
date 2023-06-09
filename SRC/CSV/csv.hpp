@@ -1,11 +1,3 @@
-#pragma once
-
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
-#include "..\..\ANN\net_set"
-
 NEUNET_BEGIN
 
 net_set<net_set<std::string>> csv_in(const std::string &file_path) {
@@ -56,27 +48,3 @@ void csv_print(const net_set<net_set<std::string>> &src) {
 }
 
 NEUNET_END
-
-using namespace std;
-using namespace neunet;
-
-int main(int argc, char *argv[], char *envp[]) {
-    cout << "hello, world." << endl;
-
-    auto in = csv_in("SRC/CSV/CSV_IN.csv");
-
-    csv_print(in);
-    
-    net_set<net_set<string>> table = {
-        {"ID", "Name", "Age", "Gender"},
-        {"0" , "Doxy", "22" , "Female"},
-        {"1" , "Roal", "31" , "Female"},
-        {"2" , "Celu", "26" , "Male"  }
-    };
-
-    cout << endl;
-
-    csv_out(table, "SRC/CSV/CSV_OUT.csv");
-
-    return EXIT_SUCCESS;
-}

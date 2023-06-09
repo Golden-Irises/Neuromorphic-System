@@ -4,6 +4,7 @@
         "net_matrix": "cpp",
         "*.vt": "verilog",
         "net_set": "cpp",
-        "neunet": "cpp"
+        "neunet": "cpp",
+        "csv": "cpp"
     }
 }

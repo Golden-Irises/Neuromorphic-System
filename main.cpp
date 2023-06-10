@@ -66,7 +66,7 @@ int main(int argc, char *argv[], char *envp[]) {
     mnist_open(&test_file, test_elem.c_str(), test_lbl.c_str());
     mnist_magic_verify(&test_file);
     mnist_qty_verify(&test_file, &test_data);
-    mnist_ln_cnt(&test_file),
+    mnist_ln_cnt(&test_file);
     mnist_col_cnt(&test_file);
     mnist_read(&test_file, &test_data, ln_cnt, col_cnt, 0, true);
     mnist_close(&test_file);

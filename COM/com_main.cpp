@@ -2,7 +2,7 @@
 
 #define DCB_FLAG    true
 
-#define DCB_MSG     true
+#define DCB_MSG     false
 #define DCB_BUF_LEN 0x0010
 
 #include <iostream>

@@ -50,7 +50,7 @@ net_matrix PoolGlbAvg(const net_matrix &vecIn) {
 }
 
 net_matrix PoolGradGlbAvgIn(const net_matrix vecGradOut, uint64_t iSampInElemCnt, uint64_t iSampInChannCnt) {
-    net_matrix vecAns {iSampInElemCnt, iSampInElemCnt};
+    net_matrix vecAns {iSampInElemCnt, iSampInChannCnt};
     for (auto i = 0ull; i < vecGradOut.element_count; ++i) vecAns.index(i) = vecGradOut.index(i) / iSampInElemCnt;
     for (auto i = 1ull; i < vecAns.line_count; ++i) for (auto j = 0ull; j < vecAns.column_count; ++j) vecAns[i][j] = vecAns.index(j);
     return vecAns;

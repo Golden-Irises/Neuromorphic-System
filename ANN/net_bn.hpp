@@ -8,8 +8,7 @@ net_matrix BNBetaGammaInit(uint64_t iChannCnt) {
 }
 
 struct BNData final {
-    net_matrix vecMuBeta, vecSigmaSqr,
-               vecSigmaEps, vecSigmaSqrEps,
+    net_matrix vecMuBeta, vecSigmaSqr, vecSigmaEps,
                vecExpMuBeta, vecExpSigmaSqr, vecExpSigmaEps;
 
     uint64_t iBatCnt = 0,
@@ -20,8 +19,8 @@ struct BNData final {
     net_set<net_matrix> setBarX, setDist;
 };
 
-void BNDataInit(BNData &BdData, uint64_t iBatchSize, uint64_t iBatchBatchCnt) {
-    BdData.iBatCnt   = iBatchBatchCnt;
+void BNDataInit(BNData &BdData, uint64_t iBatchSize, uint64_t iBatchCnt) {
+    BdData.iBatCnt   = iBatchCnt;
     BdData.dCoeBatSz = 1. / iBatchSize;
     BdData.setBarX.init(iBatchSize, false);
     BdData.setDist.init(iBatchSize, false);

@@ -135,8 +135,8 @@ struct LayerPC : LayerChann{
     virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
         net_matrix vecAns {iElemCnt, iChannCnt};
         for (auto i = 0ull; i < setElemIdx.length; ++i)
-            if constexpr (bPad1Crop0) vecGrad.index(i) = vecAns.index(setElemIdx[i]);
-            else vecGrad.index(setElemIdx[i]) = vecAns.index(i);
+            if constexpr (bPad1Crop0) vecAns.index(i) = vecGrad.index(setElemIdx[i]);
+            else vecAns.index(setElemIdx[i]) = vecGrad.index(i);
         vecGrad = std::move(vecAns);
     }
 

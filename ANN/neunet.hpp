@@ -1,6 +1,6 @@
 NEUNET_BEGIN
 
-struct NeunetCore {
+template <bool DeduceMode = false> struct NeunetCore {
     uint64_t iTrainBatSz   = 32,
              iTrainBatCnt  = 0,
              iTestBatSz    = 32,
@@ -24,6 +24,8 @@ struct NeunetCore {
 
     async_pool asyPool;
 
+    consteval bool IsDeduceMode() const { return DeduceMode; }
+
     NeunetCore(uint64_t iTrainBatchSize = 32, uint64_t iTestBatchSize = 32, double dTrainPrecision = .1) :
         iTrainBatSz(iTrainBatchSize),
         iTestBatSz(iTestBatchSize),
@@ -42,10 +44,13 @@ struct NeunetCore {
  * LayerBN
  * LayerFlat
  */
-template <typename LayerType>
-void NeunetAddLayer(NeunetCore &netSrc) { netSrc.arrLayers[netSrc.iLayersCnt++] = std::make_shared<LayerType>(); }
+template <typename LayerType,
+          bool     DeduceMode,
+          typename...LayerArgs, typename = std::enable_if_t<std::is_base_of_v<Layer, LayerType>>>
+void NeunetAddLayer(NeunetCore<DeduceMode> &netSrc, LayerArgs &&...argsLayerInit) { netSrc.arrLayers[netSrc.iLayersCnt++] = std::make_shared<LayerType>(std::forward<LayerArgs>(argsLayerInit)...); }
 
-void NeunetInit(NeunetCore &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt) {
+template <bool DeduceMode>
+void NeunetInit(NeunetCore<DeduceMode> &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt) {
     netSrc.iTrainBatCnt  = iTrainDataCnt / netSrc.iTrainBatSz;
     netSrc.iTestBatCnt   = iTestDataCnt / netSrc.iTestBatSz;
     netSrc.iTrainDataCnt = iTrainDataCnt;
@@ -56,7 +61,8 @@ void NeunetInit(NeunetCore &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCn
     }
 }
 
-bool NeunetAbort(NeunetCore &netSrc) {
+template <bool DeduceMode>
+bool NeunetAbort(NeunetCore<DeduceMode> &netSrc) {
     if (netSrc.iStatus != neunet_err) return false;
     netSrc.queTestAcc.reset();
     netSrc.queTestRc.reset();
@@ -66,9 +72,11 @@ bool NeunetAbort(NeunetCore &netSrc) {
     return true;
 }
 
-bool NeunetStopVerify(NeunetCore &netSrc) { return netSrc.iStatus == neunet_fin || netSrc.iStatus == neunet_err; }
+template <bool DeduceMode>
+bool NeunetStopVerify(NeunetCore<DeduceMode> &netSrc) { return netSrc.iStatus == neunet_fin || netSrc.iStatus == neunet_err; }
 
-void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, const net_set<uint64_t> &setTrainLbl, net_set<uint64_t> &setTrainDataIdx, const net_set<net_matrix> &setTestData, const net_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == neunet_ok) {
+template <bool DeduceMode>
+void NeunetRun(NeunetCore<DeduceMode> &netSrc, const net_set<net_matrix> &setTrianData, const net_set<uint64_t> &setTrainLbl, net_set<uint64_t> &setTrainDataIdx, const net_set<net_matrix> &setTestData, const net_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == neunet_ok) {
     auto bTaskVld = i < netSrc.iTrainBatSz;
     auto iDataIdx = bTaskVld ? i : 0;
     // train
@@ -123,7 +131,8 @@ void NeunetRun(NeunetCore &netSrc, const net_set<net_matrix> &setTrianData, cons
     if (NeunetStopVerify(netSrc)) break;
 } }); }
 
-void NeunetResult(NeunetCore &netSrc) {
+template <bool DeduceMode>
+void NeunetResult(NeunetCore<DeduceMode> &netSrc) {
     double   dRcRt  = 0;
     uint64_t iEpCnt = 0;
     while (dRcRt < 1) {
@@ -141,6 +150,13 @@ void NeunetResult(NeunetCore &netSrc) {
              dRcRt = netSrc.queTestRc.de_queue() / (netSrc.iTestDataCnt * 1.);
         net_epoch_status(++iEpCnt, dAcc, dRcRt, (neunet_chrono_time_point - cEpTmPt));
     }
+    for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.arrLayers[i]->SaveData();
+}
+
+net_matrix NeunetDeduce(const NeunetCore<true> &netSrc, const net_matrix &vecIn) {
+    auto vecAns = vecIn;
+    for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.arrLayers[i]->Deduce(vecAns);
+    return vecAns;
 }
 
 NEUNET_END

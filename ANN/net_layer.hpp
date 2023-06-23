@@ -11,6 +11,8 @@ struct Layer {
 
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {}
 
+    virtual bool SaveData() const { return true; }
+
     virtual constexpr uint64_t LayerType() const = 0;
 };
 
@@ -31,6 +33,16 @@ struct LayerWeight : virtual LayerIO {
 
     ada_nesterov<dLearnRate, dGradDecay> AdaN;
 
+    std::string sSavePath {""};
+
+    LayerWeight(const std::string &sWeightFileLoadPath = "", const std::string &sWeightFileSavePath = "") :
+        sSavePath(sWeightFileSavePath) {
+        if (!sWeightFileLoadPath.length()) return;
+        auto tabWeight = csv_in(sWeightFileLoadPath);
+        vecWeight      = {tabWeight.length, tabWeight[0].length};
+        for (auto i = 0ull; i < vecWeight.line_count; ++i) for (auto j = 0ull; j < vecWeight.column_count; ++j) vecWeight[i][j] = std::stod(tabWeight[i][j]);
+    }
+
     template <bool bTranspose = false>
     void Update() {
         auto vecGrad = net_matrix::sigma(setIO);
@@ -43,6 +55,15 @@ struct LayerWeight : virtual LayerIO {
             if constexpr (bTranspose) vecWeightT = vecWeightN.transpose;
         }
     }
+
+    virtual bool SaveData() const {
+        net_set<net_set<std::string>> tabWeight(vecWeight.line_count);
+        for (auto i = 0ull; i < vecWeight.line_count; ++i) {
+            tabWeight[i].init(vecWeight.column_count);
+            for (auto j = 0ull; j < vecWeight.column_count; ++j) tabWeight[i][j] = std::to_string(vecWeight[i][j]);
+        }
+        return csv_out(tabWeight, sSavePath);
+    }
 };
 
 template <double dLearnRate  = 0.,
@@ -51,7 +72,10 @@ template <double dLearnRate  = 0.,
           double dGradDecay  = 0.9>
 struct LayerBias : LayerWeight<dLearnRate,
                                dGradDecay> {
+    LayerBias(const std::string &sBiasFileLoadPath = "", const std::string &sBiasFileSavePath = "") : LayerWeight<dLearnRate, dGradDecay>(sBiasFileLoadPath, sBiasFileSavePath) {}
+    
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
+        if (this->vecWeight.verify) return;
         this->vecWeight = {iInLnCnt * iInColCnt, iInChannCnt};
         this->vecWeight.elem_rand(dRandFstRng, dRandSndRng);
         if constexpr (dLearnRate != 0) this->vecWeightN = this->vecWeight;
@@ -175,7 +199,10 @@ template <uint64_t iOutLnCnt = 1,
           double dGradDecay  = 0.9>
 struct LayerFC : LayerWeight<dLearnRate,
                              dGradDecay> {
+    LayerFC(const std::string &sWeightFileLoadPath = "", const std::string &sWeightFileSavePath = "") : LayerWeight<dLearnRate, dGradDecay>(sWeightFileLoadPath, sWeightFileSavePath) {}
+
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
+        if (this->vecWeight.verify) return;
         this->vecWeight = FCInitWeight(iInLnCnt, iOutLnCnt, dRandFstRng, dRandSndRng);
         if constexpr (dLearnRate != 0) this->vecWeightN = this->vecWeight;
         this->vecWeightT = this->vecWeight.transpose;
@@ -239,7 +266,10 @@ struct LayerConv : LayerWeight<dLearnRate,
                               iColStride,
                               iLnDilate,
                               iColDilate> {
+    LayerConv(const std::string &sKernelFileLoadPath = "", const std::string &sKernelFileSavePath = "") : LayerWeight<dLearnRate, dGradDecay>(sKernelFileLoadPath, sKernelFileSavePath) {}
+    
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
+        if (this->vecWeight.verify) return;
         this->vecWeight  = ConvInitKernel(iKernelQty, iInChannCnt, iKernelLnCnt, iKernelColCnt, dRandFstRng, dRandSndRng);
         this->vecWeightT = this->vecWeight.transpose;
         if constexpr (dLearnRate != 0) this->vecWeightN = this->vecWeight;
@@ -336,6 +366,16 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
 
     BNData BdData;
 
+    std::string sScaleSavePath {""};
+
+    LayerBN(const std::string &sShiftFileLoadPath = "", const std::string &sShiftFileSavePath = "", const std::string &sScaleFileLoadPath = "", const std::string &sScaleFileSavePath = "") : LayerWeight<dShiftLearnRate, dShiftGradDecay>(sShiftFileLoadPath, sShiftFileSavePath),
+        sScaleSavePath(sScaleFileSavePath) {
+        if (!sScaleFileLoadPath.length()) return;
+        auto tabScale = csv_in(sScaleFileLoadPath);
+        vecScale      = {1, tabScale[0].length};
+        for (auto i = 0ull; i < vecScale.element_count; ++i) vecScale.index(i) = std::stod(tabScale[0][i]);
+    }
+
     const net_matrix &BNScaleRef() {
         if constexpr (dScaleLearnRate != 0) return vecScale;
         else return vecScaleN;
@@ -352,6 +392,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
     }
 
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
+        if (this->vecWeight.verify && vecScale.verify) return;
         this->vecWeight = BNBetaGammaInit<dShift>(iInChannCnt);
         vecScale        = BNBetaGammaInit<dScale>(iInChannCnt);
         if constexpr (dScaleLearnRate != 0) vecScaleN = vecScale.transpose;
@@ -388,6 +429,14 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
     }
 
     virtual void Deduce(net_matrix &vecIn) { BNOut(vecIn, BdData, this->vecWeight, vecScale); }
+
+    virtual bool SaveData() const {
+        if (!LayerWeight<dShiftLearnRate, dShiftGradDecay>::SaveData()) return false;
+        net_set<net_set<std::string>> tabScale(1);
+        tabScale[0].init(vecScale.element_count);
+        for (auto i = 0ull; i < vecScale.element_count; ++i) tabScale[0][i] = std::to_string(vecScale.index(i));
+        return csv_out(tabScale, sScaleSavePath);
+    }
 
     virtual constexpr uint64_t LayerType() const { return neunet_bn; }
 };

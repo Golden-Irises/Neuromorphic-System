@@ -35,7 +35,7 @@ struct LayerWeight : virtual LayerIO {
 
     std::string sSavePath {""};
 
-    LayerWeight(const std::string &sWeightFileLoadPath = "", const std::string &sWeightFileSavePath = "") :
+    LayerWeight(const std::string &sWeightFileSavePath = "", const std::string &sWeightFileLoadPath = "") :
         sSavePath(sWeightFileSavePath) {
         if (!sWeightFileLoadPath.length()) return;
         auto tabWeight = csv_in(sWeightFileLoadPath);
@@ -72,7 +72,7 @@ template <double dLearnRate  = 0.,
           double dGradDecay  = 0.9>
 struct LayerBias : LayerWeight<dLearnRate,
                                dGradDecay> {
-    LayerBias(const std::string &sBiasFileLoadPath = "", const std::string &sBiasFileSavePath = "") : LayerWeight<dLearnRate, dGradDecay>(sBiasFileLoadPath, sBiasFileSavePath) {}
+    LayerBias(const std::string &sBiasFileSavePath = "", const std::string &sBiasFileLoadPath = "") : LayerWeight<dLearnRate, dGradDecay>(sBiasFileSavePath, sBiasFileLoadPath) {}
     
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         if (this->vecWeight.verify) return;
@@ -199,7 +199,7 @@ template <uint64_t iOutLnCnt = 1,
           double dGradDecay  = 0.9>
 struct LayerFC : LayerWeight<dLearnRate,
                              dGradDecay> {
-    LayerFC(const std::string &sWeightFileLoadPath = "", const std::string &sWeightFileSavePath = "") : LayerWeight<dLearnRate, dGradDecay>(sWeightFileLoadPath, sWeightFileSavePath) {}
+    LayerFC(const std::string &sWeightFileSavePath = "", const std::string &sWeightFileLoadPath = "") : LayerWeight<dLearnRate, dGradDecay>(sWeightFileSavePath, sWeightFileLoadPath) {}
 
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         if (this->vecWeight.verify) return;
@@ -266,7 +266,7 @@ struct LayerConv : LayerWeight<dLearnRate,
                               iColStride,
                               iLnDilate,
                               iColDilate> {
-    LayerConv(const std::string &sKernelFileLoadPath = "", const std::string &sKernelFileSavePath = "") : LayerWeight<dLearnRate, dGradDecay>(sKernelFileLoadPath, sKernelFileSavePath) {}
+    LayerConv(const std::string &sKernelFileSavePath = "", const std::string &sKernelFileLoadPath = "") : LayerWeight<dLearnRate, dGradDecay>(sKernelFileSavePath, sKernelFileLoadPath) {}
     
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         if (this->vecWeight.verify) return;
@@ -368,7 +368,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
 
     std::string sScaleSavePath {""};
 
-    LayerBN(const std::string &sShiftFileLoadPath = "", const std::string &sShiftFileSavePath = "", const std::string &sScaleFileLoadPath = "", const std::string &sScaleFileSavePath = "") : LayerWeight<dShiftLearnRate, dShiftGradDecay>(sShiftFileLoadPath, sShiftFileSavePath),
+    LayerBN(const std::string &sShiftFileSavePath = "", const std::string &sScaleFileSavePath = "", const std::string &sShiftFileLoadPath = "", const std::string &sScaleFileLoadPath = "") : LayerWeight<dShiftLearnRate, dShiftGradDecay>(sShiftFileSavePath, sShiftFileLoadPath),
         sScaleSavePath(sScaleFileSavePath) {
         if (!sScaleFileLoadPath.length()) return;
         auto tabScale = csv_in(sScaleFileLoadPath);

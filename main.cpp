@@ -24,27 +24,28 @@ int main(int argc, char *argv[], char *envp[]) {
 
     NeunetCore net_core {125, 125};
 
-    NeunetAddLayer<LayerConv<20, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core);
-    NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core);
-    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core);
+    string root = "SRC\\ARCHIVE\\";
+    NeunetAddLayer<LayerConv<20, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core, root + "C0.csv");
+    NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B0_shift.csv", root + "B0_scale.csv");
+    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S0.csv");
     NeunetAddLayer<LayerAct<neunet_ReLU>>(net_core);
     NeunetAddLayer<LayerPool<neunet_avg_pool, 2, 2, 2, 2>>(net_core);
-    NeunetAddLayer<LayerConv<50, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core);
-    NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core);
-    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core);
+    NeunetAddLayer<LayerConv<50, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core, root + "C2.csv");
+    NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B2_shift.csv", root + "B2_scale.csv");
+    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S2.csv");
     NeunetAddLayer<LayerAct<neunet_ReLU>>(net_core);
     NeunetAddLayer<LayerPool<neunet_avg_pool, 2, 2, 2, 2>>(net_core);
     NeunetAddLayer<LayerFlat>(net_core);
-    NeunetAddLayer<LayerFC<500, LEARN_RATE>>(net_core);
-    NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core);
-    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core);
+    NeunetAddLayer<LayerFC<500, LEARN_RATE>>(net_core, root + "F4.csv");
+    NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B4_shift.csv", root + "B4_scale.csv");
+    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S4.csv");
     NeunetAddLayer<LayerAct<neunet_sigmoid>>(net_core);
-    NeunetAddLayer<LayerFC<10, LEARN_RATE>>(net_core);
-    NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core);
-    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core);
+    NeunetAddLayer<LayerFC<10, LEARN_RATE>>(net_core, root + "F5.csv");
+    NeunetAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B5_shift.csv", root + "B5_scale.csv");
+    // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S5.csv");
     NeunetAddLayer<LayerAct<neunet_softmax>>(net_core);
 
-    std::string root = "...\\MNIST\\"; // absolute path
+    root = "...\\MNIST\\"; // absolute path
     auto train_elem  = root + "train-images.idx3-ubyte",
          train_lbl   = root + "train-labels.idx1-ubyte",
          test_elem   = root + "t10k-images.idx3-ubyte",

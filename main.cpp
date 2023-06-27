@@ -45,7 +45,7 @@ int main(int argc, char *argv[], char *envp[]) {
     // NeunetAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S5.csv");
     NeunetAddLayer<LayerAct<neunet_softmax>>(net_core);
 
-    root = "...\\MNIST\\"; // absolute path
+    root = "...\\MNIST\\";
     auto train_elem  = root + "train-images.idx3-ubyte",
          train_lbl   = root + "train-labels.idx1-ubyte",
          test_elem   = root + "t10k-images.idx3-ubyte",

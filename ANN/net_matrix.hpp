@@ -125,19 +125,26 @@ void matrix_mul(net_matrix_base &ans, const net_matrix_base &fst, const net_matr
     }
     if (fst_ln_blk > fst.ln_cnt) fst_ln_blk = fst.ln_cnt;
     if (fst_col_blk > fst.col_cnt) fst_col_blk = fst.col_cnt;
-	for (auto i = fst_ln; i < fst_ln_blk; ++i) if (blk_flag) for (auto j = snd_col; j < snd_col_blk; j += neunet_blk_sz) {
-		__m256d ans_reg[neunet_unroll];
-		for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_load_pd(ans.ptr + i * snd.col_cnt + j + x * neunet_reg_sz);
 
-		for (auto k = fst_col; k < fst_col_blk; ++k) {
-			__m256d fst_reg = _mm256_broadcast_sd(fst.ptr + i * fst.col_cnt + k);
-			for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_add_pd(ans_reg[x], _mm256_mul_pd(fst_reg, _mm256_load_pd(snd.ptr + k * snd.col_cnt + j + x * neunet_reg_sz)));
-		}
+    for (auto i = fst_ln; i < fst_ln_blk; ++i) {
+        auto ans_ptr = ans.ptr + i * snd.col_cnt;
+        if (blk_flag) for (auto j = snd_col; j < snd_col_blk; j += neunet_blk_sz) {
+		    __m256d ans_reg[neunet_unroll];
+		    for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_load_pd(ans_ptr + j + x * neunet_reg_sz);
 
-		for (auto x = 0; x < neunet_unroll; ++x) _mm256_store_pd(ans.ptr + i * snd.col_cnt + j + x * neunet_reg_sz, ans_reg[x]);
-	} else for (auto j = fst_col; j < fst_col_blk; ++j) {
-        auto coe = fst[i][j];
-        for (auto k = snd_col; k < snd_col_blk; ++k) ans[i][k] += coe * snd[j][k];
+	    	for (auto k = fst_col; k < fst_col_blk; ++k) {
+	    		__m256d fst_reg = _mm256_broadcast_sd(fst.ptr + i * fst.col_cnt + k);
+	    		for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_add_pd(ans_reg[x], _mm256_mul_pd(fst_reg, _mm256_load_pd(snd.ptr + k * snd.col_cnt + j + x * neunet_reg_sz)));
+	    	}
+            
+	    	for (auto x = 0; x < neunet_unroll; ++x) _mm256_store_pd(ans_ptr + j + x * neunet_reg_sz, ans_reg[x]);
+	    } else for (auto j = fst_col; j < fst_col_blk; ++j) {
+            auto coe_val = fst[i][j];
+            auto snd_ptr = snd.ptr + j * snd.col_cnt;
+            for (auto k = snd_col; k < snd_col_blk; ++k) ans_ptr[k] += coe_val * snd_ptr[k];
+            snd_ptr = nullptr;
+        }
+        ans_ptr = nullptr;
     }
 }
 void matrix_mul(net_matrix_base &ans, const net_matrix_base &fst, const net_matrix_base &snd_vect) {

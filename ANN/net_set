@@ -3,6 +3,8 @@
 #ifndef __NET_SET__
 #define __NET_SET__
 
+#include <chrono>
+
 #define NEUNET_BEGIN    namespace neunet {
 #define NEUNET_END      }
 

@@ -3,7 +3,6 @@
 #ifndef __NET_BASE__
 #define __NET_BASE__
 
-#include <chrono>
 #include "net_matrix"
 
 #define neunet_traverse(vect, fn) for (auto i = 0ull; i < vect.elem_cnt(); ++i) vect.index(i) = fn(vect.index(i))

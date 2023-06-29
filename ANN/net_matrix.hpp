@@ -128,16 +128,19 @@ void matrix_mul(net_matrix_base &ans, const net_matrix_base &fst, const net_matr
 
     for (auto i = fst_ln; i < fst_ln_blk; ++i) {
         auto ans_ptr = ans.ptr + i * snd.col_cnt;
+        auto fst_ptr = fst.ptr + i * fst.col_cnt;
         if (blk_flag) for (auto j = snd_col; j < snd_col_blk; j += neunet_blk_sz) {
 		    __m256d ans_reg[neunet_unroll];
-		    for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_load_pd(ans_ptr + j + x * neunet_reg_sz);
+            ans_ptr += j;
+		    for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_load_pd(ans_ptr + x * neunet_reg_sz);
 
 	    	for (auto k = fst_col; k < fst_col_blk; ++k) {
-	    		__m256d fst_reg = _mm256_broadcast_sd(fst.ptr + i * fst.col_cnt + k);
-	    		for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_add_pd(ans_reg[x], _mm256_mul_pd(fst_reg, _mm256_load_pd(snd.ptr + k * snd.col_cnt + j + x * neunet_reg_sz)));
+	    		__m256d fst_reg = _mm256_broadcast_sd(fst_ptr + k);
+                auto snd_ptr    = snd.ptr + k * snd.col_cnt + j;
+	    		for (auto x = 0; x < neunet_unroll; ++x) ans_reg[x] = _mm256_add_pd(ans_reg[x], _mm256_mul_pd(fst_reg, _mm256_load_pd(snd_ptr + x * neunet_reg_sz)));
 	    	}
             
-	    	for (auto x = 0; x < neunet_unroll; ++x) _mm256_store_pd(ans_ptr + j + x * neunet_reg_sz, ans_reg[x]);
+	    	for (auto x = 0; x < neunet_unroll; ++x) _mm256_store_pd(ans_ptr + x * neunet_reg_sz, ans_reg[x]);
 	    } else for (auto j = fst_col; j < fst_col_blk; ++j) {
             auto coe_val = fst[i][j];
             auto snd_ptr = snd.ptr + j * snd.col_cnt;

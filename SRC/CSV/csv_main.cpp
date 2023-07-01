@@ -9,7 +9,7 @@ using namespace neunet;
 int main(int argc, char *argv[], char *envp[]) {
     cout << "hello, world." << endl;
 
-    auto in = csv_in("SRC/CSV/CSV_IN.csv");
+    auto in = csv_in("SRC/ARCHIVE/CSV_IN.csv");
 
     csv_print(in);
     
@@ -22,7 +22,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
     cout << endl;
 
-    csv_out(table, "SRC/CSV/CSV_OUT.csv");
+    csv_out(table, "SRC/ARCHIVE/CSV_OUT.csv");
 
     return EXIT_SUCCESS;
 }

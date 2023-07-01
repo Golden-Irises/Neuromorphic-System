@@ -1,0 +1,10 @@
+#pragma once
+
+#ifndef __DGM__
+#define __DGM__
+
+#include "../../../ANN/net_set"
+#include "../../../ANN/net_async.hpp"
+#include "diagram.hpp"
+
+#endif

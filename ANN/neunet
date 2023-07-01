@@ -36,7 +36,6 @@
 #define neuent_async_core   std::thread::hardware_concurrency()
 
 #include "net_async.hpp"
-#include "../SRC/CSV/csv"
 #include "net_layer.hpp"
 
 #define nuenet_layer_ptr    std::shared_ptr<neunet::Layer>

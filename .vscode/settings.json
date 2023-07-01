@@ -5,6 +5,7 @@
         "*.vt": "verilog",
         "net_set": "cpp",
         "neunet": "cpp",
-        "csv": "cpp"
+        "csv": "cpp",
+        "diagram": "cpp"
     }
 }

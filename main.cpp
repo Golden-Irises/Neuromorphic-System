@@ -9,6 +9,7 @@
 
 #include <iostream>
 
+#include "SRC/CSV/csv"
 #include "ANN/neunet"
 #include "SRC/MNIST/mnist.h"
 

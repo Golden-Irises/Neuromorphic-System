@@ -74,8 +74,10 @@ public:
     ~net_queue() {
         while (tail) {
             auto tmp  = tail->prev;
-            tmp->prev = nullptr;
-            if (tmp) tmp->next = nullptr;
+            if (tmp) {
+                tmp->prev = nullptr;
+                tmp->next = nullptr;
+            }
             delete tail;
             tail = tmp;
             tmp  = nullptr;

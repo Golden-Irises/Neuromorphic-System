@@ -4,8 +4,6 @@
 #ifndef __NEUNET__
 #define __NEUNET__
 
-#include <future>
-
 #ifndef neunet_eps
 #define neunet_eps DBL_EPSILON
 #endif
@@ -32,8 +30,6 @@
 #define neunet_avg_pool 0x0000
 #define neunet_max_pool 0x0001
 #define neunet_gag_pool 0x0002
-
-#define neuent_async_core   std::thread::hardware_concurrency()
 
 #include "net_async.hpp"
 #include "net_layer.hpp"

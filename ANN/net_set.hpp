@@ -47,7 +47,7 @@ public:
             return;
         }
         auto tmp = new arg [alloc_size](arg {});
-        if (remain) std::copy(ptr, ptr + std::min(len, alloc_size), tmp);
+        if (remain) std::copy(ptr, ptr + neunet_min(len, alloc_size), tmp);
         reset();
         ptr = tmp;
         len = alloc_size;

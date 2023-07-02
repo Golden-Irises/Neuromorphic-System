@@ -30,7 +30,7 @@ template <bool DeduceMode = false> struct NeunetCore {
         iTrainBatSz(iTrainBatchSize),
         iTestBatSz(iTestBatchSize),
         dTrainPrec(dTrainPrecision),
-        asyPool(std::max(iTrainBatchSize, iTestBatchSize)) {}
+        asyPool(neunet_max(iTrainBatchSize, iTestBatchSize)) {}
 };
 
 /* Construct the layer

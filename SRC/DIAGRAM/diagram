@@ -2,8 +2,8 @@
 #pragma comment(lib, "Kernel32.lib")
 #pragma comment(lib, "User32.lib")
 
-#ifndef __DGM__
-#define __DGM__
+#ifndef __DIAGRAM__
+#define __DIAGRAM__
 
 #include <windows.h>
 #include <future>

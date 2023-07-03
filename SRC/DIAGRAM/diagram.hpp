@@ -79,8 +79,6 @@ void diagram_scroll_flush(diagram_scroll_info<point_cnt> &info) {
 template<int point_cnt>
 void diagram_scroll_add_point(diagram_scroll_info<point_cnt> &info, net_queue<double> &points_que) {
     auto y_point = points_que.de_queue();
-    if (info.max_y < y_point) info.max_y = y_point;
-    if (info.min_y > y_point) info.min_y = y_point;
     // if (info.empty) {
     //     info.empty = false;
     //     goto add_point;
@@ -91,6 +89,10 @@ void diagram_scroll_add_point(diagram_scroll_info<point_cnt> &info, net_queue<do
         ++info.min_x;
     }
     add_point: info.y_points[info.point_que_rear] = y_point;
+    info.max_y = *std::max_element(info.y_points, info.y_points + point_cnt);
+    info.min_y = *std::min_element(info.y_points, info.y_points + point_cnt);
+    if (info.min_y < 0)
+    auto pause = true;
 }
 
 template<int point_cnt>
@@ -99,10 +101,15 @@ int diagram_scroll_points_cnt(const diagram_scroll_info<point_cnt> &info) { retu
 template<int point_cnt>
 bool diagram_scroll_update_axis(diagram_scroll_info<point_cnt> &info, int width, int height) {
     diagram_scroll_flush(info);
+    auto y_axis_sgn = info.min_y < 0;
+    if (y_axis_sgn) info.min_y *= (-1);
     auto y_axis_from = int(std::pow(10, std::log10(info.min_y))),
          y_axis_to   = int(std::pow(10, std::log10(info.max_y)) + 10);
-    if (y_axis_from > 10) y_axis_from = 0;
-    else y_axis_from = 0;
+    if (y_axis_sgn) {
+        y_axis_from *= (-1);
+        info.min_y  *= (-1);
+    }
+    if (y_axis_from > 10) y_axis_from -= 10;
     auto y_axis_area = y_axis_to - y_axis_from;
     auto font_y_sz   = 0;
     if (!diagram_font_sz(y_axis_from, font_y_sz)) return false;

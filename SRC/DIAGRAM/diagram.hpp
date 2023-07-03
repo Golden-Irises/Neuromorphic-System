@@ -62,7 +62,7 @@ struct diagram_scroll_info {
     
     double y_points[point_cnt] = {0.};
     
-    int y_axis_points[point_count * 2] = {0};
+    int y_axis_points[point_cnt * 2] = {0};
     
     #endif
 };

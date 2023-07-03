@@ -1,154 +1,175 @@
 NEUNET_BEGIN
 
-struct diagram_pt { double x = 0., y = 0.; };
-
-diagram_pt diagram_console_rect() {
+bool diagram_rect(int &width, int &height) {
     RECT rect;
-    GetWindowRect(GetConsoleWindow(), &rect);
-    return {double(rect.right - rect.left), double(rect.bottom - rect.top)};
+    auto ans = GetWindowRect(GetConsoleWindow(), &rect);
+    width    = rect.right - rect.left;
+    height   = rect.bottom - rect.top;
+    return ans;
 }
 
-template<int point_count = 20>
-struct diagram_scroll_info {
-    int pt_front_idx = 0,
-        pt_rear_idx  = 0,
-        
-        y_axis_len   = 0,
-        y_axis_dy    = 0,
-        
-        x_left       = 1,
-        x_colsz      = 1;
-
-    #if __POINT_COUNT__
-    diagram_pt pt_arr[point_count];
-    
-    int y_axis[point_count * 2];
-    #else
-    diagram_pt pt_arr[20];
-    
-    int y_axis_val[20 * 2];
-    #endif
-
-    double max_y = 10.,
-           min_y = 0.,
-
-           min_x = 0.;
-};
-
-template <int pt_cnt>
-void diagram_scroll_add_point(diagram_scroll_info<pt_cnt> &src, net_queue<diagram_pt> &pt_que) {
-    auto point = pt_que.de_queue();
-    if (src.max_y < point.y) src.max_y = point.y;
-    if (src.min_y > point.y) src.min_y = point.y;
-    if (++src.pt_rear_idx == pt_cnt) src.pt_rear_idx = 0;
-    if (src.pt_front_idx == src.pt_rear_idx) if (++src.pt_front_idx == pt_cnt) src.pt_front_idx = 0;
-    src.pt_arr[src.pt_rear_idx] = std::move(point);
+bool diagram_font_sz(int &x, int &y) {
+    CONSOLE_FONT_INFO font_info;
+    auto ans = GetCurrentConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE), false, &font_info);
+    y        = font_info.dwFontSize.Y;
+    x        = font_info.dwFontSize.X;
+    return ans;
 }
 
-template <int pt_cnt>
-bool diagram_scroll_full(const diagram_scroll_info<pt_cnt> &src) {
-    auto for_rear = src.pt_rear_idx + 1;
-    if (for_rear == pt_cnt) return true;
-    return for_rear == src.pt_front_idx;
+bool diagram_buffer_axis_sz(int &x, int &y) {
+    CONSOLE_SCREEN_BUFFER_INFO buffer_info;
+    auto ans = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &buffer_info);
+    x        = buffer_info.dwSize.X;
+    y        = buffer_info.dwSize.Y;
+    return ans;
 }
 
-template <int pt_cnt>
-int diagram_scroll_len(const diagram_scroll_info<pt_cnt> &src) { return src.pt_front_idx > src.pt_rear_idx ? pt_cnt - src.pt_front_idx + src.pt_rear_idx + 1 : src.pt_rear_idx - src.pt_front_idx + 1; }
-
-int diagram_scroll_colszx(int max_x) {
+template<typename fn>
+int diagram_axis_point_buffer_sz(int src, fn &&os_s_operate = []{}) {
     auto ans = 0;
-    while (max_x) {
-        max_x /= 10;
+    for (auto i = src; src; src /= 10) {
         ++ans;
+        os_s_operate();
     }
     return ans;
 }
 
-void diagram_scroll_printx(int src, int buf_cnt) {
-    auto src_colsz = diagram_scroll_colszx(src);
-    std::cout << src;
-    buf_cnt -= src_colsz;
-    for (auto i = 0; i < buf_cnt; ++i) std::cout << ' ';
+template<int point_cnt = __POINT_COUNT__>
+struct diagram_scroll_info {
+    int point_que_front   = 0,// y_axis_point_dist = 1, 
+        point_que_rear    = 0,// y_axis_point_cnt  = 2
+
+        y_axis_point_cnt  = 0,// 20_    *     *
+        y_axis_point_dist = 0,// |  
+                              // 10_*
+        x_axis_begin      = 1,// |                x_axis_begin    = 3
+        x_axis_block_sz   = 1,// ___0____10___20... x_axis_block_sz = 5
+
+        min_x = 0;
+
+    double max_y = 0.,
+           min_y = 0.;
+
+    bool empty = true;
+
+    #if __POINT_COUNT__
+    
+    double y_points[__POINT_COUNT__] = {0.};
+
+    int y_axis_points[__POINT_COUNT__ * 2] = {0};
+    
+    #else
+    
+    double y_points[point_cnt] = {0.};
+    
+    int y_axis_points[point_count * 2] = {0};
+    
+    #endif
+};
+
+template<int point_cnt>
+void diagram_scroll_flush(diagram_scroll_info<point_cnt> &info) {
+    info.x_axis_begin      = 1;
+    info.x_axis_block_sz   = 1;
+    info.y_axis_point_cnt  = 0;
+    info.y_axis_point_dist = 0;
+    std::system("cls");
 }
 
-template <int pt_cnt>
-void diagram_scroll_axis(diagram_scroll_info<pt_cnt> &src) {
-    auto wnd_sz = diagram_console_rect();
-    auto y_from = int(std::pow(10, std::log10(src.min_y))),
-         y_to   = int(std::pow(10, std::log10(src.max_y)) + 10);
-    if (y_from < 10) y_from = 0;
-    else y_from -= 10;
-    auto y_area = y_to - y_from;
-    CONSOLE_FONT_INFO font_info;
-    GetCurrentConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE), false, &font_info);
-    auto y_font_sz = font_info.dwFontSize.Y,
-         x_font_sz = font_info.dwFontSize.X;
-    auto y_axis    = wnd_sz.y * 0.8 / y_font_sz,
-         y_buffer  = y_axis / pt_cnt,
-         y_unit    = y_area / y_axis,
-         y_show    = y_to * 1.;
-    while (y_axis > pt_cnt + 5) {
-        ++src.y_axis_dy;
-        y_axis /= (src.y_axis_dy + 1);
+template<int point_cnt>
+void diagram_scroll_add_point(diagram_scroll_info<point_cnt> &info, net_queue<double> &points_que) {
+    auto y_point = points_que.de_queue();
+    if (info.max_y < y_point) info.max_y = y_point;
+    if (info.min_y > y_point) info.min_y = y_point;
+    // if (info.empty) {
+    //     info.empty = false;
+    //     goto add_point;
+    // }
+    if (++info.point_que_rear == point_cnt) info.point_que_rear = 0;
+    if (info.point_que_rear == info.point_que_front) {
+        if (++info.point_que_front == point_cnt) info.point_que_front = 0;
+        ++info.min_x;
     }
-    for (auto i = 0; i < y_axis; ++i) {
-        std::cout << (int)y_show << '\n';
-        src.y_axis_val[src.y_axis_len++] = y_show;
-        if (src.y_axis_dy) for (auto j = 0; j < src.y_axis_dy; ++j) {
-            std::cout << '\n';
-            y_show -= y_unit;
-        } else y_show -= y_unit;
+    add_point: info.y_points[info.point_que_rear] = y_point;
+}
+
+template<int point_cnt>
+int diagram_scroll_points_cnt(const diagram_scroll_info<point_cnt> &info) { return info.point_que_rear > info.point_que_front ? info.point_que_rear - info.point_que_front + 1 : info.point_que_rear + 1 + point_cnt - info.point_que_front; }
+
+template<int point_cnt>
+bool diagram_scroll_update_axis(diagram_scroll_info<point_cnt> &info, int width, int height) {
+    diagram_scroll_flush(info);
+    auto y_axis_from = int(std::pow(10, std::log10(info.min_y))),
+         y_axis_to   = int(std::pow(10, std::log10(info.max_y)) + 10);
+    if (y_axis_from > 10) y_axis_from = 0;
+    else y_axis_from = 0;
+    auto y_axis_area = y_axis_to - y_axis_from;
+    auto font_y_sz   = 0;
+    if (!diagram_font_sz(y_axis_from, font_y_sz)) return false;
+    auto y_axis_height = height * 0.8,
+         y_point_cnt   = y_axis_height / font_y_sz;
+    while (y_point_cnt > point_cnt) y_point_cnt = y_axis_height / (font_y_sz * (++info.y_axis_point_dist + 1) + 1);
+    auto y_axis_max  = y_axis_to * 1.,
+         y_axis_unit = y_axis_area * 1. / y_point_cnt;
+    for (auto i = 0; i < y_point_cnt; ++i) {
+        std::cout << int(y_axis_max) << '\n';
+        info.y_axis_points[info.y_axis_point_cnt++] = y_axis_max;
+        y_axis_max -= y_axis_unit;
+        for (auto j = 0; j < info.y_axis_point_dist; ++j) std::cout << '\n';
     }
-    while (y_to) {
-        std::cout << ' ';
-        y_to /= 10;
-        ++src.x_left;
-    }
+    diagram_axis_point_buffer_sz(y_axis_to, [&info]{ std::cout << ' '; ++info.x_axis_begin; });
     std::cout << ' ';
-    CONSOLE_SCREEN_BUFFER_INFO buffer_info;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &buffer_info);
-    auto x_axis_buf = buffer_info.dwSize.X - src.x_left;
-    src.x_colsz     = x_axis_buf / pt_cnt;
-    for (auto i = 0; i < pt_cnt; ++i) diagram_scroll_printx(i, src.x_colsz);
-    ++src.x_left;
-    if (diagram_scroll_full(src)) ++src.min_x;
-}
-
-template <int pt_cnt>
-bool diagram_scroll_offset(const diagram_scroll_info<pt_cnt> &src, const diagram_pt &point) {
-    short y_offset = 0;
-    for (auto i = 0; i < src.y_axis_len; ++i) {
-        if (point.y < src.y_axis_val[i]) continue;
-        y_offset = i * src.y_axis_dy + 1;
-        if (point.y == src.y_axis_val[i] || !src.y_axis_dy) break;
-        auto dif = src.y_axis_val[i] - src.y_axis_val[i - 1];
-        auto dy = dif * 1.0 / src.y_axis_dy + 1;
-        for (double j = src.y_axis_val[i] + dy; j < src.y_axis_val[i - 1]; j += dy) {
-            if (j > point.y) break;
-            --y_offset;
-        }
+    auto x_bufsz = 0;
+    if (!diagram_buffer_axis_sz(x_bufsz, y_axis_from)) return false;
+    x_bufsz             -= info.x_axis_begin;
+    info.x_axis_block_sz = x_bufsz / point_cnt;
+    for (auto i = 0; i < point_cnt; ++i) {
+        auto x_axis_point = info.min_x + i;
+        std::cout << x_axis_point;
+        auto blank_bufsz = info.x_axis_block_sz - diagram_axis_point_buffer_sz(x_axis_point, []{});
+        if (i + 1 < point_cnt) for (auto j = 0; j < blank_bufsz; ++j) std::cout << ' ';
     }
-    short x_ffset = point.x % pt_cnt * src.x_colsz + 1 + src.x_left;
-    COORD co_ord {x_ffset, y_offset};
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), &co_ord);
     return true;
 }
 
-template <int pt_cnt>
-void diagram_scroll_print(diagram_scroll_info<pt_cnt> &src, net_queue<diagram_pt> &pt_que) {
-    std::system("cls");
-    diagram_scroll_axis(src);
-    diagram_scroll_add_point(src, pt_que);
-    auto pt_len = diagram_scroll_len(src);
-    for (auto i = 0; i < pt_len; ++i) {
-        auto idx = (src.pt_front_idx + i) % pt_cnt;
-        diagram_scroll_offset(src, src.pt_arr[idx]);
+template<int point_cnt>
+bool diagram_scroll_offset(const diagram_scroll_info<point_cnt> &info, int x_point, double y_point) {
+    auto prev_tmp = 0,
+         y_offset = 0;
+    for (auto i = 0; i < info.y_axis_point_cnt; ++i) {
+        auto y_axis_point = info.y_axis_points[i];
+        if (y_point < y_axis_point) {
+            prev_tmp = y_axis_point;
+            if (i + 1 == info.y_axis_point_cnt) {
+                y_offset = info.y_axis_point_cnt * (info.y_axis_point_dist + 1) - 1;
+                break;
+            }
+            continue;
+        }
+        y_offset += i * (info.y_axis_point_dist + 1);
+        if (y_point == y_axis_point || !info.y_axis_point_dist) break;
+        auto y_axis_point_dif = (prev_tmp - y_axis_point) * 1. / (info.y_axis_point_dist + 1);
+        for (auto j = y_axis_point + y_axis_point_dif; j < prev_tmp; j += y_axis_point_dif) {
+            if (j > y_point) break;
+            --y_offset;
+        }
+        break;
+    }
+    auto x_offset = x_point - info.min_x;
+    x_offset     *= info.x_axis_block_sz;
+    x_offset     += info.x_axis_begin;
+    return SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), {short(x_offset), short(y_offset)});
+}
+
+template<int point_cnt>
+bool diagram_scroll_update_point(diagram_scroll_info<point_cnt> &info, net_queue<double> &points_que) {
+    auto points_cnt = diagram_scroll_points_cnt(info);
+    for (auto i = 0; i < points_cnt; ++i) {
+        auto idx = (info.point_que_front + i) % point_cnt;
+        diagram_scroll_offset(info, i + info.min_x, info.y_points[idx]);
         std::cout << '*';
     }
-    src.x_left     = 1;
-    src.x_colsz    = 0;
-    src.y_axis_dy  = 0;
-    src.y_axis_len = 0;
+    return true;
 }
 
 NEUNET_END

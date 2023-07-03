@@ -18,7 +18,7 @@ int main(int argc, char *argv[], char *envp[]) {
         que_test.en_queue(std::sin(i * area) * 20);
     }
 
-    diagram_scroll_info info;
+    diagram_scroll_info<20, '#'> info;
     auto len = que_test.size();
     for (auto i = 0ull; i < len; ++i) {
         auto console_x = 0,
@@ -27,7 +27,7 @@ int main(int argc, char *argv[], char *envp[]) {
         diagram_scroll_add_point(info, que_test);
         diagram_scroll_update_axis(info, console_x, console_y);
         diagram_scroll_update_point(info, que_test);
-        Sleep(100);
+        Sleep(50);
     }
     diagram_scroll_flush(info);
 

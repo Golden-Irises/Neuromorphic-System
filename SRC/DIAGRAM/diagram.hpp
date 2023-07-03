@@ -34,7 +34,7 @@ int diagram_axis_point_buffer_sz(int src, fn &&os_s_operate = []{}) {
     return ans;
 }
 
-template<int point_cnt = __POINT_COUNT__>
+template<int point_cnt = __POINT_COUNT__, char point_show = '*'>
 struct diagram_scroll_info {
     int point_que_front   = 0,// y_axis_point_dist = 1, 
         point_que_rear    = 0,// y_axis_point_cnt  = 2
@@ -67,8 +67,8 @@ struct diagram_scroll_info {
     #endif
 };
 
-template<int point_cnt>
-void diagram_scroll_flush(diagram_scroll_info<point_cnt> &info) {
+template<int point_cnt, char point_show>
+void diagram_scroll_flush(diagram_scroll_info<point_cnt, point_show> &info) {
     info.x_axis_begin      = 1;
     info.x_axis_block_sz   = 1;
     info.y_axis_point_cnt  = 0;
@@ -76,8 +76,8 @@ void diagram_scroll_flush(diagram_scroll_info<point_cnt> &info) {
     std::system("cls");
 }
 
-template<int point_cnt>
-void diagram_scroll_add_point(diagram_scroll_info<point_cnt> &info, net_queue<double> &points_que) {
+template<int point_cnt, char point_show>
+void diagram_scroll_add_point(diagram_scroll_info<point_cnt, point_show> &info, net_queue<double> &points_que) {
     auto y_point = points_que.de_queue();
     // if (info.empty) {
     //     info.empty = false;
@@ -95,11 +95,11 @@ void diagram_scroll_add_point(diagram_scroll_info<point_cnt> &info, net_queue<do
     auto pause = true;
 }
 
-template<int point_cnt>
-int diagram_scroll_points_cnt(const diagram_scroll_info<point_cnt> &info) { return info.point_que_rear > info.point_que_front ? info.point_que_rear - info.point_que_front + 1 : info.point_que_rear + 1 + point_cnt - info.point_que_front; }
+template<int point_cnt, char point_show>
+int diagram_scroll_points_cnt(const diagram_scroll_info<point_cnt, point_show> &info) { return info.point_que_rear > info.point_que_front ? info.point_que_rear - info.point_que_front + 1 : info.point_que_rear + 1 + point_cnt - info.point_que_front; }
 
-template<int point_cnt>
-bool diagram_scroll_update_axis(diagram_scroll_info<point_cnt> &info, int width, int height) {
+template<int point_cnt, char point_show>
+bool diagram_scroll_update_axis(diagram_scroll_info<point_cnt, point_show> &info, int width, int height) {
     diagram_scroll_flush(info);
     auto y_axis_sgn = info.min_y < 0;
     if (y_axis_sgn) info.min_y *= (-1);
@@ -139,8 +139,8 @@ bool diagram_scroll_update_axis(diagram_scroll_info<point_cnt> &info, int width,
     return true;
 }
 
-template<int point_cnt>
-bool diagram_scroll_offset(const diagram_scroll_info<point_cnt> &info, int x_point, double y_point) {
+template<int point_cnt, char point_show>
+bool diagram_scroll_offset(const diagram_scroll_info<point_cnt, point_show> &info, int x_point, double y_point) {
     auto prev_tmp = 0,
          y_offset = 0;
     for (auto i = 0; i < info.y_axis_point_cnt; ++i) {
@@ -168,13 +168,13 @@ bool diagram_scroll_offset(const diagram_scroll_info<point_cnt> &info, int x_poi
     return SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), {short(x_offset), short(y_offset)});
 }
 
-template<int point_cnt>
-bool diagram_scroll_update_point(diagram_scroll_info<point_cnt> &info, net_queue<double> &points_que) {
+template<int point_cnt, char point_show>
+bool diagram_scroll_update_point(diagram_scroll_info<point_cnt, point_show> &info, net_queue<double> &points_que) {
     auto points_cnt = diagram_scroll_points_cnt(info);
     for (auto i = 0; i < points_cnt; ++i) {
         auto idx = (info.point_que_front + i) % point_cnt;
         diagram_scroll_offset(info, i + info.min_x, info.y_points[idx]);
-        std::cout << '*';
+        std::cout << point_show;
     }
     return true;
 }

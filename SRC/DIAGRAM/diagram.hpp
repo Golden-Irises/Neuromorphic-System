@@ -79,10 +79,10 @@ void diagram_scroll_flush(diagram_scroll_info<point_cnt, point_show> &info) {
 template<int point_cnt, char point_show>
 void diagram_scroll_add_point(diagram_scroll_info<point_cnt, point_show> &info, net_queue<double> &points_que) {
     auto y_point = points_que.de_queue();
-    // if (info.empty) {
-    //     info.empty = false;
-    //     goto add_point;
-    // }
+    if (info.empty) {
+        info.empty = false;
+        goto add_point;
+    }
     if (++info.point_que_rear == point_cnt) info.point_que_rear = 0;
     if (info.point_que_rear == info.point_que_front) {
         if (++info.point_que_front == point_cnt) info.point_que_front = 0;
@@ -91,8 +91,6 @@ void diagram_scroll_add_point(diagram_scroll_info<point_cnt, point_show> &info, 
     add_point: info.y_points[info.point_que_rear] = y_point;
     info.max_y = *std::max_element(info.y_points, info.y_points + point_cnt);
     info.min_y = *std::min_element(info.y_points, info.y_points + point_cnt);
-    if (info.min_y < 0)
-    auto pause = true;
 }
 
 template<int point_cnt, char point_show>
@@ -170,6 +168,8 @@ template<int point_cnt, char point_show>
 bool diagram_scroll_update_point(diagram_scroll_info<point_cnt, point_show> &info, net_queue<double> &points_que) {
     auto points_cnt = diagram_scroll_points_cnt(info);
     for (auto i = 0; i < points_cnt; ++i) {
+        CONSOLE_CURSOR_INFO cursor_info {1, false};
+        SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursor_info);
         auto idx = (info.point_que_front + i) % point_cnt;
         diagram_scroll_offset(info, i + info.min_x, info.y_points[idx]);
         std::cout << point_show;

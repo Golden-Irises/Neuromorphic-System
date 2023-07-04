@@ -15,9 +15,9 @@ int main(int argc, char *argv[], char *envp[]) {
     net_queue<double> que_test;
     auto area = std::acos(-1) / 10;
 
-    std::thread set_data([&que_test, area]{ for (auto i = 0; i < 300; ++i) {
+    std::thread set_data([&que_test, area]{ for (auto i = 0; i < 500; ++i) {
         que_test.en_queue(std::sin(i * area) * 20);
-        _sleep(500);
+        _sleep(50);
     } });
 
     diagram_scroll_info<20, 'O'> info;

@@ -113,7 +113,7 @@ bool diagram_scroll_update_axis(diagram_scroll_info<point_cnt, point_show> &info
     auto y_axis_area = y_axis_to - y_axis_from;
     auto font_y_sz   = 0;
     if (!diagram_font_sz(y_axis_from, font_y_sz)) return false;
-    auto y_axis_height = height * 0.8,
+    auto y_axis_height = height * .87,
          y_point_cnt   = y_axis_height / font_y_sz;
     while (y_point_cnt > point_cnt) y_point_cnt = y_axis_height / (font_y_sz * (++info.y_axis_point_dist + 1) + 1);
     auto y_axis_max  = y_axis_to * 1.,
@@ -147,11 +147,9 @@ bool diagram_scroll_offset(const diagram_scroll_info<point_cnt, point_show> &inf
         auto y_axis_point = info.y_axis_points[i];
         if (y_point < y_axis_point) {
             prev_tmp = y_axis_point;
-            if (i + 1 == info.y_axis_point_cnt) {
-                y_offset = info.y_axis_point_cnt * (info.y_axis_point_dist + 1) - 1;
-                break;
-            }
-            continue;
+            if (i + 1 != info.y_axis_point_cnt) continue; 
+            y_offset = info.y_axis_point_cnt * (info.y_axis_point_dist + 1) - 1;
+            break;
         }
         y_offset += i * (info.y_axis_point_dist + 1);
         if (y_point == y_axis_point || !info.y_axis_point_dist) break;

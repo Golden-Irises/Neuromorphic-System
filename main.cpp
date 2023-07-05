@@ -47,10 +47,10 @@ int main(int argc, char *argv[], char *envp[]) {
     NeunetAddLayer<LayerAct<neunet_softmax>>(net_core);
 
     root = "...\\MNIST\\";
-    auto train_elem  = root + "train-images.idx3-ubyte",
-         train_lbl   = root + "train-labels.idx1-ubyte",
-         test_elem   = root + "t10k-images.idx3-ubyte",
-         test_lbl    = root + "t10k-labels.idx1-ubyte";
+    auto train_elem = root + "train-images.idx3-ubyte",
+         train_lbl  = root + "train-labels.idx1-ubyte",
+         test_elem  = root + "t10k-images.idx3-ubyte",
+         test_lbl   = root + "t10k-labels.idx1-ubyte";
 
     mnist_stream train_file, test_file;
 	mnist_data train_data, test_data;

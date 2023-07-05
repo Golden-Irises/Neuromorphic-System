@@ -1,8 +1,8 @@
 # Neuromorphic System
 
-Hello, This is Hatsune ~\
-こんにちは、ハツネちゃんです～　キラー～(∠・ω< )⌒✨
+Welcome back home, my master.\
+お帰りなさいませ、主様。
 
-![Hatsune](https://patchwiki.biligame.com/images/pcr/0/08/g1w6mz5mjfp23jgeqixo7xjvavjp9wt.png)
+<img src="https://moegirl.uk/images/5/52/Unit_big_111931.jpg" width = "200px" />
 
-It's about a neo tale.
+Call my neo heart "kokoro".

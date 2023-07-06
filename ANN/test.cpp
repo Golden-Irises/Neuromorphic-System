@@ -27,28 +27,28 @@ int main(int argc, char *argv[], char *envp[]) {
     auto chrono_begin = kokkoro_chrono_time_point;
     cout << "Kokkoro is working, my master..." << endl;
 
-    KokkoroCore net_core {125, 125};
+    KokkoroCore kokkoro_core {125, 125};
 
     string root = "SRC\\ARCHIVE\\";
-    KokkoroAddLayer<LayerConv<20, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core, root + "C0.csv");
-    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B0_shift.csv", root + "B0_scale.csv");
-    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S0.csv");
-    KokkoroAddLayer<LayerAct<kokkoro_ReLU>>(net_core);
-    KokkoroAddLayer<LayerPool<kokkoro_avg_pool, 2, 2, 2, 2>>(net_core);
-    KokkoroAddLayer<LayerConv<50, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core, root + "C2.csv");
-    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B2_shift.csv", root + "B2_scale.csv");
-    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S2.csv");
-    KokkoroAddLayer<LayerAct<kokkoro_ReLU>>(net_core);
-    KokkoroAddLayer<LayerPool<kokkoro_avg_pool, 2, 2, 2, 2>>(net_core);
-    KokkoroAddLayer<LayerFlat>(net_core);
-    KokkoroAddLayer<LayerFC<500, LEARN_RATE>>(net_core, root + "F4.csv");
-    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B4_shift.csv", root + "B4_scale.csv");
-    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S4.csv");
-    KokkoroAddLayer<LayerAct<kokkoro_sigmoid>>(net_core);
-    KokkoroAddLayer<LayerFC<10, LEARN_RATE>>(net_core, root + "F5.csv");
-    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B5_shift.csv", root + "B5_scale.csv");
-    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S5.csv");
-    KokkoroAddLayer<LayerAct<kokkoro_softmax>>(net_core);
+    KokkoroAddLayer<LayerConv<20, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(kokkoro_core, root + "C0.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_core, root + "B0_shift.csv", root + "B0_scale.csv");
+    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(kokkoro_core, root + "S0.csv");
+    KokkoroAddLayer<LayerAct<kokkoro_ReLU>>(kokkoro_core);
+    KokkoroAddLayer<LayerPool<kokkoro_avg_pool, 2, 2, 2, 2>>(kokkoro_core);
+    KokkoroAddLayer<LayerConv<50, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(kokkoro_core, root + "C2.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_core, root + "B2_shift.csv", root + "B2_scale.csv");
+    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(kokkoro_core, root + "S2.csv");
+    KokkoroAddLayer<LayerAct<kokkoro_ReLU>>(kokkoro_core);
+    KokkoroAddLayer<LayerPool<kokkoro_avg_pool, 2, 2, 2, 2>>(kokkoro_core);
+    KokkoroAddLayer<LayerFlat>(kokkoro_core);
+    KokkoroAddLayer<LayerFC<500, LEARN_RATE>>(kokkoro_core, root + "F4.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_core, root + "B4_shift.csv", root + "B4_scale.csv");
+    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(kokkoro_core, root + "S4.csv");
+    KokkoroAddLayer<LayerAct<kokkoro_sigmoid>>(kokkoro_core);
+    KokkoroAddLayer<LayerFC<10, LEARN_RATE>>(kokkoro_core, root + "F5.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_core, root + "B5_shift.csv", root + "B5_scale.csv");
+    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(kokkoro_core, root + "S5.csv");
+    KokkoroAddLayer<LayerAct<kokkoro_softmax>>(kokkoro_core);
 
     root = "E:\\VS Code project data\\MNIST\\";
     auto train_elem = root + "train-images.idx3-ubyte",
@@ -78,9 +78,9 @@ int main(int argc, char *argv[], char *envp[]) {
     mnist_read(&test_file, &test_data, ln_cnt, col_cnt, 0, true);
     mnist_close(&test_file);
     
-    KokkoroInit(net_core, train_data.lbl.length, test_data.lbl.length, ln_cnt, col_cnt, 1);
-	KokkoroRun(net_core, train_data.elem, train_data.lbl, train_idx, test_data .elem, test_data.lbl, MNIST_ORGN_SZ);
-    KokkoroResult(net_core);
+    KokkoroInit(kokkoro_core, train_data.lbl.length, test_data.lbl.length, ln_cnt, col_cnt, 1);
+	KokkoroRun(kokkoro_core, train_data.elem, train_data.lbl, train_idx, test_data .elem, test_data.lbl, MNIST_ORGN_SZ);
+    KokkoroResult(kokkoro_core);
     
     cout << kokkoro_chrono_time_point - chrono_begin << "ms" << endl;
     return EXIT_SUCCESS;

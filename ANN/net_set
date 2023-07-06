@@ -10,8 +10,6 @@
 #define NEUNET_END      }
 
 #define neunet_null_ref(type)       *(type*)nullptr
-#define neunet_max(x, y)            (x < y ? y : x)
-#define neunet_min(x, y)            (x < y ? x : y)
 
 #define neunet_pure_type(type)      std::remove_reference_t<type>
 #define neunet_copy_assert(type)    static_assert(std::is_copy_assignable_v<type>, "Type is not copy assignable.")

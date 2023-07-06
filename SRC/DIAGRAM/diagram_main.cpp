@@ -1,6 +1,7 @@
 #pragma once
 
-#define __POINT_COUNT__ 20
+#define __POINT_COUNT__   20
+#define __POINT_PATTERN__ '#'
 
 #include <iostream>
 #include "diagram"
@@ -18,20 +19,18 @@ int main(int argc, char *argv[], char *envp[]) {
     std::thread set_data([&que_test, area]{ for (auto i = 0; i < 500; ++i) {
         que_test.en_queue(std::sin(i * area) * 20);
         _sleep(50);
+        if (i == 499) i = 0;
     } });
 
-    diagram_scroll_info<20, 'O'> info;
+    diagram_scroll_info<20, '#'> info;
     auto len = que_test.size();
     while (true) {
-        auto console_x = 0,
-             console_y = 0;
-        diagram_rect(console_x, console_y);
         diagram_scroll_add_point(info, que_test);
-        diagram_scroll_update_axis(info, console_x, console_y);
+        diagram_scroll_update_axis(info);
         diagram_scroll_update_point(info, que_test);
     }
-    diagram_scroll_flush(info);
     set_data.join();
+    diagram_scroll_flush(info);
 
     cout << neunet_chrono_time_point - tm << "ms" << endl;
     return 0;

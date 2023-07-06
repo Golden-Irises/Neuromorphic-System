@@ -5,4 +5,4 @@ Welcome back home, my master.\
 
 <img src="https://moegirl.uk/images/5/52/Unit_big_111931.jpg" width = "200px" />
 
-Call my neo heart "kokoro".
+Call my neo heart "Kokkoro".

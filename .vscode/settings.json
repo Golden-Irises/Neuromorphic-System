@@ -8,6 +8,7 @@
         "neunet": "cpp",
         "csv": "cpp",
         "diagram": "cpp",
-        "kokkoro": "cpp"
+        "kokkoro": "cpp",
+        "kokkoro_data": "cpp"
     }
 }

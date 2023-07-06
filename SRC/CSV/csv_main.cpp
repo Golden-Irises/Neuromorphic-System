@@ -4,7 +4,7 @@
 #include "csv"
 
 using namespace std;
-using namespace neunet;
+using namespace kokkoro;
 
 int main(int argc, char *argv[], char *envp[]) {
     cout << "hello, world." << endl;
@@ -13,7 +13,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
     csv_print(in);
     
-    net_set<net_set<string>> table = {
+    kokkoro_set<kokkoro_set<string>> table = {
         {"ID", "Name", "Age", "Gender"},
         {"0" , "Doxy", "22" , "Female"},
         {"1" , "Roal", "31" , "Female"},

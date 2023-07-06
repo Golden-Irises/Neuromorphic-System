@@ -4,6 +4,7 @@
 #pragma once
 
 #include <iostream>
+#include "../../ANN/kokkoro"
 #include "kokkoro_data"
 
 using namespace kokkoro;

@@ -1,11 +1,13 @@
 {
     "files.associations": {
-        "net_base": "cpp",
-        "net_matrix": "cpp",
+        "*.jsp": "html",
+        "kokkoro_base": "cpp",
+        "kokkoro_matrix": "cpp",
         "*.vt": "verilog",
-        "net_set": "cpp",
+        "kokkoro_set": "cpp",
         "neunet": "cpp",
         "csv": "cpp",
-        "diagram": "cpp"
+        "diagram": "cpp",
+        "kokkoro": "cpp"
     }
 }

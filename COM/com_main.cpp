@@ -8,6 +8,7 @@
 #include <iostream>
 #include <dcb.h>
 
+using namespace kokkoro;
 using namespace std;
 
 int main(int argc, char *argv[], char *envp[]) {

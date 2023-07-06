@@ -1,14 +1,14 @@
-NEUNET_BEGIN
+KOKKORO_BEGIN
 
 template <double dPlaceholder = 0.>
-net_matrix BNBetaGammaInit(uint64_t iChannCnt) {
-    net_matrix vecAns {1, iChannCnt};
+kokkoro_matrix BNBetaGammaInit(uint64_t iChannCnt) {
+    kokkoro_matrix vecAns {1, iChannCnt};
     if constexpr (dPlaceholder != 0) for (auto i = 0ull; i < iChannCnt; ++i) vecAns.index(i) = dPlaceholder;
     return vecAns;
 }
 
 struct BNData final {
-    net_matrix vecMuBeta, vecSigmaSqr, vecSigmaEps,
+    kokkoro_matrix vecMuBeta, vecSigmaSqr, vecSigmaEps,
                vecExpMuBeta, vecExpSigmaSqr, vecExpSigmaEps;
 
     uint64_t iBatCnt = 0,
@@ -16,7 +16,7 @@ struct BNData final {
 
     double dCoeBatSz = 0;
 
-    net_set<net_matrix> setBarX, setDist;
+    kokkoro_set<kokkoro_matrix> setBarX, setDist;
 };
 
 void BNDataInit(BNData &BdData, uint64_t iBatchSize, uint64_t iBatchCnt) {
@@ -27,18 +27,18 @@ void BNDataInit(BNData &BdData, uint64_t iBatchSize, uint64_t iBatchCnt) {
 }
 
 // Train
-void BNOut(net_set<net_matrix> &setIn, BNData &BdData, const net_matrix &vecBeta, const net_matrix &vecGamma) {
-    BdData.vecMuBeta  = net_matrix::sigma(setIn);
+void BNOut(kokkoro_set<kokkoro_matrix> &setIn, BNData &BdData, const kokkoro_matrix &vecBeta, const kokkoro_matrix &vecGamma) {
+    BdData.vecMuBeta  = kokkoro_matrix::sigma(setIn);
     BdData.vecMuBeta *= BdData.dCoeBatSz;
     for (auto i = 0ull; i < setIn.length; ++i) {
         setIn[i]         -= BdData.vecMuBeta;
         BdData.setDist[i] = setIn[i];
         BdData.setDist[i].elem_wise_mul(BdData.setDist[i]);
     }
-    BdData.vecSigmaSqr  = net_matrix::sigma(BdData.setDist);
+    BdData.vecSigmaSqr  = kokkoro_matrix::sigma(BdData.setDist);
     BdData.vecSigmaSqr *= BdData.dCoeBatSz;
     BdData.vecSigmaEps  = BdData.vecSigmaSqr;
-    BdData.vecSigmaEps.broadcast_add(neunet_eps);
+    BdData.vecSigmaEps.broadcast_add(kokkoro_eps);
     BdData.vecSigmaEps.elem_wise_pow(0.5);
     BdData.setDist = setIn;
     for (auto i = 0ull; i < setIn.length; ++i) {
@@ -73,15 +73,15 @@ void BNMovAvg(BNData &BdData) {
     }
 }
 
-void BNGradIn(net_set<net_matrix> &setGradOut, BNData &BdData, net_matrix &vecGradBeta, net_matrix &vecGradGamma, const net_matrix &vecGamma) {
+void BNGradIn(kokkoro_set<kokkoro_matrix> &setGradOut, BNData &BdData, kokkoro_matrix &vecGradBeta, kokkoro_matrix &vecGradGamma, const kokkoro_matrix &vecGamma) {
     // shift gradient
-    BdData.vecMuBeta = net_matrix::sigma(setGradOut);
+    BdData.vecMuBeta = kokkoro_matrix::sigma(setGradOut);
     if (vecGradBeta.verify) vecGradBeta.clear();
     else vecGradBeta = {1, vecGamma.element_count};
     for (auto i = 0ull; i < BdData.vecMuBeta.line_count; ++i) for (auto j = 0ull; j < vecGradBeta.element_count; ++j) vecGradBeta.index(j) += BdData.vecMuBeta[i][j];
     // scale gradient tensor
     for (auto i = 0ull; i < setGradOut.length; ++i) BdData.setBarX[i].elem_wise_mul(setGradOut[i]);
-    BdData.vecSigmaSqr = net_matrix::sigma(BdData.setBarX);
+    BdData.vecSigmaSqr = kokkoro_matrix::sigma(BdData.setBarX);
     // bar x gradient
     for (auto i = 0ull; i < setGradOut.length; ++i) for (auto j = 0ull; j < setGradOut[i].line_count; ++j) for (auto k = 0ull; k < setGradOut[i].column_count; ++k) setGradOut[i][j][k] *= vecGamma.index(k);
     // scale gradient
@@ -91,14 +91,14 @@ void BNGradIn(net_set<net_matrix> &setGradOut, BNData &BdData, net_matrix &vecGr
     // variant gradient
     BdData.setBarX = setGradOut;
     for (auto i = 0ull; i < setGradOut.length; ++i) BdData.setBarX[i].elem_wise_mul(BdData.setDist[i]);
-    BdData.vecSigmaSqr = net_matrix::sigma(BdData.setBarX);
+    BdData.vecSigmaSqr = kokkoro_matrix::sigma(BdData.setBarX);
     for (auto i = 0; i < 3; ++i) BdData.vecSigmaSqr.elem_wise_div(BdData.vecSigmaEps);
     BdData.vecSigmaSqr *= BdData.dCoeBatSz;
     // expectation gradient
     for (auto i = 0ull; i < setGradOut.length; ++i) setGradOut[i].elem_wise_div(BdData.vecSigmaEps);
-    BdData.vecMuBeta = net_matrix::sigma(BdData.setDist);
+    BdData.vecMuBeta = kokkoro_matrix::sigma(BdData.setDist);
     BdData.vecMuBeta.elem_wise_mul(BdData.vecSigmaSqr);
-    BdData.vecMuBeta -= net_matrix::sigma(setGradOut);
+    BdData.vecMuBeta -= kokkoro_matrix::sigma(setGradOut);
     BdData.vecMuBeta *= BdData.dCoeBatSz;
     // input gradient
     for (auto i = 0ull; i < setGradOut.length; ++i) {
@@ -109,7 +109,7 @@ void BNGradIn(net_set<net_matrix> &setGradOut, BNData &BdData, net_matrix &vecGr
 }
 
 // Deduce
-void BNOut(net_matrix &vecIn, BNData &BdData, const net_matrix &vecBeta, const net_matrix &vecGamma) {
+void BNOut(kokkoro_matrix &vecIn, BNData &BdData, const kokkoro_matrix &vecBeta, const kokkoro_matrix &vecGamma) {
     vecIn -= BdData.vecExpMuBeta;
     vecIn.elem_wise_div(BdData.vecExpSigmaEps);
     for (auto i = 0ull; i < vecIn.line_count; ++i) for (auto j = 0ull; j < vecIn.column_count; ++j) {
@@ -118,4 +118,4 @@ void BNOut(net_matrix &vecIn, BNData &BdData, const net_matrix &vecBeta, const n
     }
 }
 
-NEUNET_END
+KOKKORO_END

@@ -1,3 +1,5 @@
+KOKKORO_BEGIN
+
 int mnist_num_rev(int src) {
     uint8_t tmp_0, tmp_1, tmp_2, tmp_3;
     tmp_0 = src & 0x00ff;
@@ -96,8 +98,8 @@ std::wstring mnist_s2ws(const std::string &src) {
     return ans;
 }
 
-neunet::net_set<uint64_t> mnist_idx(const mnist_data *src) {
-    neunet::net_set<uint64_t> ans(src->elem.length);
+kokkoro_set<uint64_t> mnist_idx(const mnist_data *src) {
+    kokkoro_set<uint64_t> ans(src->elem.length);
     for (auto i = 0ull; i < ans.length; ++i) ans[i] = i;
     ans.shuffle();
     return ans;
@@ -134,3 +136,5 @@ bool mnist_save_image(const char *dir, const mnist_data *src, int expe_save_qty 
     } } status_err: Gdiplus::GdiplusShutdown(gph_token);
     return status == Gdiplus::Ok;
 }
+
+KOKKORO_END

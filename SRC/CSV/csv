@@ -6,7 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "..\..\ANN\net_set"
+#include "..\..\ANN\kokkoro_set"
 #include "csv.hpp"
 
 #endif

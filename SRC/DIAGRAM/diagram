@@ -8,8 +8,8 @@
 #include <windows.h>
 #include <future>
 
-#include "../../ANN/net_set"
-#include "../../ANN/net_async.hpp"
+#include "../../ANN/kokkoro_set"
+#include "../../ANN/kokkoro_async.hpp"
 #include "diagram.hpp"
 
 #endif

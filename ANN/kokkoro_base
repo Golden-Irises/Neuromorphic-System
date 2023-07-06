@@ -1,0 +1,12 @@
+#pragma once
+
+#ifndef __KOKKORO_BASE__
+#define __KOKKORO_BASE__
+
+#include "kokkoro_matrix"
+
+#define kokkoro_traverse(vect, fn) for (auto i = 0ull; i < vect.elem_cnt(); ++i) vect.index(i) = fn(vect.index(i))
+
+#include "kokkoro_base.hpp"
+
+#endif

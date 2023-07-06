@@ -1,4 +1,4 @@
-NEUNET_BEGIN
+KOKKORO_BEGIN
 
 bool diagram_buffer_sz(int &x, int &y) {
     // getting console buffer info status
@@ -75,7 +75,7 @@ void diagram_scroll_flush(diagram_scroll_info<point_cnt, point_show> &info) {
 #if !__POINT_COUNT__
 template<int point_cnt, char point_show>
 #endif
-void diagram_scroll_add_point(diagram_scroll_info<point_cnt, point_show> &info, net_queue<double> &points_que) {
+void diagram_scroll_add_point(diagram_scroll_info<point_cnt, point_show> &info, kokkoro_queue<double> &points_que) {
     auto y_point = points_que.de_queue();
     if (info.empty) {
         info.empty = false;
@@ -183,7 +183,7 @@ bool diagram_scroll_offset(const diagram_scroll_info<point_cnt, point_show> &inf
 #if !__POINT_COUNT__
 template<int point_cnt, char point_show>
 #endif
-bool diagram_scroll_update_point(diagram_scroll_info<point_cnt, point_show> &info, net_queue<double> &points_que) {
+bool diagram_scroll_update_point(diagram_scroll_info<point_cnt, point_show> &info) {
     auto points_cnt = diagram_scroll_points_cnt(info);
     for (auto i = 0; i < points_cnt; ++i) {
         CONSOLE_CURSOR_INFO cursor_info {1, false};
@@ -194,4 +194,4 @@ bool diagram_scroll_update_point(diagram_scroll_info<point_cnt, point_show> &inf
     return true;
 }
 
-NEUNET_END
+KOKKORO_END

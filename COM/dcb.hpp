@@ -1,3 +1,5 @@
+KOKKORO_BEGIN
+
 bool dcb_open_port(void     *h_port,
                    int      idx                        = NULL,
                    dcbi32_t read_byte_interval_timeout = 50,
@@ -102,3 +104,5 @@ bool dcb_read(void *h_port, char *buf_dest, int buf_len) {
     buf_dest[data_len] = '\0';
     return res;
 }
+
+KOKKORO_END

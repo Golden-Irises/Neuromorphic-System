@@ -5,7 +5,7 @@
 #define __DCB_H__
 
 #include <windows.h>
-#include "../ANN/net_set"
+#include "../ANN/kokkoro_set"
 
 #define dcbi32_t unsigned long
 
@@ -16,6 +16,8 @@
 #ifndef DCB_BUF_LEN
 #define DCB_BUF_LEN 0x0010
 #endif
+
+KOKKORO_BEGIN
 
 /**
  * @brief Open DCB port, reading timeout = bytes_count * (read_byte_timeout + max{read_byte_interval_timeout}) + read_timeout
@@ -50,6 +52,8 @@ bool dcb_port_params(void *, int, int, int, int);
 bool dcb_write(void *, const char *);
 
 bool dcb_read(void *, char *, int);
+
+KOKKORO_END
 
 #include "dcb.hpp"
 

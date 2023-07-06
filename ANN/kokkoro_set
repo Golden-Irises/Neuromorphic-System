@@ -1,0 +1,22 @@
+#pragma once
+
+#ifndef __KOKKORO_SET__
+#define __KOKKORO_SET__
+
+#include <chrono>
+#include <future>
+
+#define KOKKORO_BEGIN   namespace kokkoro {
+#define KOKKORO_END     }
+
+#define kokkoro_null_ref(type)       *(type*)nullptr
+
+#define kokkoro_pure_type(type)     std::remove_reference_t<type>
+#define kokkoro_copy_assert(type)   static_assert(std::is_copy_assignable_v<type>, "Type is not copy assignable.")
+#define kokkoro_chrono_time_point   std::chrono::time_point_cast<std::chrono::milliseconds>(\
+                                    std::chrono::system_clock::now()).time_since_epoch().count()
+#define kokkoro_async_core          std::thread::hardware_concurrency()
+
+#include "kokkoro_set.hpp"
+
+#endif

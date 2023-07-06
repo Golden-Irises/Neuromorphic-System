@@ -1,11 +1,11 @@
-NEUNET_BEGIN
+KOKKORO_BEGIN
 
 struct Layer {
-    virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) = 0;
+    virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) = 0;
 
-    virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) = 0;
+    virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) = 0;
 
-    virtual void Deduce(net_matrix &vecIn) = 0;
+    virtual void Deduce(kokkoro_matrix &vecIn) = 0;
 
     virtual void Batch(uint64_t iBatSz, uint64_t iBatCnt) {}
 
@@ -17,7 +17,7 @@ struct Layer {
 };
 
 struct LayerIO : virtual Layer {
-    net_set<net_matrix> setIO;
+    kokkoro_set<kokkoro_matrix> setIO;
 
     virtual void Batch(uint64_t iBatSz, uint64_t iBatCnt) { setIO.init(iBatSz, false); }
 };
@@ -25,9 +25,9 @@ struct LayerIO : virtual Layer {
 template <double dLearnRate = 0.,
           double dGradDecay = 0.9>
 struct LayerWeight : virtual LayerIO {
-    net_counter iBatSzCnt;
+    kokkoro_counter iBatSzCnt;
 
-    net_matrix vecWeight, vecWeightN, vecWeightT;
+    kokkoro_matrix vecWeight, vecWeightN, vecWeightT;
 
     ada_delta<dGradDecay> AdaD;
 
@@ -45,7 +45,7 @@ struct LayerWeight : virtual LayerIO {
 
     template <bool bTranspose = false>
     void Update() {
-        auto vecGrad = net_matrix::sigma(setIO);
+        auto vecGrad = kokkoro_matrix::sigma(setIO);
         vecGrad.elem_wise_div(setIO.length);
         if constexpr (dLearnRate == 0){
             AdaD.update(vecWeight, vecGrad);
@@ -57,7 +57,7 @@ struct LayerWeight : virtual LayerIO {
     }
 
     virtual bool SaveData() const {
-        net_set<net_set<std::string>> tabWeight(vecWeight.line_count);
+        kokkoro_set<kokkoro_set<std::string>> tabWeight(vecWeight.line_count);
         for (auto i = 0ull; i < vecWeight.line_count; ++i) {
             tabWeight[i].init(vecWeight.column_count);
             for (auto j = 0ull; j < vecWeight.column_count; ++j) tabWeight[i][j] = std::to_string(vecWeight[i][j]);
@@ -81,12 +81,12 @@ struct LayerBias : LayerWeight<dLearnRate,
         if constexpr (dLearnRate != 0) this->vecWeightN = this->vecWeight;
     }
 
-    virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
+    virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
         if constexpr (dLearnRate == 0) Deduce(vecIn);
         else vecIn += this->vecWeightN;
     }
 
-    virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
+    virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = vecGrad;
         if (++this->iBatSzCnt.cnt == this->setIO.length) {
             this->iBatSzCnt.cnt = 0;
@@ -94,35 +94,35 @@ struct LayerBias : LayerWeight<dLearnRate,
         }
     }
 
-    virtual void Deduce(net_matrix &vecIn) { vecIn += this->vecWeight; }
+    virtual void Deduce(kokkoro_matrix &vecIn) { vecIn += this->vecWeight; }
 
-    virtual constexpr uint64_t LayerType() const { return neunet_bias; }
+    virtual constexpr uint64_t LayerType() const { return kokkoro_bias; }
 };
 
-template <uint64_t iActFnType = neunet_null>
+template <uint64_t iActFnType = kokkoro_null>
 struct LayerAct : LayerIO {
-    virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
-        if constexpr (iActFnType == neunet_sigmoid || iActFnType == neunet_ReLU) setIO[iBatSzIdx] = vecIn;
+    virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
+        if constexpr (iActFnType == kokkoro_sigmoid || iActFnType == kokkoro_ReLU) setIO[iBatSzIdx] = vecIn;
         Deduce(vecIn);
     }
 
-    virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
-        if constexpr (iActFnType == neunet_softmax) softmax_cec_grad(vecGrad, vecOrgn);
-        constexpr auto bActReLU = iActFnType == neunet_ReLU;
-        if constexpr (bActReLU || iActFnType == neunet_sigmoid) {
-            if constexpr (bActReLU) neunet_traverse(setIO[iBatSzIdx], ReLU_dv);
-            else neunet_traverse(setIO[iBatSzIdx], sigmoid_dv);
+    virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
+        if constexpr (iActFnType == kokkoro_softmax) softmax_cec_grad(vecGrad, vecOrgn);
+        constexpr auto bActReLU = iActFnType == kokkoro_ReLU;
+        if constexpr (bActReLU || iActFnType == kokkoro_sigmoid) {
+            if constexpr (bActReLU) kokkoro_traverse(setIO[iBatSzIdx], ReLU_dv);
+            else kokkoro_traverse(setIO[iBatSzIdx], sigmoid_dv);
             vecGrad.elem_wise_mul(setIO[iBatSzIdx]);
         }
     }
 
-    virtual void Deduce(net_matrix &vecIn) {
-        if constexpr (iActFnType == neunet_sigmoid) neunet_traverse(vecIn, sigmoid);
-        if constexpr (iActFnType == neunet_ReLU) neunet_traverse(vecIn, ReLU);
-        if constexpr (iActFnType == neunet_softmax) softmax(vecIn);
+    virtual void Deduce(kokkoro_matrix &vecIn) {
+        if constexpr (iActFnType == kokkoro_sigmoid) kokkoro_traverse(vecIn, sigmoid);
+        if constexpr (iActFnType == kokkoro_ReLU) kokkoro_traverse(vecIn, ReLU);
+        if constexpr (iActFnType == kokkoro_softmax) softmax(vecIn);
     }
 
-    virtual constexpr uint64_t LayerType() const { return neunet_act; }
+    virtual constexpr uint64_t LayerType() const { return kokkoro_act; }
 };
 
 struct LayerChann : virtual Layer {
@@ -143,7 +143,7 @@ template <bool bPad1Crop0   = false,
           uint64_t iLnDist  = 0,
           uint64_t iColDist = 0>
 struct LayerPC : LayerChann{
-    net_set<uint64_t> setElemIdx;
+    kokkoro_set<uint64_t> setElemIdx;
 
     uint64_t iOutElemCnt = 0;
 
@@ -154,25 +154,25 @@ struct LayerPC : LayerChann{
         iOutElemCnt = iInLnCnt * iInColCnt;
     }
 
-    virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) { Deduce(vecIn); }
+    virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) { Deduce(vecIn); }
 
-    virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
-        net_matrix vecAns {iElemCnt, iChannCnt};
+    virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
+        kokkoro_matrix vecAns {iElemCnt, iChannCnt};
         for (auto i = 0ull; i < setElemIdx.length; ++i)
             if constexpr (bPad1Crop0) vecAns.index(i) = vecGrad.index(setElemIdx[i]);
             else vecAns.index(setElemIdx[i]) = vecGrad.index(i);
         vecGrad = std::move(vecAns);
     }
 
-    virtual void Deduce(net_matrix &vecIn) {
-        net_matrix vecAns {iOutElemCnt, iChannCnt};
+    virtual void Deduce(kokkoro_matrix &vecIn) {
+        kokkoro_matrix vecAns {iOutElemCnt, iChannCnt};
         for (auto i = 0ull; i < setElemIdx.length; ++i)
             if constexpr (bPad1Crop0) vecAns.index(setElemIdx[i]) = vecIn.index(i);
             else vecAns.index(i) = vecIn.index(setElemIdx[i]);
         vecIn = std::move(vecAns);
     }
 
-    virtual constexpr uint64_t LayerType() const { return neunet_pc; }
+    virtual constexpr uint64_t LayerType() const { return kokkoro_pc; }
 };
 
 struct LayerFlat : LayerChann{
@@ -183,13 +183,13 @@ struct LayerFlat : LayerChann{
         iInColCnt   = 1;
     }
 
-    virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) { Deduce(vecIn); }
+    virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) { Deduce(vecIn); }
 
-    virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) { vecGrad.reshape(iElemCnt, iChannCnt); }
+    virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) { vecGrad.reshape(iElemCnt, iChannCnt); }
 
-    virtual void Deduce(net_matrix &vecIn) { vecIn.reshape(vecIn.element_count, 1); }
+    virtual void Deduce(kokkoro_matrix &vecIn) { vecIn.reshape(vecIn.element_count, 1); }
 
-    virtual constexpr uint64_t LayerType() const { return neunet_flat; }
+    virtual constexpr uint64_t LayerType() const { return kokkoro_flat; }
 };
 
 template <uint64_t iOutLnCnt = 1,
@@ -209,13 +209,13 @@ struct LayerFC : LayerWeight<dLearnRate,
         iInLnCnt         = iOutLnCnt;
     }
     
-    virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
+    virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
         this->setIO[iBatSzIdx] = vecIn.transpose;
         if constexpr (dLearnRate == 0) Deduce(vecIn);
         else vecIn = FCOut(vecIn, this->vecWeightN);
     }
 
-    virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
+    virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = FCGradWeight(vecGrad, this->setIO[iBatSzIdx]);
         vecGrad                = FCGradIn(vecGrad, this->vecWeightT);
         if (++this->iBatSzCnt.cnt == this->setIO.length) {
@@ -224,9 +224,9 @@ struct LayerFC : LayerWeight<dLearnRate,
         }
     }
 
-    virtual void Deduce(net_matrix &vecIn) { vecIn = FCOut(vecIn, this->vecWeight); }
+    virtual void Deduce(kokkoro_matrix &vecIn) { vecIn = FCOut(vecIn, this->vecWeight); }
 
-    virtual constexpr uint64_t LayerType() const { return neunet_fc; }
+    virtual constexpr uint64_t LayerType() const { return kokkoro_fc; }
 };
 
 template <uint64_t iFilterLnCnt  = 0,
@@ -239,7 +239,7 @@ struct LayerCaffe : virtual LayerChann {
     uint64_t iCaffeLnCnt  = 0,
              iCaffeColCnt = 0;
 
-    net_set<uint64_t> setCaffeIdx;
+    kokkoro_set<uint64_t> setCaffeIdx;
 
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
         LayerChann::Shape(iInLnCnt, iInColCnt, iInChannCnt);
@@ -277,14 +277,14 @@ struct LayerConv : LayerWeight<dLearnRate,
         iInChannCnt = iKernelQty;
     }
     
-    virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
+    virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
         vecIn                  = Caffe(vecIn, this->setCaffeIdx, this->iCaffeLnCnt, this->iCaffeColCnt);
         this->setIO[iBatSzIdx] = vecIn.transpose;
         if constexpr (dLearnRate == 0) vecIn = Conv(vecIn, this->vecWeight);
         else vecIn = Conv(vecIn, this->vecWeightN);
     }
 
-    virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
+    virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = ConvGradKernel(vecGrad, this->setIO[iBatSzIdx]);
         vecGrad                = CaffeGradIn(ConvGradCaffeOut(vecGrad, this->vecWeightT), this->setCaffeIdx, this->iElemCnt, this->iChannCnt);
         if (++this->iBatSzCnt.cnt == this->setIO.length) {
@@ -293,12 +293,12 @@ struct LayerConv : LayerWeight<dLearnRate,
         }
     }
 
-    virtual void Deduce(net_matrix &vecIn) { vecIn = Conv(Caffe(vecIn, this->setCaffeIdx, this->iCaffeLnCnt, this->iCaffeColCnt), this->vecWeight); }
+    virtual void Deduce(kokkoro_matrix &vecIn) { vecIn = Conv(Caffe(vecIn, this->setCaffeIdx, this->iCaffeLnCnt, this->iCaffeColCnt), this->vecWeight); }
 
-    virtual constexpr uint64_t LayerType() const { return neunet_conv; }
+    virtual constexpr uint64_t LayerType() const { return kokkoro_conv; }
 };
 
-template <uint64_t iPoolType     = neunet_avg_pool,
+template <uint64_t iPoolType     = kokkoro_avg_pool,
           uint64_t iFilterLnCnt  = 0,
           uint64_t iFilterColCnt = 0,
           uint64_t iLnStride     = 0,
@@ -313,36 +313,36 @@ struct LayerPool : LayerCaffe<iFilterLnCnt,
                               iColDilate> {
     static constexpr auto iFilterElemCnt = iFilterLnCnt * iFilterColCnt;
 
-    net_set<net_set<net_set<uint64_t>>> setElemIdx;
+    kokkoro_set<kokkoro_set<kokkoro_set<uint64_t>>> setElemIdx;
 
-    virtual void Batch(uint64_t iBatSz, uint64_t iBatCnt) { if constexpr (iPoolType == neunet_max_pool) setElemIdx.init(iBatSz, false); }
+    virtual void Batch(uint64_t iBatSz, uint64_t iBatCnt) { if constexpr (iPoolType == kokkoro_max_pool) setElemIdx.init(iBatSz, false); }
 
     virtual void Shape(uint64_t &iInLnCnt, uint64_t &iInColCnt, uint64_t &iInChannCnt) {
-        if constexpr (iPoolType == neunet_gag_pool) {
+        if constexpr (iPoolType == kokkoro_gag_pool) {
             LayerChann::Shape(iInLnCnt, iInColCnt, iInChannCnt);
             iInLnCnt  = 1;
             iInColCnt = 1;
         } else LayerCaffe<iFilterLnCnt, iFilterColCnt, iLnStride, iColStride, iLnDilate, iColDilate>::Shape(iInLnCnt, iInColCnt, iInChannCnt);
     }
     
-    virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
-        if constexpr (iPoolType == neunet_max_pool) vecIn = PoolMax(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt, setElemIdx[iBatSzIdx]);
+    virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
+        if constexpr (iPoolType == kokkoro_max_pool) vecIn = PoolMax(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt, setElemIdx[iBatSzIdx]);
         else Deduce(vecIn);
     }
 
-    virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
-        if constexpr (iPoolType == neunet_gag_pool) vecGrad = PoolGradGlbAvgIn(vecGrad, this->iElemCnt, this->iChannCnt);
-        if constexpr (iPoolType == neunet_avg_pool) vecGrad = PoolGradAvgIn(vecGrad, this->setCaffeIdx, iFilterElemCnt, this->iElemCnt);
-        if constexpr (iPoolType == neunet_max_pool) vecGrad = PoolGradMaxIn(vecGrad, this->iElemCnt, setElemIdx[iBatSzIdx]);
+    virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
+        if constexpr (iPoolType == kokkoro_gag_pool) vecGrad = PoolGradGlbAvgIn(vecGrad, this->iElemCnt, this->iChannCnt);
+        if constexpr (iPoolType == kokkoro_avg_pool) vecGrad = PoolGradAvgIn(vecGrad, this->setCaffeIdx, iFilterElemCnt, this->iElemCnt);
+        if constexpr (iPoolType == kokkoro_max_pool) vecGrad = PoolGradMaxIn(vecGrad, this->iElemCnt, setElemIdx[iBatSzIdx]);
     }
 
-    virtual void Deduce(net_matrix &vecIn) {
-        if constexpr (iPoolType == neunet_gag_pool) vecIn = PoolGlbAvg(vecIn);
-        if constexpr (iPoolType == neunet_avg_pool) vecIn = PoolAvg(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt);
-        if constexpr (iPoolType == neunet_max_pool) vecIn = PoolMax(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt);
+    virtual void Deduce(kokkoro_matrix &vecIn) {
+        if constexpr (iPoolType == kokkoro_gag_pool) vecIn = PoolGlbAvg(vecIn);
+        if constexpr (iPoolType == kokkoro_avg_pool) vecIn = PoolAvg(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt);
+        if constexpr (iPoolType == kokkoro_max_pool) vecIn = PoolMax(vecIn, this->setCaffeIdx, iFilterElemCnt, this->iCaffeLnCnt);
     }
 
-    virtual constexpr uint64_t LayerType() const { return neunet_pool; }
+    virtual constexpr uint64_t LayerType() const { return kokkoro_pool; }
 };
 
 template <double dShift          = 0.,
@@ -354,9 +354,9 @@ template <double dShift          = 0.,
           double dMovAvgDecay    = .9>
 struct LayerBN : LayerWeight<dShiftLearnRate,
                              dShiftGradDecay> {
-    net_counter iBackBatSzCnt;
+    kokkoro_counter iBackBatSzCnt;
 
-    net_matrix vecScale, vecScaleN;
+    kokkoro_matrix vecScale, vecScaleN;
 
     ada_delta<dScaleGradDecay> AdaDScale;
 
@@ -376,12 +376,12 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
         for (auto i = 0ull; i < vecScale.element_count; ++i) vecScale.index(i) = std::stod(tabScale[0][i]);
     }
 
-    const net_matrix &BNScaleRef() {
+    const kokkoro_matrix &BNScaleRef() {
         if constexpr (dScaleLearnRate != 0) return vecScale;
         else return vecScaleN;
     }
 
-    const net_matrix &BNShiftRef() {
+    const kokkoro_matrix &BNShiftRef() {
         if constexpr (dShiftLearnRate != 0) return this->vecWeight;
         else return this->vecWeightN;
     }
@@ -406,7 +406,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
         else AdaNScale.update(vecScale, vecScaleN, vecScaleN);
     }
     
-    virtual void ForProp(net_matrix &vecIn, uint64_t iBatSzIdx) {
+    virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
         this->setIO[iBatSzIdx] = std::move(vecIn);
         if (++this->iBatSzCnt.cnt == this->setIO.length) {
             BNOut(this->setIO, BdData, BNShiftRef(), BNScaleRef());
@@ -417,7 +417,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
         vecIn = std::move(this->setIO[iBatSzIdx]);
     }
 
-    virtual void BackProp(net_matrix &vecGrad, uint64_t iBatSzIdx, net_matrix &vecOrgn) {
+    virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = std::move(vecGrad);
         if (++iBackBatSzCnt.cnt == this->setIO.length) {
             BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNScaleRef());
@@ -428,17 +428,17 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
         vecGrad = std::move(this->setIO[iBatSzIdx]);
     }
 
-    virtual void Deduce(net_matrix &vecIn) { BNOut(vecIn, BdData, this->vecWeight, vecScale); }
+    virtual void Deduce(kokkoro_matrix &vecIn) { BNOut(vecIn, BdData, this->vecWeight, vecScale); }
 
     virtual bool SaveData() const {
         if (!LayerWeight<dShiftLearnRate, dShiftGradDecay>::SaveData()) return false;
-        net_set<net_set<std::string>> tabScale(1);
+        kokkoro_set<kokkoro_set<std::string>> tabScale(1);
         tabScale[0].init(vecScale.element_count);
         for (auto i = 0ull; i < vecScale.element_count; ++i) tabScale[0][i] = std::to_string(vecScale.index(i));
         return csv_out(tabScale, sScaleSavePath);
     }
 
-    virtual constexpr uint64_t LayerType() const { return neunet_bn; }
+    virtual constexpr uint64_t LayerType() const { return kokkoro_bn; }
 };
 
-NEUNET_END
+KOKKORO_END

@@ -1,0 +1,22 @@
+#pragma once
+
+#include <intrin.h>
+#include <numeric>
+
+#include "kokkoro_set"
+
+#ifndef __KOKKORO_MATRIX__
+#define __KOKKORO_MATRIX__
+
+#ifndef kokkoro_eps
+#define kokkoro_eps 1e-8
+#endif
+
+#define kokkoro_blk_sz  0x0010
+#define kokkoro_reg_sz  0x0004
+#define kokkoro_unroll  kokkoro_reg_sz
+#define kokkoro_byte_sz (0x0002 * kokkoro_reg_sz)
+
+#include "kokkoro_matrix.hpp"
+
+#endif

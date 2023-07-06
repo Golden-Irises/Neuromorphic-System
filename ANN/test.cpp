@@ -1,193 +1,87 @@
+/* お疲れ様でした、主様。
+ * God job, my master.
+ */
+
 #pragma once
 
+#define kokkoro_eps  DBL_EPSILON
+#define kokkoro_len  0x0080
+
+#define kokkoro_arg  false
+
+#define MNIST_MSG   false
+
 #include <iostream>
-#include "neunet"
 
-using namespace neunet;
+#include "../SRC/CSV/csv"
+#include "kokkoro"
+#include "../SRC/MNIST/mnist.h"
 
-struct net_matrix_block {
-    constexpr static auto reg_sz        = 0x0004;
-    constexpr static auto block_sz      = 0x0010;
-    constexpr static auto block_elem_sz = block_sz * block_sz;
-
-    double *block = nullptr;
-
-    void value_copy(const net_matrix_block &src) { std::copy(src.block, src.block + block_elem_sz, block); }
-
-    void value_move(net_matrix_block &&src) {
-        block     = src.block;
-        src.block = nullptr;
-    }
-    
-    net_matrix_block() :
-    block(new double[block_elem_sz](0.)) {}
-    net_matrix_block(const net_matrix_block &src) { value_copy(src); }
-    net_matrix_block(net_matrix_block &&src) { value_move(std::move(src)); }
-
-    void elem_mul(const net_matrix_block &src) { for (auto i = 0; i < block_elem_sz; ++i) *(block + i) *= *(src.block + i); }
-    
-    template<bool divr = true>
-    void elem_div(const net_matrix_block &src) { for (auto i = 0; i < block_elem_sz; ++i) if constexpr (divr) *(block + i) /= *(src.block + i); else *(block + i) = *(src.block + i) / *(block + i); }
-    template<bool divr = true>
-    void elem_div(double src) { for (auto i = 0; i < block_elem_sz; ++i) if constexpr (divr) *(block + i) /= src; else *(block + i) = src / *(block + i); }
-
-    template<bool times = true>
-    void elem_pow(const net_matrix_block &src) { for (auto i = 0; i < block_elem_sz; ++i) if constexpr (times) *(block + i) = std::pow(*(block + i), *(src.block + i)); else *(block + i) = std::pow(*(src.block + i), *(block + i)); }
-    template<bool times = true>
-    void elem_pow(double src) { for (auto i = 0; i < block_elem_sz; ++i) if constexpr (times) *(block + i) = std::pow(*(block + i), src); else *(block + i) = std::pow(src, *(block + i)); }
-
-    void elem_rand(double fst_rng = -1, double snd_rng = 1) {
-        if (fst_rng == snd_rng) return;
-        if (snd_rng > snd_rng) std::swap(fst_rng, snd_rng);
-        auto rng_dif = snd_rng - fst_rng;
-        for (auto i = 0ull; i < block_elem_sz; ++i) *(block + i) = (rng_dif / RAND_MAX) * std::rand() + fst_rng;
-    }
-
-    template <bool sub = false>
-    void broadcast_add(double src) {
-        if constexpr (sub) src *= -1;
-        for (auto i = 0; i < block_elem_sz; ++i) *(block + i) += src;
-    }
-
-    void reset() { while (block) {
-        delete [] block;
-        block = nullptr;
-    } }
-
-    ~net_matrix_block() { reset(); }
-
-    void operator+=(const net_matrix_block &src) { for (auto i = 0; i < block_elem_sz; ++i) *(block + i) += *(src.block + i); }
-
-    void operator-=(const net_matrix_block &src) { for (auto i = 0; i < block_elem_sz; ++i) *(block + i) -= *(src.block + i); }
-
-    // bool operator==(const net_matrix_block &src) {
-    //     for (auto i = 0; i < block_elem_sz; ++i) if (*(block + i) != *(src.block + i)) return false;
-    //     return true;
-    // }
-
-    net_matrix_block operator*(const net_matrix_block &src) {
-        net_matrix_block ans;
-        for (auto i = 0; i < block_sz; ++i) {
-            auto ans_ptr = ans.block + i * block_sz;
-            auto lptr    = block + i * block_sz;
-            __m256d ans_reg[reg_sz];
-            for (auto x = 0; x < reg_sz; ++x) ans_reg[x] = _mm256_load_pd(ans_ptr + x * reg_sz);
-            for (auto j = 0; j < block_sz; ++j) {
-                __m256d lreg = _mm256_broadcast_sd(lptr + j);
-                for (auto x = 0; x < reg_sz; ++x) ans_reg[x] = _mm256_add_pd(ans_reg[x], _mm256_mul_pd(lreg, _mm256_load_pd(src.block + j * block_sz + x * reg_sz)));
-            }
-            for (auto x = 0; x < reg_sz; ++x) _mm256_store_pd(ans_ptr + x * reg_sz, ans_reg[x]);
-        }
-        return ans;
-    }
-
-    net_matrix_block& operator=(const net_matrix_block &src) {
-        value_copy(src);
-        return *this;
-    }
-    net_matrix_block& operator=(net_matrix_block &&src) {
-        value_move(std::move(src));
-        return *this;
-    }
-};
-
-struct __net_matrix {
-    uint64_t ln_cnt  = 0,
-             col_cnt = 0;
-
-    uint64_t ln_block_cnt   = 0,
-             col_block_cnt  = 0,
-             elem_block_cnt = 0;
-
-    net_matrix_block *val = nullptr;
-
-    void elem_rand() { for (auto i = 0ull; i < elem_block_cnt; ++i) val[i].elem_rand(); }
-
-    void value_assign(const __net_matrix &src) {
-        ln_cnt         = src.ln_cnt;
-        col_cnt        = src.col_cnt;
-        ln_block_cnt   = src.ln_block_cnt;
-        col_block_cnt  = src.col_block_cnt;
-        elem_block_cnt = src.elem_block_cnt;
-    }
-
-    void value_copy(const __net_matrix &src) {
-        if (src.elem_block_cnt != elem_block_cnt) {
-            reset();
-            val = new net_matrix_block[elem_block_cnt];
-        }
-        
-        std::copy(src.val, src.val + elem_block_cnt, val);
-    }
-
-    void value_move(__net_matrix &&src) {
-        value_assign(src);
-        val     = src.val;
-        src.val = nullptr;
-        src.reset();
-    }
-
-    __net_matrix(uint64_t ln_cnt = 0, uint64_t col_cnt = 0) :
-        ln_cnt(ln_cnt),
-        col_cnt(col_cnt) {
-        if (!(ln_cnt && col_cnt)) {
-            ln_cnt  = 0;
-            col_cnt = 0;
-            return;
-        }
-        ln_block_cnt   = ln_cnt / net_matrix_block::block_sz + 1;
-        col_block_cnt  = col_cnt / net_matrix_block::block_sz + 1;
-        elem_block_cnt = ln_block_cnt * col_block_cnt;
-        val = new net_matrix_block[elem_block_cnt];
-    }
-    __net_matrix(const __net_matrix &src) { value_copy(src); }
-    __net_matrix(__net_matrix &&src) { value_move(std::move(src)); }
-
-    void reset() {
-        for (auto i = 0ull; i < elem_block_cnt; ++i) val[i].reset();
-        while (val) {
-            delete [] val;
-            val = nullptr;
-        }
-    }
-    
-    ~__net_matrix() { reset(); }
-
-    __net_matrix& operator=(const __net_matrix &src) { value_copy(src); return *this; }
-    __net_matrix& operator=(__net_matrix &&src) { value_move(std::move(src)); return *this; }
-
-    // bool operator==(const __net_matrix &src) {
-    //     if (!(ln_cnt == src.ln_cnt && col_cnt == src.col_cnt)) return false;
-        
-    //     return true;
-    // }
-
-    __net_matrix operator*(const __net_matrix &src) {
-        __net_matrix ans;
-        ans.ln_cnt         = ln_cnt;
-        ans.col_cnt        = src.col_cnt;
-        ans.ln_block_cnt   = ln_block_cnt;
-        ans.col_block_cnt  = src.col_block_cnt;
-        ans.elem_block_cnt = ln_block_cnt * src.col_block_cnt;
-        ans.val            = new net_matrix_block[ans.elem_block_cnt];
-        for (auto i = 0ull; i < ln_block_cnt; ++i) {
-            auto ans_ptr = ans.val + i * ans.col_block_cnt;
-            auto fst_ptr = val + i * col_block_cnt;
-            for (auto j = 0ull; j < src.col_block_cnt; ++j) for (auto k = 0ull; k < col_block_cnt; ++k) *(ans_ptr + k) = *(fst_ptr + k) * *(src.val + k * src.col_block_cnt + j);
-        }
-        return ans;
-    }
-};
+#define LEARN_RATE       .4     // 1e-5
+#define BN_LEARN_RATE    1e-5
 
 using namespace std;
+using namespace kokkoro;
 
-int main() {
-    __net_matrix fst{500, 500}, snd{500, 500};
-    fst.elem_rand(); snd.elem_rand();
-    auto start = neunet_chrono_time_point;
+int main(int argc, char *argv[], char *envp[]) {
+    auto chrono_begin = kokkoro_chrono_time_point;
+    cout << "Kokkoro is working, my master..." << endl;
 
-    auto ans = fst * snd;
+    KokkoroCore net_core {125, 125};
 
-    cout << neunet_chrono_time_point - start << "ms" << endl;
-    return 0;
+    string root = "SRC\\ARCHIVE\\";
+    KokkoroAddLayer<LayerConv<20, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core, root + "C0.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B0_shift.csv", root + "B0_scale.csv");
+    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S0.csv");
+    KokkoroAddLayer<LayerAct<kokkoro_ReLU>>(net_core);
+    KokkoroAddLayer<LayerPool<kokkoro_avg_pool, 2, 2, 2, 2>>(net_core);
+    KokkoroAddLayer<LayerConv<50, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(net_core, root + "C2.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B2_shift.csv", root + "B2_scale.csv");
+    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S2.csv");
+    KokkoroAddLayer<LayerAct<kokkoro_ReLU>>(net_core);
+    KokkoroAddLayer<LayerPool<kokkoro_avg_pool, 2, 2, 2, 2>>(net_core);
+    KokkoroAddLayer<LayerFlat>(net_core);
+    KokkoroAddLayer<LayerFC<500, LEARN_RATE>>(net_core, root + "F4.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B4_shift.csv", root + "B4_scale.csv");
+    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S4.csv");
+    KokkoroAddLayer<LayerAct<kokkoro_sigmoid>>(net_core);
+    KokkoroAddLayer<LayerFC<10, LEARN_RATE>>(net_core, root + "F5.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(net_core, root + "B5_shift.csv", root + "B5_scale.csv");
+    // KokkoroAddLayer<LayerBias<LEARN_RATE>>(net_core, root + "S5.csv");
+    KokkoroAddLayer<LayerAct<kokkoro_softmax>>(net_core);
+
+    root = "E:\\VS Code project data\\MNIST\\";
+    auto train_elem = root + "train-images.idx3-ubyte",
+         train_lbl  = root + "train-labels.idx1-ubyte",
+         test_elem  = root + "t10k-images.idx3-ubyte",
+         test_lbl   = root + "t10k-labels.idx1-ubyte";
+
+    mnist_stream train_file, test_file;
+	mnist_data train_data, test_data;
+
+	auto train_data_load = mnist_open(&train_file, train_elem.c_str(), train_lbl.c_str()) &&
+                           mnist_magic_verify(&train_file) &&
+                           mnist_qty_verify(&train_file, &train_data);
+    if (!train_data_load) return EXIT_FAILURE;
+    auto ln_cnt  = mnist_ln_cnt(&train_file),
+         col_cnt = mnist_col_cnt(&train_file);
+    mnist_read(&train_file, &train_data, ln_cnt, col_cnt, 0, true);
+    mnist_close(&train_file);
+	auto train_idx = mnist_idx(&train_data);
+    
+    auto test_data_load = mnist_open(&test_file, test_elem.c_str(), test_lbl.c_str()) &&
+                          mnist_magic_verify(&test_file) &&
+                          mnist_qty_verify(&test_file, &test_data);
+    if (!test_data_load) return EXIT_FAILURE;
+    mnist_ln_cnt(&test_file);
+    mnist_col_cnt(&test_file);
+    mnist_read(&test_file, &test_data, ln_cnt, col_cnt, 0, true);
+    mnist_close(&test_file);
+    
+    KokkoroInit(net_core, train_data.lbl.length, test_data.lbl.length, ln_cnt, col_cnt, 1);
+	KokkoroRun(net_core, train_data.elem, train_data.lbl, train_idx, test_data .elem, test_data.lbl, MNIST_ORGN_SZ);
+    KokkoroResult(net_core);
+    
+    cout << kokkoro_chrono_time_point - chrono_begin << "ms" << endl;
+    return EXIT_SUCCESS;
 }

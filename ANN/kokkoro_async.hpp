@@ -1,4 +1,4 @@
-NEUNET_BEGIN
+KOKKORO_BEGIN
 
 template<typename r_arg, typename ... args> constexpr std::function<r_arg(args...)> function_capsulate(r_arg (*func)(args...)) { return static_cast<r_arg(*)(args...)>(func); }
 
@@ -6,15 +6,15 @@ template<typename f_arg, typename ... args> constexpr auto function_package(f_ar
 
 // #define arg int
 template <typename arg>
-class net_queue {
-protected: struct net_node {
+class kokkoro_queue {
+protected: struct kokkoro_node {
     arg elem {};
-    net_node *next = nullptr,
+    kokkoro_node *next = nullptr,
              *prev = next;
 };
 
 public:
-    net_queue() = default;
+    kokkoro_queue() = default;
 
     uint64_t size() {
         auto ans = 0ull;
@@ -27,7 +27,7 @@ public:
 
     template<typename...args>
     void en_queue(args &&...params) {
-        auto tmp  = new net_node;
+        auto tmp  = new kokkoro_node;
         tmp->elem = arg {std::forward<args>(params)...};
         {
             std::unique_lock<std::mutex> lk {td_mtx};
@@ -44,7 +44,7 @@ public:
     }
 
     arg de_queue() {
-        net_node *tmp = nullptr;
+        kokkoro_node *tmp = nullptr;
         {
             std::unique_lock<std::mutex> lk {td_mtx};
             if (!len) cond.wait(lk);
@@ -71,7 +71,7 @@ public:
         cond.notify_all();
     }
 
-    ~net_queue() {
+    ~kokkoro_queue() {
         while (tail) {
             auto tmp  = tail->prev;
             if (tmp) {
@@ -89,8 +89,8 @@ protected:
     std::mutex td_mtx;
     std::condition_variable cond;
 
-    net_node *head = nullptr,
-             *tail = head;
+    kokkoro_node *head = nullptr,
+                 *tail = head;
 
     uint64_t len = 0;
 
@@ -122,7 +122,7 @@ private:
 
 class async_pool final {
 public:
-    async_pool(uint64_t thread_size = neuent_async_core) :
+    async_pool(uint64_t thread_size = kokkoro_async_core) :
         thd_set(thread_size) { for (auto i = 0ull; i < thread_size; ++i) thd_set[i] = std::thread([this] { while (true) {
             auto curr_tsk = tsk_que.de_queue();
             if (stop) return;
@@ -147,11 +147,11 @@ public:
     }
 
 private:
-    net_set<std::thread> thd_set;
+    kokkoro_set<std::thread> thd_set;
 
-    net_queue<std::function<void()>> tsk_que;
+    kokkoro_queue<std::function<void()>> tsk_que;
 
     std::atomic_bool stop = false;
 };
 
-NEUNET_END
+KOKKORO_END

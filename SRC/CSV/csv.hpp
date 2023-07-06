@@ -1,8 +1,8 @@
-NEUNET_BEGIN
+KOKKORO_BEGIN
 
-net_set<net_set<std::string>> csv_in(const std::string &file_path) {
+kokkoro_set<kokkoro_set<std::string>> csv_in(const std::string &file_path) {
     std::ifstream in(file_path);
-    net_set<net_set<std::string>> ans;
+    kokkoro_set<kokkoro_set<std::string>> ans;
     if (!in.is_open()) {
         in.close();
         return ans;
@@ -26,7 +26,7 @@ net_set<net_set<std::string>> csv_in(const std::string &file_path) {
     return ans;
 }
 
-bool csv_out(const net_set<net_set<std::string>> &output_strings, const std::string &file_path) {
+bool csv_out(const kokkoro_set<kokkoro_set<std::string>> &output_strings, const std::string &file_path) {
     std::ofstream of_file;
     of_file.open(file_path, std::ios::out|std::ios::trunc);
     if (!of_file.is_open()) return false;
@@ -38,7 +38,7 @@ bool csv_out(const net_set<net_set<std::string>> &output_strings, const std::str
     return true;
 }
 
-void csv_print(const net_set<net_set<std::string>> &src) {
+void csv_print(const kokkoro_set<kokkoro_set<std::string>> &src) {
     for (auto i = 0ull; i < src.length; ++i) {
         for (auto j = 0ull; j < src[i].length; ++j) {
             std::cout << src[i][j];
@@ -48,4 +48,4 @@ void csv_print(const net_set<net_set<std::string>> &src) {
     }
 }
 
-NEUNET_END
+KOKKORO_END

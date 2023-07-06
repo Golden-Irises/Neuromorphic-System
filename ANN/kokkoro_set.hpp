@@ -1,15 +1,15 @@
-NEUNET_BEGIN
+KOKKORO_BEGIN
 
-#if nuenet_arg
+#if kokkoro_arg
 #define arg int
 #else
 template <class arg>
 #endif
-class net_set {
+class kokkoro_set {
 protected:
-    static void net_srand() { std::srand(std::time(NULL)); }
+    static void kokkoro_srand() { std::srand(std::time(NULL)); }
 
-    void value_copy(const net_set &src) {
+    void value_copy(const kokkoro_set &src) {
         if (this == &src) return;
         if (src.len != len) {
             reset();
@@ -19,7 +19,7 @@ protected:
         std::copy(src.ptr, src.ptr + len, ptr);
     }
 
-    void value_move(net_set &&src) {
+    void value_move(kokkoro_set &&src) {
         if (this == &src) return;
         if (ptr) reset();
         len     = src.len;
@@ -29,13 +29,13 @@ protected:
     }
 
 public:
-    net_set(uint64_t alloc_size = 0) : len(alloc_size) { if (len) { ptr = new arg[len](arg {}); } }
-    net_set(std::initializer_list<arg> init_list) { if (init_list.size()) {
+    kokkoro_set(uint64_t alloc_size = 0) : len(alloc_size) { if (len) { ptr = new arg[len](arg {}); } }
+    kokkoro_set(std::initializer_list<arg> init_list) { if (init_list.size()) {
         ptr = new arg[init_list.size()];
         for (auto tmp : init_list) ptr[len++] = std::move(tmp);
     } }
-    net_set(const net_set &src) { value_copy(src); }
-    net_set(net_set &&src) { value_move(std::move(src)); }
+    kokkoro_set(const kokkoro_set &src) { value_copy(src); }
+    kokkoro_set(kokkoro_set &&src) { value_move(std::move(src)); }
 
     void init(uint64_t alloc_size, bool remain = true) {
         if (len == alloc_size) {
@@ -82,7 +82,7 @@ public:
         len = 0;
     }
     
-    ~net_set() { reset(); }
+    ~kokkoro_set() { reset(); }
 
 protected:
     arg *ptr = nullptr;
@@ -92,16 +92,16 @@ protected:
 public:
     __declspec(property(get = size)) uint64_t length;
 
-    net_set &operator=(const net_set &src) {
+    kokkoro_set &operator=(const kokkoro_set &src) {
         value_copy(src);
         return *this;
     }
-    net_set &operator=(net_set &&src) {
+    kokkoro_set &operator=(kokkoro_set &&src) {
         value_move(std::move(src));
         return *this;
     }
 
-    bool operator==(const net_set &src) const {
+    bool operator==(const kokkoro_set &src) const {
         if (this == &src) return true;
         if (src.len != len) return false;
         return std::equal(ptr, ptr + len, src.ptr);
@@ -109,10 +109,10 @@ public:
 
     arg &operator[](uint64_t idx) const {
         if (idx < len) return ptr[idx];
-        return neunet_null_ref(arg);
+        return kokkoro_null_ref(arg);
     }
     
-    friend std::ostream &operator<<(std::ostream &out, const net_set &src) {
+    friend std::ostream &operator<<(std::ostream &out, const kokkoro_set &src) {
         out << "[Length " << src.len << "]\n";
         for (auto i = 0ull; i < src.len; ++i) {
             out << '[' << i << "][\n";
@@ -124,4 +124,4 @@ public:
 
 };
 
-NEUNET_END
+KOKKORO_END

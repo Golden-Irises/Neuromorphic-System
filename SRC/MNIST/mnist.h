@@ -17,11 +17,15 @@
 #include <comdef.h>
 #include <gdiplus.h>
 
+#include "../../ANN/kokkoro_set"
+
+KOKKORO_BEGIN
+
 typedef struct { std::ifstream elem_file, lbl_file; } mnist_stream;
 
 typedef struct {
-    neunet::net_set<uint64_t> lbl;
-    neunet::net_set<neunet::net_matrix> elem;
+    kokkoro_set<uint64_t> lbl;
+    kokkoro_set<kokkoro_matrix> elem;
 } mnist_data;
 
 bool mnist_open(mnist_stream *, const char *, const char *);
@@ -38,9 +42,11 @@ int mnist_col_cnt(mnist_stream *);
 
 void mnist_read(mnist_stream *, mnist_data *, int, int, uint64_t, bool);
 
-neunet::net_set<uint64_t> mnist_idx(const mnist_data *);
+kokkoro_set<uint64_t> mnist_idx(const mnist_data *);
 
 bool mnist_save_image(const char *, const mnist_data *, int);
+
+KOKKORO_END
 
 #include "mnist.hpp"
 

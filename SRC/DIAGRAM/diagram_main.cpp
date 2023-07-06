@@ -7,13 +7,13 @@
 #include "diagram"
 
 using namespace std;
-using namespace neunet;
+using namespace kokkoro;
 
 int main(int argc, char *argv[], char *envp[]) {
     cout << "hello, world." << endl;
-    auto tm = neunet_chrono_time_point;
+    auto tm = kokkoro_chrono_time_point;
 
-    net_queue<double> que_test;
+    kokkoro_queue<double> que_test;
     auto area = std::acos(-1) / 10;
 
     std::thread set_data([&que_test, area]{ for (auto i = 0; i < 500; ++i) {
@@ -27,11 +27,11 @@ int main(int argc, char *argv[], char *envp[]) {
     while (true) {
         diagram_scroll_add_point(info, que_test);
         diagram_scroll_update_axis(info);
-        diagram_scroll_update_point(info, que_test);
+        diagram_scroll_update_point(info);
     }
     set_data.join();
     diagram_scroll_flush(info);
 
-    cout << neunet_chrono_time_point - tm << "ms" << endl;
+    cout << kokkoro_chrono_time_point - tm << "ms" << endl;
     return 0;
 }

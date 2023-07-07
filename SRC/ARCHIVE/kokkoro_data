@@ -20,6 +20,8 @@
  * voltage threshold value (0 1 2 3)
  */
 #define kokkoro_array_sz    0x0009
+#define kokkoro_databits    0x0014
+#define kokkoro_stopbits    0x0001
 
 #define kokkoro_handle      HANDLE
 

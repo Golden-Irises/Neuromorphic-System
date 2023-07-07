@@ -38,7 +38,7 @@ struct kokkoro_dcb {
 bool kokkoro_dcb_startup(kokkoro_dcb &dcb_info, int port_no = 3, int baudrate = 19200) {
     kokkoro_handle h_dcb = nullptr;
     if (!(dcb_open_port(h_dcb, port_no, 50, 10, 50, 10, 50) && 
-          dcb_port_params(h_dcb, baudrate, 20, NOPARITY))) return false;
+          dcb_port_params(h_dcb, baudrate, kokkoro_databits, kokkoro_stopbits, NOPARITY))) return false;
     dcb_info.dcb_pool.add_task([&dcb_info, h_dcb]{ while (true) {
         char buffer [DCB_BUF_LEN] = {0};
         if (!dcb_read(h_dcb, buffer, DCB_BUF_LEN)) return false;

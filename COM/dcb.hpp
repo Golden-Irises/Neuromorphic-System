@@ -57,12 +57,12 @@ bool dcb_port_params(void *h_port,
         return false;
     }
     // Set COM baud rate
-    serial_params.BaudRate  = baudrate;
+    serial_params.BaudRate = baudrate;
     // Each data bits of COM IO
-    serial_params.ByteSize  = databits;
-    serial_params.StopBits  = stopbits;
+    serial_params.ByteSize = databits;
+    serial_params.StopBits = stopbits;
     // Parity [NOPARITY | ODDPARITY | EVENPAERITY | MARKPARITY | SPACEPARITY]
-    serial_params.Parity    = parity;
+    serial_params.Parity   = parity;
     return SetCommState(h_port, &serial_params);
 }
 

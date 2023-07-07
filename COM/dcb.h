@@ -9,10 +9,6 @@
 
 #define dcbi32_t unsigned long
 
-#ifndef DCB_MSG
-#define DCB_MSG true
-#endif
-
 #ifndef DCB_BUF_LEN
 #define DCB_BUF_LEN 0x0010
 #endif
@@ -20,7 +16,7 @@
 KOKKORO_BEGIN
 
 /**
- * @brief Open DCB port, reading timeout = bytes_count * (read_byte_timeout + max{read_byte_interval_timeout}) + read_timeout
+ * @brief Open DCB port for hardware device, reading timeout = bytes_count * (read_byte_timeout + max{read_byte_interval_timeout}) + read_timeout
  * @param h_port DCB port handle
  * @param idx DCB port index
  * @param read_byte_interval_timeout Max timeout for reading each byte data
@@ -37,7 +33,7 @@ bool dcb_open_port(void *, int, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t
 bool dcb_close_port(void *);
 
 /**
- * @brief Set DCB port parameters
+ * @brief Set DCB port parameters for protocol
  * @param h_port DCB port handle
  * @param baudrate Baudrate
  * @param databits Data bit count

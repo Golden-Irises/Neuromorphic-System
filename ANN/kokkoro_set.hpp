@@ -108,6 +108,7 @@ public:
     }
 
     arg &operator[](uint64_t idx) const {
+        return ptr[idx]; // FIXME: Pointer array boundary checking, performance lost
         if (idx < len) return ptr[idx];
         return kokkoro_null_ref(arg);
     }

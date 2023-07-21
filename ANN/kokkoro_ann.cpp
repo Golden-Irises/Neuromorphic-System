@@ -14,8 +14,8 @@
 #include <iostream>
 
 #include "../SRC/CSV/csv"
-#include "../SRC/MNIST/mnist.h"
 #include "kokkoro"
+#include "../SRC/MNIST/mnist.h"
 
 #define LEARN_RATE       .4     // 1e-5
 #define BN_LEARN_RATE    1e-5

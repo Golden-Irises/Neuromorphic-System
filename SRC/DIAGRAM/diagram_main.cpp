@@ -19,7 +19,6 @@ int main(int argc, char *argv[], char *envp[]) {
     std::thread set_data([&que_test, area]{ for (auto i = 0; i < 500; ++i) {
         que_test.en_queue(std::sin(i * area) * 20);
         _sleep(50);
-        if (i == 499) i = 0;
     } });
 
     diagram_scroll_info<20, '#'> info;

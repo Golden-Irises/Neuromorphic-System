@@ -8,6 +8,8 @@
 #define kokkoro_eps DBL_EPSILON
 #endif
 
+#include "../SRC/CSV/csv"
+
 #include "kokkoro_base"
 #include "kokkoro_fc.hpp"
 #include "kokkoro_conv.hpp"

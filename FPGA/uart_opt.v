@@ -70,9 +70,12 @@ always@(posedge sys_clk or posedge sys_reset) begin      //period conut & contin
       end
     end
     else begin
-      tx_enable <= 1'b 0;
-      clk_cnt_2 <= 10'b 0000000000;
+      tx_enable  <= 1'b 0;
+      clk_cnt_2  <= 10'b 0000000000;
       period_cnt <= 5'b 00000;
+      tx_state   <= 1'b 0;
+      uart_txd   <= 1'b 1;
+      tx_data    <= 18'b 000000000000000000;
     end
 end
 always@(posedge sys_clk or posedge sys_reset) begin      //sending controller

@@ -1,0 +1,50 @@
+`timescale  1ns/1ns
+
+module uart_2bit();
+
+reg  sys_clk;
+reg  sys_reset;
+reg  in1, in2;
+reg  uart_start;
+wire uart_txd;
+
+localparam integer B_TIME = 'd 1_000_000_000/'d 19_200;
+localparam integer C_TIME = 'd 1_000_000_000/'d 11_059_200;
+
+initial begin
+    sys_clk    <= 1'b 0;
+    sys_reset  <= 1'b 1;
+    uart_start <= 1'b 0;
+    in1  <= 1'b 0;
+    in2  <= 1'b 0;
+
+#100 sys_reset = 1'b 0;
+#200 @(posedge sys_clk)
+     uart_start <= 1'b 1;
+     in1  <= 1'b 0;
+     in2  <= 1'b 0;
+#(B_TIME * 8)
+     in1  <= 1'b 0;
+     in2  <= 1'b 1;
+#(B_TIME * 8)
+     in1  <= 1'b 1;
+     in2  <= 1'b 0;
+#(B_TIME * 8)
+     in1  <= 1'b 1;
+     in2  <= 1'b 1;
+#(B_TIME * 8) uart_start <= 1'b 0;
+#200 $stop;
+end
+
+always #(C_TIME / 2) sys_clk = ~sys_clk;
+
+uart_2bit_tx I(
+    .sys_clk(sys_clk),
+    .sys_reset(sys_reset),
+    .uart_start(uart_start),
+    .tx_state(tx_state), .tx_enable(tx_enable),
+    .uart_txd(uart_txd),
+    .in1(in1), .in2(in2)
+);
+
+endmodule

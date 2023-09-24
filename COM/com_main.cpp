@@ -6,7 +6,7 @@
 #define DCB_BUF_LEN 0x0010
 
 #include <iostream>
-#include <dcb.h>
+#include "dcb.h"
 
 using namespace kokkoro;
 using namespace std;

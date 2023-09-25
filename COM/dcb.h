@@ -28,7 +28,7 @@ KOKKORO_BEGIN
  * @retval [true] Open port successfully
  * @retval [false] Open port failed
  */
-bool dcb_open_port(void *, int, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t);
+bool dcb_open_port(void *, int, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t);
 
 bool dcb_close_port(void *);
 

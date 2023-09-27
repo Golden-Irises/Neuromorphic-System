@@ -6,9 +6,7 @@ bool dcb_open_port(void     *h_port,
                    dcbi32_t read_byte_timeout          = 10,
                    dcbi32_t read_timeout               = 50,
                    dcbi32_t write_byte_timeout         = 10,
-                   dcbi32_t write_timeout              = 50,
-                   dcbi32_t in_queue_sz                = 1024,
-                   dcbi32_t out_queue_sz               = 1024) {
+                   dcbi32_t write_timeout              = 50) {
     if (h_port) return false;
     // buffer
     char com_name[128];
@@ -19,7 +17,7 @@ bool dcb_open_port(void     *h_port,
                          NULL,
                          NULL,
                          OPEN_EXISTING,
-                         NULL, // FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
+                         NULL,
                          NULL);
     if (h_port == INVALID_HANDLE_VALUE) return false;
 
@@ -31,9 +29,7 @@ bool dcb_open_port(void     *h_port,
                            write_timeout};
     // COM timeouts & Win32 event mask (>> get characters)
     if (!(SetCommTimeouts(h_port, &timeouts) &&
-          SetCommMask(h_port, EV_RXCHAR) &&
-          PurgeComm(h_port, PURGE_RXCLEAR | PURGE_TXCLEAR) &&
-          SetupComm(h_port, in_queue_sz, out_queue_sz))) return false;
+          SetCommMask(h_port, EV_RXCHAR))) return false;
     
     #if DCB_MSG
     std::printf("[Port switches on]\n");

@@ -2,11 +2,14 @@ KOKKORO_BEGIN
 
 bool dcb_open_port(void     *h_port,
                    int      idx                        = NULL,
-                   dcbi32_t read_byte_interval_timeout = 50,
-                   dcbi32_t read_byte_timeout          = 10,
-                   dcbi32_t read_timeout               = 50,
-                   dcbi32_t write_byte_timeout         = 10,
-                   dcbi32_t write_timeout              = 50) {
+                   dcbi32_t read_byte_interval_timeout = MAXDWORD,
+                   dcbi32_t read_byte_timeout          = NULL,
+                   dcbi32_t read_timeout               = NULL,
+                   dcbi32_t write_byte_timeout         = NULL,
+                   dcbi32_t write_timeout              = NULL,
+                   bool     async_mode                 = false,
+                   dcbi32_t in_buffer_sz               = 1024,
+                   dcbi32_t out_buffer_sz              = 1024) {
     if (h_port) return false;
     // buffer
     char com_name[128];
@@ -29,7 +32,9 @@ bool dcb_open_port(void     *h_port,
                            write_timeout};
     // COM timeouts & Win32 event mask (>> get characters)
     if (!(SetCommTimeouts(h_port, &timeouts) &&
-          SetCommMask(h_port, EV_RXCHAR))) return false;
+          SetCommMask(h_port, EV_RXCHAR) &&
+          PurgeComm(h_port, PURGE_RXCLEAR | PURGE_TXCLEAR) &&
+          SetupComm(h_port, in_buffer_sz, out_buffer_sz))) return false;
     
     #if DCB_MSG
     std::printf("[Port switches on]\n");
@@ -61,7 +66,6 @@ bool dcb_port_params(void *h_port,
     // Each data bits of COM IO
     serial_params.ByteSize = databits;
     serial_params.StopBits = stopbits;
-    // Parity [NOPARITY | ODDPARITY | EVENPAERITY | MARKPARITY | SPACEPARITY]
     serial_params.Parity   = parity;
     return SetCommState(h_port, &serial_params);
 }

@@ -15,30 +15,18 @@ int main(int argc, char *argv[], char *envp[]) {
     cout << "hello, world." << endl;
 
     // 端口句柄
-    HANDLE h_port {};
+    dcb_hdl h_port;
     // 打开端口
-    if (!dcb_open_port(h_port,
-                       /* 端口句柄 */
-                       3,
-                       /* 端口 */
-                       50,
-                       /* 读取每个 byte 后的最大延时
-                        * 如果读取中超过该值那么将结束读取并返回读取缓冲区中的数据 */
-                       10,
-                       /* 读取每个 byte 数据的延时 */
-                       50,
-                       /* 读取整个数据后的延时 */
-                       10,
-                       /* 写入每个 byte 的延时 */
-                       50
-                       /* 写入整个数据后的延时 */)) return EXIT_FAILURE;
+    if (!dcb_open_port(h_port, //端口句柄
+                       3       // 端口
+                       )) return EXIT_FAILURE;
 
     // 端口参数
-    if (!dcb_port_params(h_port,    // 端口句柄
-                         19200,     // 波特率 19200
-                         20,        // 比特数 20
-                         1,         // 停止位 1
-                         NOPARITY)) // 无奇偶校验
+    if (!dcb_port_params(h_port,     // 端口句柄
+                         CBR_9600,   // 波特率 9600
+                         20,         // 比特数 20
+                         ONESTOPBIT, // 停止位 1
+                         NOPARITY))  // 无奇偶校验
                          return EXIT_FAILURE;
 
     // Windows 串口消息

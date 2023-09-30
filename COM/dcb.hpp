@@ -7,7 +7,6 @@ bool dcb_open_port(void     *h_port,
                    dcbi32_t read_timeout               = NULL,
                    dcbi32_t write_byte_timeout         = NULL,
                    dcbi32_t write_timeout              = NULL,
-                   bool     async_mode                 = false,
                    dcbi32_t in_buffer_sz               = 1024,
                    dcbi32_t out_buffer_sz              = 1024) {
     if (h_port) return false;

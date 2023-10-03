@@ -7,55 +7,25 @@
 #include <windows.h>
 #include "../ANN/kokkoro_set"
 
-#ifndef DCB_BUF_LEN
-#define DCB_BUF_LEN 0x0010
+#ifndef KOKKORO_DCB_BUF_SZ
+#define KOKKORO_DCB_BUF_SZ 0x0010
 #endif
 
-#ifndef DCB_HDL_LEN
-#define DCB_HDL_LEN 0x0010
+#ifndef KOKKORO_DCB_HDL_SZ
+#define KOKKORO_DCB_HDL_SZ 0x0010
 #endif
 
-#define dcbi32_t unsigned long
+KOKKORO_BEGIN 
 
-typedef int dcb_hdl[DCB_HDL_LEN];
+typedef int dcb_hdl[KOKKORO_DCB_HDL_SZ];
 
-KOKKORO_BEGIN
+bool dcb_startup(dcb_hdl, int, int, int, int, int, bool, int, int);
 
-/**
- * @brief Open DCB port for hardware device, reading timeout = bytes_count * (read_byte_timeout + max{read_byte_interval_timeout}) + read_timeout
- * @param h_port DCB port handle
- * @param idx DCB port index
- * @param read_byte_interval_timeout Max timeout for reading each byte data
- * @param read_byte_timeout Timeout for reading each byte data
- * @param read_timeout Total timeout after all bytes read
- * @param write_byte_timeout Timeout for writing each byte data
- * @param write_timeout Total timeout after all bytes write
- * @param in_buffer_sz Input buffer size
- * @param out_buffer_sz Output buffer size
- * @return Open port verification
- * @retval [true] Open port successfully
- * @retval [false] Open port failed
- */
-bool dcb_open_port(void *, int, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t, dcbi32_t);
+bool dcb_shutdown(dcb_hdl);
 
-bool dcb_close_port(void *);
+bool dcb_write(dcb_hdl, const char *, int, bool, int);
 
-/**
- * @brief Set DCB port parameters for protocol
- * @param h_port DCB port handle
- * @param baudrate Baudrate [CBR_110 | CBR_300 | CBR_600 | CBR_1200 | CBR_2400 | CBR_4800 | CBR_9600 | CBR_14400 | CBR_19200 | CBR_38400 | CBR_57600 | CBR_115200 | CBR_128000 | CBR_256000]
- * @param databits Data bit count
- * @param stopbits Stop bits [ONESTOPBIT | ONE5STOPBITS | TWOSTOPBITS]
- * @param parity Parity method [NOPARITY | ODDPARITY | EVENPAERITY | MARKPARITY | SPACEPARITY]
- * @return Setting port parameter verification
- * @retval [true] Parameter setting successfully
- * @retval [false] Parameter setting failed
- */
-bool dcb_port_params(void *, int, int, int, int);
-
-bool dcb_write(void *, const char *);
-
-bool dcb_read(void *, char *, int);
+int dcb_read(dcb_hdl, char *, int, bool);
 
 KOKKORO_END
 

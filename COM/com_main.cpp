@@ -32,6 +32,7 @@ int main(int argc, char *argv[], char *envp[]) {
         auto YoN = 'Y';
         cin >> YoN;
         if (YoN != 'N') buf_sz = 0;
+        else cout << endl;
     } while (buf_sz);
 
     dcb_shutdown(h_port);

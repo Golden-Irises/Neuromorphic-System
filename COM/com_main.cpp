@@ -27,8 +27,11 @@ int main(int argc, char *argv[], char *envp[]) {
          buf_bt {0};
     do {
         buf_sz = dcb_read(h_port,s_tmp, KOKKORO_DCB_BUF_SZ);
-        for (auto i = 0; i < buf_sz; ++i) cout << hex << s_tmp[i];
-        cout << endl;
+        for (auto i = 0; i < buf_sz; ++i) cout << bitset<8>(s_tmp[i]) << ' '; cout << endl;
+        cout << "Continue[Y/N]?";
+        auto YoN = 'Y';
+        cin >> YoN;
+        if (YoN != 'N') buf_sz = 0;
     } while (buf_sz);
 
     dcb_shutdown(h_port);

@@ -27,17 +27,18 @@ bool dcb_startup(dcb_hdl h_port,
     dcb_param.StopBits = stopbits;
     COMMTIMEOUTS dcb_timeouts {MAXDWORD, NULL, NULL, NULL, NULL};
     if (!(SetCommState(h_tmp, &dcb_param) &&
-          SetCommTimeouts(h_tmp, &dcb_timeouts) &&
-          PurgeComm(h_tmp, PURGE_TXCLEAR | PURGE_RXCLEAR) &&
-          FlushFileBuffers(h_tmp))) return false;
+          SetCommTimeouts(h_tmp, &dcb_timeouts))) return false;
 
     std::memmove(h_port, &h_tmp, sizeof(h_tmp));
     return true;
 }
 
 bool dcb_shutdown(dcb_hdl h_port) {
-    auto p_tmp = *(HANDLE*)h_port;
-    return CloseHandle(p_tmp);
+    auto h_tmp = *(HANDLE*)h_port;
+    PurgeComm(h_tmp, PURGE_TXCLEAR | PURGE_RXCLEAR);
+    return PurgeComm(h_tmp, PURGE_TXCLEAR | PURGE_RXCLEAR) &&
+           FlushFileBuffers(h_tmp) &&
+           CloseHandle(h_tmp);
 }
 
 bool dcb_write(dcb_hdl     h_port,

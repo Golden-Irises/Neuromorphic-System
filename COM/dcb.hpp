@@ -28,7 +28,8 @@ bool dcb_startup(dcb_hdl h_port,
     COMMTIMEOUTS dcb_timeouts {MAXDWORD, NULL, NULL, NULL, NULL};
     if (!(SetCommState(h_tmp, &dcb_param) &&
           SetCommTimeouts(h_tmp, &dcb_timeouts) &&
-          PurgeComm(h_tmp, PURGE_TXCLEAR | PURGE_RXCLEAR))) return false;
+          PurgeComm(h_tmp, PURGE_TXCLEAR | PURGE_RXCLEAR) &&
+          FlushFileBuffers(h_tmp))) return false;
 
     std::memmove(h_port, &h_tmp, sizeof(h_tmp));
     return true;

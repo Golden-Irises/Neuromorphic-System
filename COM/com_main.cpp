@@ -17,16 +17,17 @@ int main(int argc, char *argv[], char *envp[]) {
     dcb_startup(h_port,
                 3,
                 CBR_9600,
-                2,
+                6,
                 ONESTOPBIT,
                 NOPARITY);
 
-    auto buf_sz = KOKKORO_DCB_BUF_SZ;
     char s_tmp[KOKKORO_DCB_BUF_SZ] = {0};
-    while (buf_sz) {
-        if (!dcb_read(h_port,s_tmp, KOKKORO_DCB_BUF_SZ)) break;
-        cout << s_tmp << endl;
-    }
+    auto buf_sz {0};
+    do {
+        buf_sz = dcb_read(h_port,s_tmp, KOKKORO_DCB_BUF_SZ);
+        for (auto i = 0; i < buf_sz; ++i) cout << int(s_tmp[i]);
+        cout << endl;
+    } while (buf_sz);
 
     dcb_shutdown(h_port);
 

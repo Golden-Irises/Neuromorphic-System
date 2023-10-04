@@ -17,7 +17,7 @@ int main(int argc, char *argv[], char *envp[]) {
     dcb_startup(h_port,
                 3,
                 CBR_9600,
-                20,
+                2,
                 ONESTOPBIT,
                 NOPARITY);
 

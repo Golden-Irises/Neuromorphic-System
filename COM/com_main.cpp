@@ -26,15 +26,9 @@ int main(int argc, char *argv[], char *envp[]) {
     auto buf_sz {0},
          buf_bt {0};
     do {
-        buf_sz = dcb_read(h_port, s_tmp, KOKKORO_DCB_BUF_SZ);
-        for (auto i = 0; i < buf_sz; ++i) {
-            cout << bitset<8>(s_tmp[i]);
-            if (++buf_bt == 3) {
-                buf_bt = 0;
-                cout << endl;
-                // print 3 * 8 = 24 = 4 * 6
-            }
-        }
+        buf_sz = dcb_read(h_port,s_tmp, KOKKORO_DCB_BUF_SZ);
+        for (auto i = 0; i < buf_sz; ++i) cout << hex << s_tmp[i];
+        cout << endl;
     } while (buf_sz);
 
     dcb_shutdown(h_port);

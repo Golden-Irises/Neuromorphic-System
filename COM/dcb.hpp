@@ -35,7 +35,6 @@ bool dcb_startup(dcb_hdl h_port,
 
 bool dcb_shutdown(dcb_hdl h_port) {
     auto h_tmp = *(HANDLE*)h_port;
-    PurgeComm(h_tmp, PURGE_TXCLEAR | PURGE_RXCLEAR);
     return PurgeComm(h_tmp, PURGE_TXCLEAR | PURGE_RXCLEAR) &&
            FlushFileBuffers(h_tmp) &&
            CloseHandle(h_tmp);

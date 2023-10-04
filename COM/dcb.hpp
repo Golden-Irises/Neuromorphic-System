@@ -17,14 +17,14 @@ bool dcb_startup(dcb_hdl h_port,
     if (h_tmp == INVALID_HANDLE_VALUE) return false;
 
     DCB dcb_param;
-    dcb_param.DCBlength = sizeof(dcb_param);
     std::memset(&dcb_param, 0, sizeof(dcb_param));
+    dcb_param.DCBlength = sizeof(dcb_param);
     if (!(SetupComm(h_tmp, in_buf_sz, put_buf_sz) &&
           GetCommState(h_tmp, &dcb_param))) return false;
-    dcb_param.BaudRate  = baudrate;
-    dcb_param.ByteSize  = databits;
-    dcb_param.Parity    = parity;
-    dcb_param.StopBits  = stopbits;
+    dcb_param.BaudRate = baudrate;
+    dcb_param.ByteSize = databits;
+    dcb_param.Parity   = parity;
+    dcb_param.StopBits = stopbits;
     COMMTIMEOUTS dcb_timeouts {MAXDWORD, NULL, NULL, NULL, NULL};
     if (!(SetCommState(h_tmp, &dcb_param) &&
           SetCommTimeouts(h_tmp, &dcb_timeouts) &&

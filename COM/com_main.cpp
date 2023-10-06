@@ -31,7 +31,7 @@ int main(int argc, char *argv[], char *envp[]) {
         cout << "Continue[Y/N]?";
         auto YoN = 'Y';
         cin >> YoN;
-        if (YoN != 'Y') buf_sz = 0;
+        if (YoN != 'Y' || YoN != 'y') buf_sz = 0;
         else cout << endl;
     } while (buf_sz);
 

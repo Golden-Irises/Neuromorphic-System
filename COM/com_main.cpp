@@ -31,8 +31,8 @@ int main(int argc, char *argv[], char *envp[]) {
         cout << "Continue[Y/N]?";
         auto YoN = 'Y';
         cin >> YoN;
-        if (YoN != 'Y' || YoN != 'y') buf_sz = 0;
-        else cout << endl;
+        if (YoN == 'Y' || YoN == 'y') cout << endl;
+        else buf_sz = 0;
     } while (buf_sz);
 
     dcb_shutdown(h_port);

@@ -8,12 +8,12 @@ reg  in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in11, in12, in13, in14, 
 reg  uart_start;
 wire uart_txd;
 
-localparam integer B_TIME = 'd 1_000_000_000/'d 19_200;
-localparam integer C_TIME = 'd 1_000_000_000/'d 11_059_200;
+localparam integer B_TIME = 'd 1_000_000_000/'d 2_400;
+localparam integer C_TIME = 'd 1_000_000_000/'d 50_000_000;
 
 initial begin
     sys_clk    <= 1'b 0;
-    sys_reset  <= 1'b 1;
+    sys_reset  <= 1'b 0;
     uart_start <= 1'b 0;
     in1  <= 1'b 0;
     in2  <= 1'b 0;
@@ -34,7 +34,7 @@ initial begin
     in17 <= 1'b 0;
     in18 <= 1'b 0;
 
-#100 sys_reset = 1'b 0;
+#100 sys_reset = 1'b 1;
 #200 @(posedge sys_clk)
      uart_start <= 1'b 1;
      in1  <= 1'b 0;
@@ -84,7 +84,7 @@ uart_tx I(
     .sys_clk(sys_clk),
     .sys_reset(sys_reset),
     .uart_start(uart_start),
-    .tx_state(tx_state), .tx_enable(tx_enable),
+
     .uart_txd(uart_txd),
     .in1(in1), .in2(in2), .in3(in3), .in4(in4), .in5(in5), .in6(in6), .in7(in7), .in8(in8), .in9(in9),
     .in10(in10), .in11(in11), .in12(in12), .in13(in13), .in14(in14), .in15(in15), .in16(in16), .in17(in17), .in18(in18)

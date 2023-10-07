@@ -3,6 +3,10 @@
  */
 #pragma once
 
+#define kokkoro_dcb_msg     false
+#define kokkoro_dcb_bufsz   300
+#define kokkoro_dcb_thdsz   4
+
 #include <iostream>
 #include "../../ANN/kokkoro"
 #include "kokkoro_data"

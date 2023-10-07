@@ -8,7 +8,7 @@ bool dcb_startup(dcb_hdl h_port,
                  int     parity     = NOPARITY,
                  bool    async_mode = false,
                  int     in_buf_sz  = 1024,
-                 int     put_buf_sz = 1024
+                 int     out_buf_sz = 1024
                  ) {
     char port_name[KOKKORO_DCB_HDL_SZ] = {0};
     wsprintfA(port_name, "\\\\.\\COM%d", port_idx);
@@ -19,7 +19,7 @@ bool dcb_startup(dcb_hdl h_port,
     DCB dcb_param;
     std::memset(&dcb_param, 0, sizeof(dcb_param));
     dcb_param.DCBlength = sizeof(dcb_param);
-    if (!(SetupComm(h_tmp, in_buf_sz, put_buf_sz) &&
+    if (!(SetupComm(h_tmp, in_buf_sz, out_buf_sz) &&
           GetCommState(h_tmp, &dcb_param))) return false;
     dcb_param.BaudRate = baudrate;
     dcb_param.ByteSize = databits;
@@ -33,11 +33,16 @@ bool dcb_startup(dcb_hdl h_port,
     return true;
 }
 
-bool dcb_shutdown(dcb_hdl h_port) {
+bool dcb_refresh(dcb_hdl h_port) {
     auto h_tmp = *(HANDLE*)h_port;
     return PurgeComm(h_tmp, PURGE_TXCLEAR | PURGE_RXCLEAR) &&
-           FlushFileBuffers(h_tmp) &&
-           CloseHandle(h_tmp);
+           FlushFileBuffers(h_tmp);
+}
+
+bool dcb_shutdown(dcb_hdl h_port) {
+    if (!dcb_refresh(h_port)) return false;
+    auto h_tmp = *(HANDLE*)h_port;
+    return CloseHandle(h_tmp);
 }
 
 bool dcb_write(dcb_hdl     h_port,
@@ -65,9 +70,9 @@ bool dcb_write(dcb_hdl     h_port,
 }
 
 int dcb_read(dcb_hdl h_port,
-              char   *buf_dest,
-              int     buf_max_len,
-              bool    async_mode = false) {
+              char  *buf_dest,
+              int    buf_max_len,
+              bool   async_mode = false) {
     DWORD buf_sz = buf_max_len;
     auto  h_tmp  = *(HANDLE*)h_port;
     if (!async_mode) {

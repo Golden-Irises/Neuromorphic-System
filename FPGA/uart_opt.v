@@ -90,7 +90,7 @@ always@(posedge sys_clk or negedge sys_reset) begin      //sending controller
       tx_state <= tx_state;
     end
 end
-always@(sys_clk or negedge sys_reset)begin            //data select
+always@(posedge sys_clk or negedge sys_reset)begin       //data selector
   if(!sys_reset)begin
     tx_data <= 6'b 000000;
   end
@@ -117,7 +117,7 @@ always@(posedge sys_clk or negedge sys_reset) begin      //clock count and bit c
         clk_cnt_1 <= clk_cnt_1 + 16'b 0000000000000001;
         bit_cnt <= bit_cnt;
       end
-      else begin                                         // 1/2400, 1 bit is sent
+      else begin                                         // 1/2400 second , 1 bit is sent
         clk_cnt_1 <= 16'b 0000000000000000;
         bit_cnt <= bit_cnt + 3'b 001;
       end
@@ -134,14 +134,14 @@ always@(posedge sys_clk or negedge sys_reset) begin      //sending program
     else if(tx_state)begin
       if(clk_cnt_1 == 16'b 0000000000000001)begin
         case(bit_cnt)
-          3'b 000: uart_txd <= 1'b 0;                  //start bit 1'b0
+          3'b 000: uart_txd <= 1'b 0;                    //start bit 1'b0
           3'b 001: uart_txd <= tx_data[0];
           3'b 010: uart_txd <= tx_data[1];
           3'b 011: uart_txd <= tx_data[2];
           3'b 100: uart_txd <= tx_data[3];
           3'b 101: uart_txd <= tx_data[4];
           3'b 110: uart_txd <= tx_data[5];
-          3'b 111: uart_txd <= 1'b 1;                  //end bit 1'b1
+          3'b 111: uart_txd <= 1'b 1;                    //end bit 1'b1
           default: uart_txd <= 1'b 0; //ERROR
         endcase
       end

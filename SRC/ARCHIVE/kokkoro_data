@@ -19,21 +19,17 @@
 #ifndef __KOKKORO_DATA__
 #define __KOKKORO_DATA__
 
-#define kokkoro_dcb_mask    3
-#define kokkoro_dcb_bitsz   2
+#define kokkoro_dcb_mask    0x03
+#define kokkoro_dcb_bitsz   0x02
+#define kokkoro_dcb_idle    0x3f
 
 #ifndef kokkoro_dcb_msg
 #define kokkoro_dcb_msg     true
 #endif
 
-#ifndef kokkoro_dcb_bufsz
-#define kokkoro_dcb_bufsz   300
+#if kokkoro_dcb_msg
+#include <bitset>
 #endif
-
-#ifndef kokkoro_dcb_thdsz
-#define kokkoro_dcb_thdsz   4
-#endif
-
 #include "../CSV/csv"
 #include "../../COM/dcb.h"
 #include "kokkoro_data.hpp"

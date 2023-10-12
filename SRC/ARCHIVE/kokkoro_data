@@ -19,6 +19,11 @@
 #ifndef __KOKKORO_DATA__
 #define __KOKKORO_DATA__
 
+#define kokkoro_loop        while (true)
+
+#define kokkoro_dcb_unitsz  0x20
+#define kokkoro_dcb_bytecnt 0x04
+#define kokkoro_dcb_arraysz 0x09
 #define kokkoro_dcb_mask    0x03
 #define kokkoro_dcb_bitsz   0x02
 #define kokkoro_dcb_idle    0x3f

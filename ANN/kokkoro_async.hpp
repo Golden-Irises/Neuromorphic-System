@@ -68,6 +68,7 @@ public:
     
     void reset() {
         stop = true;
+        len  = 0;
         cond.notify_all();
     }
 

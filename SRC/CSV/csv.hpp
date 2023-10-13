@@ -28,8 +28,11 @@ kokkoro_set<kokkoro_set<std::string>> csv_in(const std::string &file_path) {
 
 bool csv_out(const kokkoro_set<kokkoro_set<std::string>> &output_strings, const std::string &file_path) {
     std::ofstream of_file;
-    of_file.open(file_path, std::ios::out|std::ios::trunc);
-    if (!of_file.is_open()) return false;
+    of_file.open(file_path, std::ios::out | std::ios::trunc);
+    if (!of_file.is_open()) {
+        return false;
+        of_file.close();
+    }
     for(auto i = 0ull; i < output_strings.size(); ++i) {
         for(auto j=0ull; j<output_strings[i].size(); ++j) of_file << output_strings[i][j] << ',';
         of_file << std::endl;

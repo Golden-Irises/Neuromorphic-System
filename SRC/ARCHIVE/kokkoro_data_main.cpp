@@ -13,7 +13,6 @@ using namespace kokkoro;
 using namespace std;
 
 int main(int argc, char *argv[], char *envp[]) {
-    kokkoro_dcb_handle test {3, CBR_9600};
-    cout << test.data_cnt << endl;
+    
     return EXIT_SUCCESS;
 }

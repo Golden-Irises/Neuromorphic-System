@@ -3,16 +3,13 @@
  * Kokkoro data structure
  * [SENSOR DATA]              [SYMBOL]
  * s0 s1 s2 s3 s4 s5 s6 s7 s8 syb
- *  0  0  0  0  0  0  0  0  0   ?
- * Kokkoro array
- *************  array -> 3 * 3 = 9
- * 0 * 0 * 0 *  symbol no.
- *************  + | (1 0 0 0)
- * 0 * 0 * 0 *  - | (0 1 0 0)
- *************  x | (0 0 1 0)
- * 0 * 0 * 0 *  / | (0 0 0 1)
- *************  dim.= 4
- * voltage threshold value (0 1 2 3)
+ *  0  0  0  0  0  0  0  0  0   #
+ * symbol(syb)
+ * ∅ -> 0
+ * + -> 1
+ * - -> 2
+ * x -> 3
+ * / -> 4
  */
 #pragma once
 
@@ -26,10 +23,33 @@
 #define kokkoro_dcb_arraysz 0x09
 #define kokkoro_dcb_mask    0x03
 #define kokkoro_dcb_bitsz   0x02
-#define kokkoro_dcb_idle    0x3f
 
 #ifndef kokkoro_dcb_msg
 #define kokkoro_dcb_msg     true
+#endif
+
+KOKKORO_BEGIN struct kokkoro_sensor {
+    /*
+     *************  array -> 3 * 3 = 9
+     * 0 * 0 * 0 *  symbol no.
+     *************  + | (1 0 0 0)
+     * 0 * 0 * 0 *  - | (0 1 0 0)
+     *************  x | (0 0 1 0)
+     * 0 * 0 * 0 *  / | (0 0 0 1)
+     *************  dim.= 4
+     * voltage threshold value (0 1 2 3)
+     */ 
+    int val_0 = 0, val_1 = 0, val_2 = 0,
+        val_3 = 0, val_4 = 0, val_5 = 0,
+        val_6 = 0, val_7 = 0, val_8 = 0;
+}; KOKKORO_END
+
+#define kokkoro_dcb_databits    0x06
+#define kokkoro_dcb_stopbits    ONESTOPBIT
+#define kokkoro_dcb_parity      NOPARITY
+
+#ifndef kokkoro_dcb_read_async
+#define kokkoro_dcb_read_async  false
 #endif
 
 #if kokkoro_dcb_msg

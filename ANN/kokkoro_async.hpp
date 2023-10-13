@@ -17,12 +17,9 @@ public:
     kokkoro_queue() = default;
 
     uint64_t size() {
-        auto ans = 0ull;
-        {
-            std::unique_lock<std::mutex> lk {td_mtx};
-            ans = len;
-        }
-        return ans;
+        if (stop) return 0;
+        std::unique_lock<std::mutex> lk {td_mtx};
+        return len;
     }
 
     template<typename...args>
@@ -68,7 +65,6 @@ public:
     
     void reset() {
         stop = true;
-        len  = 0;
         cond.notify_all();
     }
 
@@ -84,6 +80,7 @@ public:
             tmp  = nullptr;
         }
         head = tail;
+        len  = 0;
     }
     
 protected:

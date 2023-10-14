@@ -137,8 +137,8 @@ bool kokkoro_dcb_data_save(const std::string &csv_save_path, bool peak_stat = fa
         // save to csv
         if (kokkoro_dcb_array_verify(kokkoro_handle.read_max_tmp)) { if (!data_ok) {
             data_ok = true;
-            std::printf("[Symbol][+ -> 1 | - -> 2 | x -> 3 | / -> 4 ] ");
-            std::scanf("%c", syb_num);
+            std::printf("[Symbol][+ -> 1 | - -> 2 | x -> 3 | / -> 4] ");
+            std::scanf("%c", &syb_num);
         } } else if (data_ok) {
             data_ok = false;
             syb_num = '0';

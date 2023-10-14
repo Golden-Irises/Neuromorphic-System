@@ -40,9 +40,8 @@ bool dcb_refresh(dcb_hdl h_port) {
 }
 
 bool dcb_shutdown(dcb_hdl h_port) {
-    if (!dcb_refresh(h_port)) return false;
     auto h_tmp = *(HANDLE*)h_port;
-    return CloseHandle(h_tmp);
+    return dcb_refresh(h_port) && CloseHandle(h_tmp);
 }
 
 bool dcb_write(dcb_hdl     h_port,

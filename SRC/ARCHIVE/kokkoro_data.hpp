@@ -83,7 +83,7 @@ bool kokkoro_dcb_startup(kokkoro_dcb_handle &kokkoro_handle) {
 
     #endif
 
-    return dcb_startup(kokkoro_handle.dcb_port, kokkoro_handle.port_idx, kokkoro_handle.baudrate, kokkoro_dcb_stopbits, kokkoro_dcb_stopbits, kokkoro_dcb_parity, false, kokkoro_handle.buf_sz, kokkoro_handle.buf_sz);
+    return dcb_startup(kokkoro_handle.dcb_port, kokkoro_handle.port_idx, kokkoro_handle.baudrate, kokkoro_dcb_databits, kokkoro_dcb_stopbits, kokkoro_dcb_parity, false, kokkoro_handle.buf_sz, kokkoro_handle.buf_sz);
 }
 
 bool kokkoro_dcb_shutdown(kokkoro_dcb_handle &kokkoro_handle) {
@@ -97,7 +97,11 @@ bool kokkoro_dcb_shutdown(kokkoro_dcb_handle &kokkoro_handle) {
 
 void kokkoro_dcb_array_read(kokkoro_dcb_handle &kokkoro_handle) { kokkoro_loop {
     auto data_buf_len = dcb_read(kokkoro_handle.dcb_port, kokkoro_handle.read_buf, kokkoro_dcb_bytecnt);
-    if (!data_buf_len) break;
+    /*if (!data_buf_len){
+        //_sleep(1000);
+        printf("0x0");
+        break;
+    }*/
     kokkoro_dcb_vect(kokkoro_handle.read_data, kokkoro_handle.read_buf);
     std::memmove(&kokkoro_handle.read_buff_tmp, kokkoro_handle.read_data, kokkoro_dcb_arraysz * sizeof(int));
     kokkoro_handle.raw_data.en_queue(kokkoro_handle.read_buff_tmp);

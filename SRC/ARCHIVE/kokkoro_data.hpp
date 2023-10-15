@@ -118,8 +118,7 @@ void kokkoro_dcb_array_save(kokkoro_dcb_handle &kokkoro_handle) { for (auto i = 
     #endif
 } }
 
-bool kokkoro_dcb_data_save(const std::string &csv_save_path, bool peak_stat = false) {
-    kokkoro_dcb_handle kokkoro_handle;
+bool kokkoro_dcb_data_save(kokkoro_dcb_handle &kokkoro_handle, const std::string &csv_save_path, bool peak_stat = false) {
     std::ofstream of_file;
     of_file.open(csv_save_path, std::ios::out | std::ios::trunc);
     if (!(kokkoro_dcb_startup(kokkoro_handle) && of_file.is_open())) {

@@ -22,6 +22,7 @@ using namespace kokkoro;
 using namespace std;
 
 int main(int argc, char *argv[], char *envp[]) {
+    // DCB paramter
     kokkoro_dcb_handle handle_v {3,          // No.3 COM
                                  CBR_2400,   // 2400 Baudrate
                                  400,        // 400ms interval time period
@@ -29,9 +30,14 @@ int main(int argc, char *argv[], char *envp[]) {
                                  6,          // 6 databits
                                  ONESTOPBIT, // 1 stopbit(s)
                                  NOPARITY};  // no parity
-                                 
-    // Debugging, thread function for sensor array data reading
+
+    // Debugging
+    kokkoro_dcb_startup(handle_v);
+
+    // Thread function for sensor array data reading
     kokkoro_array_read(handle_v);
+
+    kokkoro_dcb_shutdown(handle_v);
 
     return EXIT_SUCCESS;
 }

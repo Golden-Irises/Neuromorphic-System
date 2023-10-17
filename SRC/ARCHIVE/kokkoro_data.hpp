@@ -1,170 +1,94 @@
 KOKKORO_BEGIN
 
-void kokkoro_dcb_vect_mask(int *ans, char *src) { for (auto i = 0; i < kokkoro_dcb_mask; ++i) for (auto j = 0; j < kokkoro_dcb_mask; ++j) {
-    ans[i + j * kokkoro_dcb_mask] = src[j] & kokkoro_dcb_mask;
-    src[j]                      >>= kokkoro_dcb_bitsz;
-} }
+bool kokkoro_data_blank_verify(char raw_msg[kokkoro_data_segcnt]) {
+    for (auto i = 0; i < kokkoro_data_segcnt; ++i) if (raw_msg[i]) return false;
+    return true;
+}
 
-// int ans[9], char src[4] = {00, 00, 00, 3f}
-void kokkoro_dcb_vect(int *ans, char *src) {
+kokkoro_sensor kokkoro_data_transfer_core(char raw_msg[kokkoro_data_segcnt]) {
+    kokkoro_sensor ans;
+    for (auto i = 0; i < kokkoro_data_segcnt; ++i) for (auto j = 0; j < kokkoro_data_segcnt; ++j) {
+        ans.sen_arr[j + i * kokkoro_data_segcnt] = raw_msg[i] & kokkoro_data_segcnt;
+        raw_msg[i]                             >>= kokkoro_data_bitsz;
+    }
+    return ans;
+}
+
+kokkoro_sensor kokkoro_data_transfer(char raw_msg[kokkoro_data_segcnt]) {
     #if kokkoro_dcb_msg
-    for (auto i = 0; i < kokkoro_dcb_mask; ++i) std::cout << '[' << std::bitset<8>(src[i]) << ']'; std::cout << std::endl;
+    for (auto i = 0; i < kokkoro_data_segcnt; ++i) std::cout << '[' << std::bitset<8>(raw_msg[i]) << ']'; std::cout << std::endl;
     #endif
-    kokkoro_dcb_vect_mask(ans, src);
+    auto ans = kokkoro_data_transfer_core(raw_msg);
     #if kokkoro_dcb_msg
-    for (auto i = 0; i < kokkoro_dcb_arraysz; i += 3) {
+    for (auto i = 0; i < kokkoro_data_sensz; i += 3) {
         std::cout << "[  ";
-        for (auto j = kokkoro_dcb_mask; j; --j) std::cout << ' ' << ans[i + j - 1];
+        for (auto j = kokkoro_data_segcnt; j; --j) std::cout << ' ' << ans.sen_arr[i + j - 1];
         std::cout << ']';
     }
     std::cout << std::endl;
     #endif
+    return ans;
 }
 
+/* port index     = 3
+ * baudrate       = CBR_2400
+ * interval in ms = 400
+ * IO buffer size = 1024
+ * data bits      = 6
+ * stop bits      = ONESTOPBIT
+ * parity         = NOPARITY
+ * async mode     = false
+ */
 struct kokkoro_dcb_handle {
+    // DCB parameter area
     int port_idx = 3,
-        baudrate = CBR_9600,
-        inter_ms = 400,
-        buf_sz   = 1024,
-        bat_sz   = inter_ms * baudrate / 1000 / kokkoro_dcb_unitsz;
+        baudrate = CBR_2400,
+        intrv_ms = 400,
+        iobuf_sz = 1024,
 
-    dcb_hdl dcb_port;
-    
-    kokkoro_queue<kokkoro_sensor> raw_data;
+        databits = 6,
+        stopbits = ONESTOPBIT,
+        parity   = NOPARITY;
 
-    // read process
-    #if kokkoro_dcb_read_async
+    bool async_mode = false;
 
-    async_pool read_proc = {kokkoro_dcb_arraysz};
+    dcb_hdl h_port;
 
-    std::atomic_int read_proc_cnt = kokkoro_dcb_arraysz;
+    int iobat_sz = intrv_ms * baudrate / 1000 / kokkoro_data_bitcnt,
+        start_pt = 0;
 
-    std::atomic_bool read_proc_stop = false;
+    // buffer reading area
 
-    async_controller read_curr_ctrl, read_max_ctrl;
+    kokkoro_queue<kokkoro_sensor> data_que;
 
-    #endif
-
-    kokkoro_sensor read_buff_tmp, read_curr_tmp, read_max_tmp;
-
-    char read_buf[kokkoro_dcb_bytecnt] = {0};
-
-    int read_data[kokkoro_dcb_arraysz] = {0},
-        read_prev[kokkoro_dcb_arraysz] = {0},
-        read_diff[kokkoro_dcb_arraysz] = {0},
-        read_peak[kokkoro_dcb_arraysz] = {0};
+    std::atomic_bool read_stop = false;
 };
 
-// unsafe
-void kokkoro_dcb_array_process(kokkoro_dcb_handle &kokkoro_handle, int arr_addr) {
-    auto curr_tmp = &kokkoro_handle.read_curr_tmp.val_0,
-         max_tmp  = &kokkoro_handle.read_max_tmp.val_0;
-    if (curr_tmp[arr_addr] > max_tmp[arr_addr]) max_tmp[arr_addr] = curr_tmp[arr_addr];
-    auto curr_dif = curr_tmp[arr_addr] - kokkoro_handle.read_prev[arr_addr];
-    if (curr_dif ^ kokkoro_handle.read_diff[arr_addr] && curr_dif < 0) ++kokkoro_handle.read_peak[arr_addr];
-    kokkoro_handle.read_prev[arr_addr] = curr_tmp[arr_addr];
-    kokkoro_handle.read_diff[arr_addr] = curr_dif;
-}
+bool kokkoro_dcb_startup(kokkoro_dcb_handle &kokkoro_handle) { return dcb_startup(kokkoro_handle.h_port, kokkoro_handle.port_idx, kokkoro_handle.baudrate, kokkoro_handle.databits, kokkoro_handle.stopbits, kokkoro_handle.parity, kokkoro_handle.async_mode, kokkoro_handle.iobuf_sz, kokkoro_handle.iobuf_sz); }
 
-bool kokkoro_dcb_array_verify(const kokkoro_sensor &src) { return
-    src.val_2 || src.val_1 || src.val_0 ||
-    src.val_5 || src.val_4 || src.val_3 ||
-    src.val_8 || src.val_7 || src.val_6; }
+bool kokkoro_dcb_shutdown(kokkoro_dcb_handle &kokkoro_handle) { return dcb_shutdown(kokkoro_handle.h_port); }
 
-bool kokkoro_dcb_startup(kokkoro_dcb_handle &kokkoro_handle) {
-    #if kokkoro_dcb_read_async
-
-    for (auto i = 0; i < kokkoro_dcb_arraysz; ++i) kokkoro_handle.read_proc.add_task([i, &kokkoro_handle]{
-        kokkoro_handle.read_max_ctrl.thread_sleep();
-        if (kokkoro_handle.read_proc_stop) return;
-        kokkoro_dcb_array_process(kokkoro_handle, i);
-        if(++kokkoro_handle.read_proc_cnt == kokkoro_dcb_arraysz) kokkoro_handle.read_curr_ctrl.thread_wake_one();
-    });
-
-    #endif
-
-    return dcb_startup(kokkoro_handle.dcb_port, kokkoro_handle.port_idx, kokkoro_handle.baudrate, kokkoro_dcb_databits, kokkoro_dcb_stopbits, kokkoro_dcb_parity, false, kokkoro_handle.buf_sz, kokkoro_handle.buf_sz);
-}
-
-bool kokkoro_dcb_shutdown(kokkoro_dcb_handle &kokkoro_handle) {
-    #if kokkoro_dcb_read_async
-    kokkoro_handle.read_proc_stop = true;
-    kokkoro_handle.read_max_ctrl.thread_wake_all();
-    #endif
-
-    return dcb_shutdown(kokkoro_handle.dcb_port);
-}
-
-void kokkoro_dcb_array_read(kokkoro_dcb_handle &kokkoro_handle) { kokkoro_loop {
-    auto data_buf_len = dcb_read(kokkoro_handle.dcb_port, kokkoro_handle.read_buf, kokkoro_dcb_bytecnt);
-    /*if (!data_buf_len){
-        //_sleep(1000);
-        printf("0x0");
-        break;
-    }*/
-    kokkoro_dcb_vect(kokkoro_handle.read_data, kokkoro_handle.read_buf);
-    std::memmove(&kokkoro_handle.read_buff_tmp, kokkoro_handle.read_data, kokkoro_dcb_arraysz * sizeof(int));
-    kokkoro_handle.raw_data.en_queue(kokkoro_handle.read_buff_tmp);
-} }
-
-void kokkoro_dcb_array_save(kokkoro_dcb_handle &kokkoro_handle) { for (auto i = 0; i < kokkoro_handle.bat_sz; ++i) {
-    kokkoro_handle.read_curr_tmp = kokkoro_handle.raw_data.de_queue();
-    if (!kokkoro_handle.raw_data.size()) return;
-
-    #if kokkoro_dcb_read_async
-
-    if (kokkoro_handle.read_proc_cnt < kokkoro_dcb_arraysz) kokkoro_handle.read_curr_ctrl.thread_sleep();
-    kokkoro_handle.read_proc_cnt = 0;
-    kokkoro_handle.read_max_ctrl.thread_wake_all();
-
-    #else
-    for (auto i = 0; i < kokkoro_dcb_arraysz; ++i) kokkoro_dcb_array_process(kokkoro_handle, i);
-    #endif
-} }
-
-bool kokkoro_dcb_data_save(kokkoro_dcb_handle &kokkoro_handle, const std::string &csv_save_path, bool peak_stat = false) {
-    std::ofstream of_file;
-    of_file.open(csv_save_path, std::ios::out | std::ios::trunc);
-    if (!(kokkoro_dcb_startup(kokkoro_handle) && of_file.is_open())) {
-        of_file.close();
-        kokkoro_dcb_shutdown(kokkoro_handle);
-        return false;
+void kokkoro_array_read(kokkoro_dcb_handle &kokkoro_handle) { kokkoro_loop {
+    if (kokkoro_handle.read_stop) break;
+    auto buf_len = 1;
+    char ch_tmp  = 0,
+         *p_buf  = &ch_tmp,
+         buf_tmp[kokkoro_data_segcnt] = {0};
+    if (kokkoro_handle.start_pt == kokkoro_data_segcnt) {
+        // normal condition
+        p_buf   = buf_tmp;
+        buf_len = kokkoro_data_segcnt;
     }
-    char syb_num = 0;
-    auto data_ok = false;
-    async_pool data_read_task(1);
-    data_read_task.add_task(kokkoro_dcb_array_read, std::ref(kokkoro_handle));
-    kokkoro_loop {
-        kokkoro_dcb_array_save(kokkoro_handle);
-
-        // save to csv
-        if (kokkoro_dcb_array_verify(kokkoro_handle.read_max_tmp)) { if (!data_ok) {
-            data_ok = true;
-            std::printf("[Symbol][+ -> 1 | - -> 2 | x -> 3 | / -> 4] ");
-            std::scanf("%c", &syb_num);
-        } } else if (data_ok) {
-            data_ok = false;
-            syb_num = '0';
-        }
-        auto p_data_tmp = &kokkoro_handle.read_max_tmp.val_0;
-        for (auto i = 0; i < kokkoro_dcb_arraysz; ++i) {
-            of_file << std::to_string(p_data_tmp[i]);
-            if (i + 1 < kokkoro_dcb_arraysz) of_file << ',';
-        }
-        of_file << syb_num << std::endl;
-        
-        
-        // print peak
-        if (!peak_stat) continue;
-        std::cout << "[Peak Count][";
-        for (auto i = 0; i < kokkoro_dcb_arraysz; ++i) {
-            std::cout << kokkoro_handle.read_peak[i];
-            if (i + 1 < kokkoro_dcb_arraysz) std::cout << ' ';
-        }
-        std::cout << ']' << std::endl;
+    buf_len = dcb_read(kokkoro_handle.h_port, p_buf, buf_len, kokkoro_handle.async_mode);
+    if (!buf_len) continue;
+    if (kokkoro_handle.start_pt < kokkoro_data_segcnt) {
+        // get [3f 3f 3f]
+        if (ch_tmp == kokkoro_dcb_start) ++kokkoro_handle.start_pt;
+        else kokkoro_handle.start_pt = 0;
+        continue;
     }
-    of_file.close();
-    return kokkoro_dcb_shutdown(kokkoro_handle);
-}
+    if (kokkoro_data_blank_verify(p_buf)) continue;
+    kokkoro_handle.data_que.en_queue(kokkoro_data_transfer(buf_tmp));
+} }
 
 KOKKORO_END

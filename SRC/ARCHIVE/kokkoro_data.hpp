@@ -87,7 +87,10 @@ void kokkoro_array_read(kokkoro_dcb_handle &kokkoro_handle) { kokkoro_loop {
         else kokkoro_handle.start_pt = 0;
         continue;
     }
-    if (kokkoro_data_blank_verify(p_buf)) continue;
+    if (kokkoro_data_blank_verify(p_buf)) {
+        std::getchar();
+        continue;
+    }
     kokkoro_handle.data_que.en_queue(kokkoro_data_transfer(buf_tmp));
 } }
 

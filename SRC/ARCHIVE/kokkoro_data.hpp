@@ -2,6 +2,9 @@ KOKKORO_BEGIN
 
 bool kokkoro_data_blank_verify(char raw_msg[kokkoro_data_segcnt]) {
     for (auto i = 0; i < kokkoro_data_segcnt; ++i) if (raw_msg[i]) return false;
+    #if kokkoro_dcb_msg
+    std::printf("[00000000][00000000][00000000]\n");
+    #endif
     return true;
 }
 
@@ -87,10 +90,7 @@ void kokkoro_array_read(kokkoro_dcb_handle &kokkoro_handle) { kokkoro_loop {
         else kokkoro_handle.start_pt = 0;
         continue;
     }
-    if (kokkoro_data_blank_verify(p_buf)) {
-        std::getchar();
-        continue;
-    }
+    if (kokkoro_data_blank_verify(p_buf)) continue;
     kokkoro_handle.data_que.en_queue(kokkoro_data_transfer(buf_tmp));
 } }
 

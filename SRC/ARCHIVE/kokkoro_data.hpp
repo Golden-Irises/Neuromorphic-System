@@ -83,7 +83,10 @@ void kokkoro_array_read(kokkoro_dcb_handle &kokkoro_handle) { kokkoro_loop {
         buf_len = kokkoro_data_segcnt;
     }
     buf_len = dcb_read(kokkoro_handle.h_port, p_buf, buf_len, kokkoro_handle.async_mode);
-    if (!buf_len) continue;
+    if (!buf_len) {
+        kokkoro_handle.start_pt = 0;
+        continue;
+    }
     if (kokkoro_handle.start_pt < kokkoro_data_segcnt) {
         // get [3f 3f 3f]
         if (ch_tmp == kokkoro_dcb_start) ++kokkoro_handle.start_pt;

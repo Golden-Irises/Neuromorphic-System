@@ -19,6 +19,9 @@
 #define kokkoro_loop        while (true)
 #define kokkoro_bytebitsz   0x08
 
+#define kokkoro_key_exit    0x1b
+#define kokkoro_key_reset   0x08
+
 #ifndef kokkoro_dcb_msg
 #define kokkoro_dcb_msg     true
 #endif
@@ -31,8 +34,8 @@
 #define kokkoro_data_segcnt 0x03
 #endif
 
-#ifndef kokkoro_data_sensz
-#define kokkoro_data_sensz  0x09
+#ifndef kokkoro_data_arrsz
+#define kokkoro_data_arrsz  0x09
 #endif
 
 #ifndef kokkoro_data_bitsz
@@ -51,11 +54,23 @@
 *************  dim.= 4
 * voltage threshold value (0 1 2 3)
 */ 
-KOKKORO_BEGIN struct kokkoro_sensor { int sen_arr[kokkoro_data_sensz] = {0}; }; KOKKORO_END
+KOKKORO_BEGIN struct kokkoro_array { int sen_arr[kokkoro_data_arrsz] = {0}; }; KOKKORO_END
+
+#define kokkoro_msg_get                     std::scanf
+#define kokkoro_msg_print                   std::printf
+
+#define kokkoro_msg_mask_char               "%c"
+#define kokkoro_msg_mask_int                "%d"
+#define kokkoro_msg_mask_space              " "
+
+#define kokkoro_msg_data_save_syb_select    "[Symbol][+(1) -(2) *(3) /(4)]: "
+#define kokkoro_msg_peak_begin              "[Peak Count]["
+#define kokkoro_msg_peak_end                "]"
 
 #if kokkoro_dcb_msg
 #include <bitset>
 #endif
+#include <conio.h>
 #include "../CSV/csv"
 #include "../../COM/dcb.h"
 #include "kokkoro_data.hpp"

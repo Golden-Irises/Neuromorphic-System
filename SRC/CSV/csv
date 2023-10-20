@@ -6,6 +6,11 @@
 #include <fstream>
 #include <sstream>
 
+#define csv_comma ','
+#define csv_enter '\n'
+#define csv_tab   '\t'
+#define csv_ch0   '0'
+
 #include "..\..\ANN\kokkoro_set"
 #include "csv.hpp"
 

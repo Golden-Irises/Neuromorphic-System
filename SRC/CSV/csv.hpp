@@ -11,14 +11,14 @@ kokkoro_set<kokkoro_set<std::string>> csv_in(const std::string &file_path) {
     buffer << in.rdbuf();
     std::string dat(buffer.str());
     in.close();
-    ans.init(std::count(dat.begin(), dat.end(), '\n') + 1);
+    ans.init(std::count(dat.begin(), dat.end(), csv_enter) + 1);
     auto from = dat.begin(),
          to   = from;
     for (auto i = 0ull; i < ans.length; ++i) {
-        for (; to != dat.end(); ++to) if (*to == '\n') break;
-        ans[i].init(std::count(from, to, ',') + 1);
+        for (; to != dat.end(); ++to) if (*to == csv_enter) break;
+        ans[i].init(std::count(from, to, csv_comma) + 1);
         auto j = 0ull;
-        for (; from != to; ++from) if (*from == ',') ++j;
+        for (; from != to; ++from) if (*from == csv_comma) ++j;
         else ans[i][j].push_back(*from);
         ++from;
         ++to;
@@ -34,7 +34,7 @@ bool csv_out(const kokkoro_set<kokkoro_set<std::string>> &output_strings, const 
         of_file.close();
     }
     for(auto i = 0ull; i < output_strings.size(); ++i) {
-        for(auto j=0ull; j<output_strings[i].size(); ++j) of_file << output_strings[i][j] << ',';
+        for(auto j=0ull; j<output_strings[i].size(); ++j) of_file << output_strings[i][j] << csv_comma;
         of_file << std::endl;
     }
     of_file.close();
@@ -45,9 +45,9 @@ void csv_print(const kokkoro_set<kokkoro_set<std::string>> &src) {
     for (auto i = 0ull; i < src.length; ++i) {
         for (auto j = 0ull; j < src[i].length; ++j) {
             std::cout << src[i][j];
-            if (j + 1 < src[i].length) std::cout << '\t';
+            if (j + 1 < src[i].length) std::cout << csv_tab;
         }
-        if (i + 1 < src.length) std::cout << '\n';
+        if (i + 1 < src.length) std::cout << csv_enter;
     }
 }
 

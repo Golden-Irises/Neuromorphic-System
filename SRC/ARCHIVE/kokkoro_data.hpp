@@ -130,8 +130,10 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
         }
         if (kokkoro_array_verify(arr_tmp)) { if (zero_arr) {
             zero_arr = false;
+            kokkoro_handle.ctrl_msg = false;
             kokkoro_msg_print(kokkoro_msg_data_save_syb_select);
             kokkoro_msg_get(kokkoro_msg_mask_char, &syb_num);
+            kokkoro_handle.ctrl_msg = true;
         } } else if (!zero_arr) {
             zero_arr = true;
             syb_num  = csv_ch0;

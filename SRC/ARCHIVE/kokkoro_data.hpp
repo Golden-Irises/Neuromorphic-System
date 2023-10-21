@@ -140,8 +140,9 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
         }
 
         // get peaks amount
-        if (peak_cnt) for (auto j = 0; j < kokkoro_data_arrsz; ++j) {
+        for (auto j = 0; j < kokkoro_data_arrsz; ++j) {
             if (arr_tmp.sen_arr[j] > max_tmp[j]) max_tmp[j] = arr_tmp.sen_arr[j];
+            if (!peak_cnt) continue;
             auto curr_dif = arr_tmp.sen_arr[j] - pre_tmp[j];
             if (curr_dif ^ dif_tmp[j] && curr_dif < 0) ++peak_pt[j];
             pre_tmp[j] = arr_tmp.sen_arr[j];

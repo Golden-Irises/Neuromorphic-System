@@ -57,8 +57,10 @@
 */ 
 KOKKORO_BEGIN struct kokkoro_array { int sen_arr[kokkoro_data_arrsz] = {0}; }; KOKKORO_END
 
+#define kokkoro_msg_get                     std::scanf
 #define kokkoro_msg_print                   std::printf
 
+#define kokkoro_msg_mask_char               "%c"
 #define kokkoro_msg_mask_int                "%d"
 #define kokkoro_msg_mask_space              " "
 #define kokkoro_msg_mask_enter              "\n"

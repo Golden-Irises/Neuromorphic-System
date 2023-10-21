@@ -132,7 +132,9 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
             zero_arr = false;
             kokkoro_handle.ctrl_msg = false;
             kokkoro_msg_print(kokkoro_msg_data_save_syb_select);
-            syb_num = std::getchar();
+            kokkoro_msg_get(kokkoro_msg_mask_char, &syb_num);
+            kokkoro_msg_print(kokkoro_msg_mask_char, syb_num);
+            kokkoro_msg_print(kokkoro_msg_mask_enter);
             kokkoro_handle.ctrl_msg = true;
         } } else if (!zero_arr) {
             zero_arr = true;

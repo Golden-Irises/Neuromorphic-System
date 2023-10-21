@@ -84,7 +84,7 @@ bool kokkoro_array_startup(kokkoro_array_handle &kokkoro_handle, const std::stri
 }
 
 void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle] { kokkoro_loop {
-    if (kokkoro_handle.read_stop) break;
+    if (kokkoro_handle.read_stop) return;
     if (kokkoro_handle.reset_sgn) {
         kokkoro_handle.reset_sgn = false;
         kokkoro_handle.start_pt  = 0;
@@ -112,7 +112,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
     for (auto i = 0; i < kokkoro_handle.iobat_sz; ++i) {
         // get max message
         auto arr_tmp = kokkoro_handle.data_que.de_queue();
-        if (kokkoro_handle.read_stop) break;
+        if (kokkoro_handle.read_stop) return;
         if (kokkoro_array_verify(arr_tmp)) { if (zero_arr) {
             zero_arr = false;
             kokkoro_msg_print(kokkoro_msg_data_save_syb_select);

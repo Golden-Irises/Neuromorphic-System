@@ -75,6 +75,7 @@ struct kokkoro_array_handle {
 };
 
 bool kokkoro_array_shutdown(kokkoro_array_handle &kokkoro_handle) {
+    while (kokkoro_handle.ctrl_sz < kokkoro_data_bitsz) _sleep(10);
     kokkoro_handle.save_ofs.close();
     return dcb_shutdown(kokkoro_handle.h_port);
 }
@@ -158,7 +159,6 @@ void kokkoro_array_control_thread(kokkoro_array_handle &kokkoro_handle) { kokkor
     if (key_val == kokkoro_key_exit) {
         kokkoro_handle.read_stop = true;
         kokkoro_handle.data_que.reset();
-        while (kokkoro_handle.ctrl_sz < kokkoro_data_bitsz) _sleep(10);
         break;
     }
     if (key_val == kokkoro_key_reset) kokkoro_handle.reset_sgn = true;

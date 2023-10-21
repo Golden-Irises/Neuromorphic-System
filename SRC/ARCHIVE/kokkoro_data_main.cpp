@@ -35,7 +35,7 @@ int main(int argc, char *argv[], char *envp[]) {
     // read from DCB
     kokkoro_array_read_thread(handle_v);
     // data save
-    kokkoro_array_save_thread(handle_v, true);
+    kokkoro_array_save_thread(handle_v, false);
     // control
     kokkoro_array_control_thread(handle_v);
     // end

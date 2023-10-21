@@ -72,10 +72,14 @@ struct kokkoro_array_handle {
 
     async_pool ctrl_pool {kokkoro_data_bitsz};
     std::atomic_size_t ctrl_sz = 0;
+
+    #if kokkoro_dcb_msg
+    std::atomic_bool ctrl_msg = true;
+    #endif
 };
 
 bool kokkoro_array_shutdown(kokkoro_array_handle &kokkoro_handle) {
-    while (kokkoro_handle.ctrl_sz < kokkoro_data_bitsz) _sleep(10);
+    while (kokkoro_handle.ctrl_sz < kokkoro_data_bitsz) _sleep(kokkoro_sleep_ms);
     kokkoro_handle.save_ofs.close();
     return dcb_shutdown(kokkoro_handle.h_port);
 }
@@ -105,6 +109,9 @@ void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     char buf_tmp[kokkoro_data_segcnt] = {0};
     auto buf_len = dcb_read(kokkoro_handle.h_port, buf_tmp, kokkoro_data_segcnt, kokkoro_handle.async_mode);
     if (!buf_len) continue;
+    #if kokkoro_dcb_msg
+    while (!kokkoro_handle.ctrl_msg) _sleep(kokkoro_sleep_ms);
+    #endif
     kokkoro_handle.data_que.en_queue(kokkoro_data_transfer(buf_tmp));
 } } ); }
 

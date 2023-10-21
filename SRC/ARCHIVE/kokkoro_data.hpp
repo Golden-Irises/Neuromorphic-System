@@ -137,7 +137,6 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
             std::fflush(stdin);
             syb_num = std::getchar();
             #if kokkoro_dcb_msg
-            _sleep(kokkoro_sleep_ms);
             kokkoro_handle.ctrl_msg = true;
             #endif
         } } else if (!zero_arr) {

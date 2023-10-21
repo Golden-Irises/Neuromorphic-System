@@ -134,7 +134,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
             kokkoro_handle.ctrl_msg = false;
             #endif
             kokkoro_msg_print(kokkoro_msg_data_save_syb_select);
-            std::fflush(stdin);
+            std::fflush(stdout);
             syb_num = std::getchar();
             #if kokkoro_dcb_msg
             kokkoro_handle.ctrl_msg = true;

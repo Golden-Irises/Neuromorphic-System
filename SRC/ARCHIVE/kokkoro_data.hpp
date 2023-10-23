@@ -57,6 +57,8 @@ struct kokkoro_array_handle {
     int iobat_sz = intrv_ms * baudrate / 1000 / kokkoro_data_bitcnt,
         start_pt = 0;
 
+    std::atomic_char key_ch = 0;
+
     // buffer reading area
 
     kokkoro_queue<kokkoro_array> data_que;
@@ -136,7 +138,9 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
             #endif
 
             kokkoro_msg_print(kokkoro_msg_data_save_syb_select);
-            syb_num = std::getchar();
+            while (!kokkoro_syb_check(kokkoro_handle.key_ch)) _sleep(kokkoro_sleep_ms);
+            syb_num = kokkoro_handle.key_ch;
+            if (syb_num == kokkoro_key_exit || syb_num == kokkoro_key_reset) break;
 
             #if kokkoro_dcb_msg
             kokkoro_handle.ctrl_msg = true;
@@ -156,6 +160,8 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
             dif_tmp[j] = curr_dif;
         }
     }
+    // check inner io message
+    if (syb_num == kokkoro_key_exit || syb_num == kokkoro_key_reset) continue;
 
     // write to file stream
     for (auto j = 0; j < kokkoro_data_arrsz; ++j) kokkoro_handle.save_ofs << std::to_string(max_tmp[j]) << csv_comma;
@@ -172,13 +178,15 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
 } } ); }
 
 void kokkoro_array_control_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_loop {
-    auto key_val = _getch();
-    if (key_val == kokkoro_key_exit) {
+    kokkoro_handle.key_ch = _getch();
+    switch (kokkoro_handle.key_ch) {
+    case kokkoro_key_exit:
         kokkoro_handle.read_stop = true;
         kokkoro_handle.data_que.reset();
-        break;
+        return;
+    case kokkoro_key_reset: kokkoro_handle.reset_sgn = true; break;
+    default: std::printf(kokkoro_msg_mask_char, kokkoro_handle.key_ch);
     }
-    if (key_val == kokkoro_key_reset) kokkoro_handle.reset_sgn = true;
 } }
 
 KOKKORO_END

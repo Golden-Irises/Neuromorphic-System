@@ -130,11 +130,14 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
         }
         if (kokkoro_array_verify(arr_tmp)) { if (zero_arr) {
             zero_arr = false;
+            
             #if kokkoro_dcb_msg
             kokkoro_handle.ctrl_msg = false;
             #endif
+
             kokkoro_msg_print(kokkoro_msg_data_save_syb_select);
             syb_num = std::getchar();
+
             #if kokkoro_dcb_msg
             kokkoro_handle.ctrl_msg = true;
             #endif

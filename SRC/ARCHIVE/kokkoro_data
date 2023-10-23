@@ -62,9 +62,9 @@ KOKKORO_BEGIN struct kokkoro_array { int sen_arr[kokkoro_data_arrsz] = {0}; }; K
 #define kokkoro_msg_mask_int                "%d"
 #define kokkoro_msg_mask_space              " "
 
-#define kokkoro_msg_data_save_syb_select    "[Symbol][+(1) -(2) *(3) /(4)]: "
+#define kokkoro_msg_data_save_syb_select    "[Symbol][+(1) -(2) x(3) /(4)]: "
 #define kokkoro_msg_peak_begin              "[Peak Count]["
-#define kokkoro_msg_peak_end                "]"
+#define kokkoro_msg_peak_end                "]\n"
 
 #if kokkoro_dcb_msg
 #include <bitset>

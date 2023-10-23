@@ -140,11 +140,11 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
             kokkoro_msg_print(kokkoro_msg_data_save_syb_select);
             while (!kokkoro_syb_check(kokkoro_handle.key_ch)) _sleep(kokkoro_sleep_ms);
             syb_num = kokkoro_handle.key_ch;
-            if (syb_num == kokkoro_key_exit || syb_num == kokkoro_key_reset) break;
 
             #if kokkoro_dcb_msg
             kokkoro_handle.ctrl_msg = true;
             #endif
+            if (syb_num == kokkoro_key_exit || syb_num == kokkoro_key_reset) break;
         } } else if (!zero_arr) {
             zero_arr = true;
             syb_num  = csv_ch0;

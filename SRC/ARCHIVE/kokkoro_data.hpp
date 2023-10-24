@@ -185,7 +185,7 @@ void kokkoro_array_control_thread(kokkoro_array_handle &kokkoro_handle) { kokkor
         kokkoro_handle.data_que.reset();
         return;
     case kokkoro_key_reset: kokkoro_handle.reset_sgn = true; break;
-    default: std::printf(kokkoro_msg_mask_char, kokkoro_handle.key_ch);
+    default: kokkoro_msg_print(kokkoro_msg_mask_char, char(kokkoro_handle.key_ch));
     }
 } }
 

@@ -58,14 +58,16 @@
 KOKKORO_BEGIN struct kokkoro_array { int sen_arr[kokkoro_data_arrsz] = {0}; }; KOKKORO_END
 
 #ifndef kokkoro_syb_check
-#define kokkoro_syb_check(ch_val)           ch_val == '1' || ch_val == '2' || ch_val == '3' || ch_val == '4' ||\
-                                            ch_val == kokkoro_key_exit || ch_val == kokkoro_key_reset
+#define kokkoro_syb_check(ch_val)           (ch_val == '1' || ch_val == '2' || ch_val == '3' || ch_val == '4' ||\
+                                             ch_val == kokkoro_key_exit || ch_val == kokkoro_key_reset)
 #endif
 
 #define kokkoro_msg_print                   std::printf
 
 #define kokkoro_msg_mask_int                "%d"
+#define kokkoro_msg_mask_intn               "%d\n"
 #define kokkoro_msg_mask_char               "%c"
+#define kokkoro_msg_mask_charn              "%c\n"
 #define kokkoro_msg_mask_space              " "
 
 #define kokkoro_msg_data_save_syb_select    "[Symbol][+(1) -(2) x(3) /(4)]: "

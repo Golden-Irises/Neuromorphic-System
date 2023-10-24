@@ -146,8 +146,9 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
             #endif
             if (syb_num == kokkoro_key_exit || syb_num == kokkoro_key_reset) break;
         } } else if (!zero_arr) {
-            zero_arr = true;
-            syb_num  = csv_ch0;
+            kokkoro_handle.key_ch = 0;
+            zero_arr              = true;
+            syb_num               = csv_ch0;
         }
 
         // get peaks amount

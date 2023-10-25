@@ -78,6 +78,9 @@ struct kokkoro_array_handle {
     #if kokkoro_dcb_msg
     std::atomic_bool ctrl_msg = true;
     #endif
+
+    // testing area
+    std::atomic_size_t test_cnt = 0;
 };
 
 bool kokkoro_array_shutdown(kokkoro_array_handle &kokkoro_handle) {
@@ -165,7 +168,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
 
     // write to file stream
     for (auto j = 0; j < kokkoro_data_arrsz; ++j) kokkoro_handle.save_ofs << std::to_string(max_tmp[j]) << csv_comma;
-    kokkoro_handle.save_ofs << syb_num << csv_enter;
+    kokkoro_handle.save_ofs << syb_num << csv_enter; ++kokkoro_handle.test_cnt;
 
     // print peak
     if (!peak_cnt) continue;

@@ -81,7 +81,6 @@ struct kokkoro_array_handle {
 };
 
 bool kokkoro_array_shutdown(kokkoro_array_handle &kokkoro_handle) {
-    // while (kokkoro_handle.ctrl_sz < kokkoro_ctrl_thrdsz) _sleep(kokkoro_sleep_ms);
     kokkoro_handle.save_ofs.close();
     return dcb_shutdown(kokkoro_handle.h_port);
 }
@@ -184,6 +183,7 @@ void kokkoro_array_control_thread(kokkoro_array_handle &kokkoro_handle) { kokkor
     case kokkoro_key_exit:
         kokkoro_handle.read_stop = true;
         kokkoro_handle.data_que.reset();
+        // while (kokkoro_handle.ctrl_sz < kokkoro_ctrl_thrdsz) _sleep(kokkoro_sleep_ms);
         return;
     case kokkoro_key_reset: kokkoro_handle.reset_sgn = true; break;
     default: kokkoro_msg_print(kokkoro_msg_mask_charn, char(kokkoro_handle.key_ch)); break;

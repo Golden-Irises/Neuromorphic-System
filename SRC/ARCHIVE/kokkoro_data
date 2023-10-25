@@ -23,6 +23,8 @@
 #define kokkoro_key_exit    0x1b
 #define kokkoro_key_reset   0x08
 
+#define kokkoro_ctrl_thrdsz 0x02
+
 #ifndef kokkoro_dcb_msg
 #define kokkoro_dcb_msg     true
 #endif

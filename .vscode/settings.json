@@ -9,6 +9,7 @@
         "csv": "cpp",
         "diagram": "cpp",
         "kokkoro": "cpp",
-        "kokkoro_data": "cpp"
+        "kokkoro_data": "cpp",
+        "kokkoro_master": "cpp"
     }
 }

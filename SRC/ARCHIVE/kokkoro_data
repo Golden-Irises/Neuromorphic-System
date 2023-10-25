@@ -23,14 +23,10 @@
 #define kokkoro_key_exit    0x1b
 #define kokkoro_key_reset   0x08
 
-#define kokkoro_ctrl_thrdsz 0x02
+#define kokkoro_data_thdsz  0x02
 
-#ifndef kokkoro_dcb_msg
-#define kokkoro_dcb_msg     true
-#endif
-
-#ifndef kokkoro_dcb_start
-#define kokkoro_dcb_start   0x3f
+#ifndef kokkoro_data_bitsz
+#define kokkoro_data_bitsz  kokkoro_data_thdsz
 #endif
 
 #ifndef kokkoro_data_segcnt
@@ -41,8 +37,12 @@
 #define kokkoro_data_arrsz  0x09
 #endif
 
-#ifndef kokkoro_data_bitsz
-#define kokkoro_data_bitsz  0x02
+#ifndef kokkoro_dcb_start
+#define kokkoro_dcb_start   0x3f
+#endif
+
+#ifndef kokkoro_dcb_msg
+#define kokkoro_dcb_msg     false
 #endif
 
 #define kokkoro_data_bitcnt ((kokkoro_data_segcnt + 1) << kokkoro_data_segcnt)
@@ -59,22 +59,7 @@
 */ 
 KOKKORO_BEGIN struct kokkoro_array { int sen_arr[kokkoro_data_arrsz] = {0}; }; KOKKORO_END
 
-#ifndef kokkoro_syb_check
-#define kokkoro_syb_check(ch_val)           (ch_val == '1' || ch_val == '2' || ch_val == '3' || ch_val == '4' ||\
-                                             ch_val == kokkoro_key_exit || ch_val == kokkoro_key_reset)
-#endif
-
-#define kokkoro_msg_print                   std::printf
-
-#define kokkoro_msg_mask_int                "%d"
-#define kokkoro_msg_mask_intn               "%d\n"
-#define kokkoro_msg_mask_char               "%c"
-#define kokkoro_msg_mask_charn              "%c\n"
-#define kokkoro_msg_mask_space              " "
-
-#define kokkoro_msg_data_save_syb_select    "[Symbol][+(1) -(2) x(3) /(4)]: "
-#define kokkoro_msg_peak_begin              "[Peak Count]["
-#define kokkoro_msg_peak_end                "]\n"
+#define kokkoro_syb_check(ch_val)   (ch_val == '1' || ch_val == '2' || ch_val == '3' || ch_val == '4')
 
 #if kokkoro_dcb_msg
 #include <bitset>

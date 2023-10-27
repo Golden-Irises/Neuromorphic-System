@@ -138,6 +138,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
             std::cout << "[Symbol][+(1) -(2) x(3) /(4)]: ";
             while (!kokkoro_syb_check(kokkoro_handle.ctrl_key) ||
                     kokkoro_handle.ctrl_key != kokkoro_key_exit) _sleep(kokkoro_sleep_ms);
+            std::cout << kokkoro_handle.ctrl_key << std::endl;
         } } else if (!zero_arr) {
             kokkoro_handle.ctrl_key = 0;
             zero_arr                = true;
@@ -182,7 +183,7 @@ void kokkoro_array_control_thread(kokkoro_array_handle &kokkoro_handle) { kokkor
         while (kokkoro_handle.ctrl_sz < kokkoro_data_thdsz) _sleep(kokkoro_sleep_ms);
         return;
     case kokkoro_key_reset: kokkoro_handle.reset_sgn = true; break; // reset
-    default: std::cout << kokkoro_handle.ctrl_key << std::endl; break; // print this character
+    default: break;
     }
 } }
 

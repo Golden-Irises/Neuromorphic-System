@@ -140,7 +140,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool peak_c
                     kokkoro_handle.ctrl_key == kokkoro_key_exit)) _sleep(kokkoro_sleep_ms);
             std::cout << kokkoro_handle.ctrl_key << std::endl;
         } } else if (!zero_arr) {
-            kokkoro_handle.ctrl_key = 0;
+            kokkoro_handle.ctrl_key = csv_ch0;
             zero_arr                = true;
         }
 

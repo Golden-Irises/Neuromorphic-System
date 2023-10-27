@@ -120,7 +120,7 @@ void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
         continue;
     }
     char buf_tmp[kokkoro_data_segcnt] = {0};
-    if (!dcb_read(kokkoro_handle.h_port, buf_tmp, kokkoro_data_segcnt, kokkoro_handle.async_mode)) continue;
+    if (kokkoro_data_segcnt != dcb_read(kokkoro_handle.h_port, buf_tmp, kokkoro_data_segcnt, kokkoro_handle.async_mode)) continue;
     kokkoro_handle.data_que.en_queue(kokkoro_data_transfer(kokkoro_handle, buf_tmp));
 } } ); }
 

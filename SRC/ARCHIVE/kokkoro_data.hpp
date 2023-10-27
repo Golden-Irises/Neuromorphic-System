@@ -101,6 +101,12 @@ bool kokkoro_array_read_stop(kokkoro_array_handle &kokkoro_handle) {
 
 bool kokkoro_array_save_stop(kokkoro_array_handle &kokkoro_handle) {
     if (kokkoro_handle.read_stop || kokkoro_handle.ctrl_key == kokkoro_key_exit) {
+        kokkoro_handle.data_que.reset();
+
+        #if kokkoro_dcb_msg
+        kokkoro_handle.msg_que.reset();
+        #endif
+        
         ++kokkoro_handle.ctrl_sz;
         return true;
     }

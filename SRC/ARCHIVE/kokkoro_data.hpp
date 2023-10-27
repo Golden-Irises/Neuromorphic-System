@@ -101,12 +101,6 @@ bool kokkoro_array_read_stop(kokkoro_array_handle &kokkoro_handle) {
 
 bool kokkoro_array_save_stop(kokkoro_array_handle &kokkoro_handle) {
     if (kokkoro_handle.read_stop || kokkoro_handle.ctrl_key == kokkoro_key_exit) {
-        kokkoro_handle.data_que.reset();
-
-        #if kokkoro_dcb_msg
-        kokkoro_handle.msg_que.reset();
-        #endif
-        
         ++kokkoro_handle.ctrl_sz;
         return true;
     }
@@ -186,6 +180,12 @@ void kokkoro_array_control_thread(kokkoro_array_handle &kokkoro_handle) { kokkor
     switch(kokkoro_handle.ctrl_key) {
     case kokkoro_key_exit: // exit
         kokkoro_handle.read_stop = true;
+        kokkoro_handle.data_que.reset();
+
+        #if kokkoro_dcb_msg
+        kokkoro_handle.msg_que.reset();
+        #endif
+        
         while (kokkoro_handle.ctrl_sz < kokkoro_data_thdsz) _sleep(kokkoro_sleep_ms);
         return;
     case kokkoro_key_reset: kokkoro_handle.reset_sgn = true; break; // reset

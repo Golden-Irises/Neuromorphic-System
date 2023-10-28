@@ -174,9 +174,9 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
                     kokkoro_handle.ctrl_key == kokkoro_key_exit)) _sleep(kokkoro_sleep_ms);
             std::cout << kokkoro_handle.ctrl_key << std::endl;
         } } else if (!zero_arr) {
-            kokkoro_handle.ctrl_key = csv_ch0;
-            zero_arr                = true;
-        }
+            zero_arr = true;
+            i        = kokkoro_handle.iobat_sz;
+        } else --i;
 
         if (kokkoro_array_save_stop(kokkoro_handle)) return;
 
@@ -203,6 +203,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     kokkoro_handle.save_ofs << kokkoro_handle.ctrl_key << csv_enter;
     #else
     kokkoro_handle.arr_que.en_queue(std::move(max_tmp));
+    if (zero_arr) kokkoro_handle.arr_que.en_queue();
     #endif
 
     // print peak

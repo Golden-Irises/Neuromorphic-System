@@ -37,12 +37,20 @@
 #define kokkoro_data_arrsz  0x09
 #endif
 
+#ifndef kokkoro_data_save
+#define kokkoro_data_save   false
+#endif
+
 #ifndef kokkoro_dcb_start
 #define kokkoro_dcb_start   0x3f
 #endif
 
 #ifndef kokkoro_dcb_msg
 #define kokkoro_dcb_msg     false
+#endif
+
+#ifndef kokkoro_dcb_peak
+#define kokkoro_dcb_peak    false
 #endif
 
 #define kokkoro_data_bitcnt ((kokkoro_data_segcnt + 1) << kokkoro_data_segcnt)

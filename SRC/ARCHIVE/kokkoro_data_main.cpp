@@ -4,7 +4,9 @@
 #pragma once
 
 // get DCB message
-#define kokkoro_dcb_msg     true
+#define kokkoro_dcb_msg     false
+// get DCB peak count
+#define kokkoro_dcb_peak    false
 // DCB start flag number -> 0x3f
 #define kokkoro_dcb_start   0x3f
 // COM message width - 3 * 8bits = 3 bytes
@@ -13,6 +15,8 @@
 #define kokkoro_data_arrsz  0x09
 // bit size for each sensor equivalent data value
 #define kokkoro_data_bitsz  0x02
+// DCB array data saving mode, for csv
+#define kokkoro_data_save   true
 
 #include <iostream>
 #include "../../ANN/kokkoro"
@@ -31,11 +35,16 @@ int main(int argc, char *argv[], char *envp[]) {
                                    ONESTOPBIT, // 1 stopbit(s)
                                    NOPARITY};  // no parity
     // Debugging
-    kokkoro_array_startup(handle_v, "file_v");
+    kokkoro_array_startup(handle_v
+                          #if kokkoro_data_save
+                          ,"file_v"
+                          ,"SRC\\ARCHIVE\\"
+                          #endif
+                         );
     // read from DCB
     kokkoro_array_read_thread(handle_v);
     // data save
-    kokkoro_array_save_thread(handle_v, false);
+    kokkoro_array_save_thread(handle_v);
     // control
     kokkoro_array_control_thread(handle_v);
     // end

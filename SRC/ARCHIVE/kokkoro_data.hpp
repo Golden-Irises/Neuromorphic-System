@@ -166,7 +166,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     for (auto i = 0; i < kokkoro_handle.iobat_sz; ++i) {
         auto arr_tmp = kokkoro_handle.data_que.de_queue();
 
-        // get data label
+        // TODO: get data label
         if (kokkoro_array_verify(arr_tmp)) { if (zero_arr) {
             zero_arr = false;
             std::cout << "[Symbol][+(1) -(2) x(3) /(4)]: ";

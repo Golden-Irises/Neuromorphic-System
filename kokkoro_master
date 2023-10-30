@@ -1,0 +1,19 @@
+/* This is the main process on master machine.
+ * これは上位機のプログラム。
+ * Here we go, my master.
+ * 主様、お任せします。
+ */
+
+#ifndef _KOKKORO_MASTER_
+#define _KOKKORO_MASTER_
+
+#pragma comment(lib, "Kernel32.lib")
+
+
+
+#include <windows.h>
+#include "ANN/kokkoro"
+#include "SRC/ARCHIVE/kokkoro_data"
+#include "kokkoro_master.hpp"
+
+#endif

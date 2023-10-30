@@ -9,7 +9,20 @@
 
 #pragma comment(lib, "Kernel32.lib")
 
-
+// get DCB message
+#define kokkoro_dcb_msg     false
+// get DCB peak count
+#define kokkoro_dcb_peak    true
+// DCB start flag number -> 0x3f
+#define kokkoro_dcb_start   0x3f
+// COM message width - 3 * 8bits = 3 bytes
+#define kokkoro_data_segcnt 0x03
+// sensor array size = 9
+#define kokkoro_data_arrsz  0x09
+// bit size for each sensor equivalent data value
+#define kokkoro_data_bitsz  0x02
+// DCB array data saving mode, for csv
+#define kokkoro_data_save   false
 
 #include <windows.h>
 #include "ANN/kokkoro"

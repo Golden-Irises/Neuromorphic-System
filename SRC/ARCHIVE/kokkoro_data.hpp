@@ -116,14 +116,6 @@ bool kokkoro_array_startup(kokkoro_array_handle &kokkoro_handle
 }
 
 bool kokkoro_array_read_stop(kokkoro_array_handle &kokkoro_handle) {
-    if (kokkoro_handle.read_stop) {
-        ++kokkoro_handle.ctrl_sz;
-        return true;
-    }
-    return false;
-}
-
-bool kokkoro_array_save_stop(kokkoro_array_handle &kokkoro_handle) {
     if (kokkoro_handle.read_stop || kokkoro_handle.ctrl_key == kokkoro_key_exit) {
         ++kokkoro_handle.ctrl_sz;
         return true;
@@ -166,21 +158,19 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     for (auto i = 0; i < kokkoro_handle.iobat_sz; ++i) {
         auto arr_tmp = kokkoro_handle.data_que.de_queue();
 
-        #if kokkoro_data_save
         if (kokkoro_array_verify(arr_tmp)) { if (zero_arr) {
             zero_arr = false;
+            #if kokkoro_data_save
             std::cout << "[Symbol][+(1) -(2) x(3) /(4)]: ";
             while (!(kokkoro_syb_check(kokkoro_handle.ctrl_key) ||
                     kokkoro_handle.ctrl_key == kokkoro_key_exit)) _sleep(kokkoro_sleep_ms);
             std::cout << kokkoro_handle.ctrl_key << std::endl;
+            #endif
         } } else if (!zero_arr) {
             zero_arr = true;
             i        = kokkoro_handle.iobat_sz;
         } else --i;
-        if (kokkoro_array_save_stop(kokkoro_handle)) return;
-        #else
         if (kokkoro_array_read_stop(kokkoro_handle)) return;
-        #endif
 
         #if kokkoro_dcb_msg
         std::cout << kokkoro_handle.msg_que.de_queue() << std::endl;

@@ -78,9 +78,9 @@ int main(int argc, char *argv[], char *envp[]) {
     mnist_read(&test_file, &test_data, ln_cnt, col_cnt, 0, true);
     mnist_close(&test_file);
     
-    KokkoroInit(kokkoro_core, train_data.lbl.length, test_data.lbl.length, ln_cnt, col_cnt, 1);
-	KokkoroRun(kokkoro_core, train_data.elem, train_data.lbl, train_idx, test_data .elem, test_data.lbl, MNIST_ORGN_SZ);
-    KokkoroResult(kokkoro_core);
+    KokkoroTrainInit(kokkoro_core, train_data.lbl.length, test_data.lbl.length, ln_cnt, col_cnt, 1);
+	KokkoroTrain(kokkoro_core, train_data.elem, train_data.lbl, train_idx, test_data .elem, test_data.lbl, MNIST_ORGN_SZ);
+    KokkoroTrainResult(kokkoro_core);
     
     cout << kokkoro_chrono_time_point - chrono_begin << "ms" << endl;
     return EXIT_SUCCESS;

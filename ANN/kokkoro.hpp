@@ -1,34 +1,9 @@
 KOKKORO_BEGIN
 
-template <bool DeduceMode = false> struct KokkoroCore {
-    uint64_t iTrainBatSz   = 32,
-             iTrainBatCnt  = 0,
-             iTestBatSz    = 32,
-             iTestBatCnt   = 0,
-             iLayersCnt    = 0,
-             iTrainDataCnt = 0,
-             iTestDataCnt  = 0;
-
-    std::atomic_uint64_t iBatCnt = 0,
-                         iAccCnt = 0,
-                         iRcCnt  = 0,
-                         iStatus = kokkoro_ok;
-
-    double dTrainPrec = .1;
+struct Kokkoro {
+    uint64_t iLayersCnt = 0;
 
     kokkoro_layer_ptr arrLayers[kokkoro_len];
-
-    kokkoro_queue<uint64_t> queTrainAcc, queTrainRc, queTestAcc, queTestRc;
-
-    async_controller asyCtrl;
-
-    async_pool asyPool;
-
-    KokkoroCore(uint64_t iTrainBatchSize = 32, uint64_t iTestBatchSize = 32, double dTrainPrecision = .1) :
-        iTrainBatSz(iTrainBatchSize),
-        iTestBatSz(iTestBatchSize),
-        dTrainPrec(dTrainPrecision),
-        asyPool((std::max)(iTrainBatchSize, iTestBatchSize)) {}
 };
 
 /* Construct the layer
@@ -43,12 +18,38 @@ template <bool DeduceMode = false> struct KokkoroCore {
  * LayerFlat
  */
 template <typename LayerType,
-          bool     DeduceMode,
           typename...LayerArgs, typename = std::enable_if_t<std::is_base_of_v<Layer, LayerType>>>
-void KokkoroAddLayer(KokkoroCore<DeduceMode> &netSrc, LayerArgs &&...argsLayerInit) { netSrc.arrLayers[netSrc.iLayersCnt++] = std::make_shared<LayerType>(std::forward<LayerArgs>(argsLayerInit)...); }
+void KokkoroAddLayer(Kokkoro &netSrc, LayerArgs &&...argsLayerInit) { netSrc.arrLayers[netSrc.iLayersCnt++] = std::make_shared<LayerType>(std::forward<LayerArgs>(argsLayerInit)...); }
 
-template <bool DeduceMode>
-void KokkoroInit(KokkoroCore<DeduceMode> &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt) {
+struct KokkoroCore : Kokkoro {
+    uint64_t iTrainBatSz   = 32,
+             iTrainBatCnt  = 0,
+             iTestBatSz    = 32,
+             iTestBatCnt   = 0,
+             iTrainDataCnt = 0,
+             iTestDataCnt  = 0;
+
+    std::atomic_uint64_t iBatCnt = 0,
+                         iAccCnt = 0,
+                         iRcCnt  = 0,
+                         iStatus = kokkoro_ok;
+
+    double dTrainPrec = .1;
+
+    kokkoro_queue<uint64_t> queTrainAcc, queTrainRc, queTestAcc, queTestRc;
+
+    async_controller asyCtrl;
+
+    async_pool asyPool;
+
+    KokkoroCore(uint64_t iTrainBatchSize = 32, uint64_t iTestBatchSize = 32, double dTrainPrecision = .1) :
+        iTrainBatSz(iTrainBatchSize),
+        iTestBatSz(iTestBatchSize),
+        dTrainPrec(dTrainPrecision),
+        asyPool((std::max)(iTrainBatchSize, iTestBatchSize)) {}
+};
+
+void KokkoroTrainInit(KokkoroCore &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt) {
     netSrc.iTrainBatCnt  = iTrainDataCnt / netSrc.iTrainBatSz;
     netSrc.iTestBatCnt   = iTestDataCnt / netSrc.iTestBatSz;
     netSrc.iTrainDataCnt = iTrainDataCnt;
@@ -59,8 +60,7 @@ void KokkoroInit(KokkoroCore<DeduceMode> &netSrc, uint64_t iTrainDataCnt, uint64
     }
 }
 
-template <bool DeduceMode>
-bool KokkoroAbort(KokkoroCore<DeduceMode> &netSrc) {
+bool KokkoroTrainAbort(KokkoroCore &netSrc) {
     if (netSrc.iStatus != kokkoro_err) return false;
     netSrc.queTestAcc.reset();
     netSrc.queTestRc.reset();
@@ -70,11 +70,9 @@ bool KokkoroAbort(KokkoroCore<DeduceMode> &netSrc) {
     return true;
 }
 
-template <bool DeduceMode>
-bool KokkoroStopVerify(KokkoroCore<DeduceMode> &netSrc) { return netSrc.iStatus == kokkoro_fin || netSrc.iStatus == kokkoro_err; }
+bool KokkoroTrainStopVerify(KokkoroCore &netSrc) { return netSrc.iStatus == kokkoro_fin || netSrc.iStatus == kokkoro_err; }
 
-template <bool DeduceMode>
-void KokkoroRun(KokkoroCore<DeduceMode> &netSrc, const kokkoro_set<kokkoro_matrix> &setTrianData, const kokkoro_set<uint64_t> &setTrainLbl, kokkoro_set<uint64_t> &setTrainDataIdx, const kokkoro_set<kokkoro_matrix> &setTestData, const kokkoro_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == kokkoro_ok) {
+void KokkoroTrain(KokkoroCore &netSrc, const kokkoro_set<kokkoro_matrix> &setTrianData, const kokkoro_set<uint64_t> &setTrainLbl, kokkoro_set<uint64_t> &setTrainDataIdx, const kokkoro_set<kokkoro_matrix> &setTestData, const kokkoro_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == kokkoro_ok) {
     auto bTaskVld = i < netSrc.iTrainBatSz;
     auto iDataIdx = bTaskVld ? i : 0;
     // train
@@ -82,7 +80,7 @@ void KokkoroRun(KokkoroCore<DeduceMode> &netSrc, const kokkoro_set<kokkoro_matri
         if (!bTaskVld) {
             iDataIdx += netSrc.iTrainBatSz;
             netSrc.asyCtrl.thread_sleep();
-            if (KokkoroStopVerify(netSrc)) break;
+            if (KokkoroTrainStopVerify(netSrc)) break;
             else continue;
         }
         auto iLbl    = setTrainLbl[setTrainDataIdx[iDataIdx]];
@@ -90,11 +88,11 @@ void KokkoroRun(KokkoroCore<DeduceMode> &netSrc, const kokkoro_set<kokkoro_matri
              vecOrgn = kokkoro_lbl_orgn(iLbl, iLblTypeCnt);
         for (auto j = 0ull; j < netSrc.iLayersCnt; ++j) netSrc.arrLayers[j]->ForProp(vecIn, i);
         if (!vecIn.verify) netSrc.iStatus = kokkoro_err;
-        if (KokkoroAbort(netSrc)) break;
+        if (KokkoroTrainAbort(netSrc)) break;
         kokkoro_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);
         for (auto j = netSrc.iLayersCnt; j; --j) netSrc.arrLayers[j - 1]->BackProp(vecIn, i, vecOrgn);
         if (!vecIn.verify) netSrc.iStatus = kokkoro_err;
-        if (KokkoroAbort(netSrc)) break;
+        if (KokkoroTrainAbort(netSrc)) break;
         iDataIdx += netSrc.iTrainBatSz;
         if (++netSrc.iBatCnt == netSrc.iTrainBatSz) {
             netSrc.queTrainAcc.en_queue(netSrc.iAccCnt);
@@ -105,7 +103,7 @@ void KokkoroRun(KokkoroCore<DeduceMode> &netSrc, const kokkoro_set<kokkoro_matri
             netSrc.asyCtrl.thread_wake_all();
         } else netSrc.asyCtrl.thread_sleep();
     }
-    if (KokkoroStopVerify(netSrc)) break;
+    if (KokkoroTrainStopVerify(netSrc)) break;
     // test
     iDataIdx = i;
     if (i < netSrc.iTestBatSz) while (iDataIdx < setTestLbl.length) {
@@ -113,7 +111,7 @@ void KokkoroRun(KokkoroCore<DeduceMode> &netSrc, const kokkoro_set<kokkoro_matri
         auto vecIn = setTestData[iDataIdx];
         for (auto j = 0ull; j < netSrc.iLayersCnt; ++j) netSrc.arrLayers[j]->Deduce(vecIn);
         if (!vecIn.verify) netSrc.iStatus = kokkoro_err;
-        if (KokkoroAbort(netSrc)) break;
+        if (KokkoroTrainAbort(netSrc)) break;
         kokkoro_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);
         iDataIdx += netSrc.iTestBatSz;
     }
@@ -126,11 +124,10 @@ void KokkoroRun(KokkoroCore<DeduceMode> &netSrc, const kokkoro_set<kokkoro_matri
         setTrainDataIdx.shuffle();
         netSrc.asyCtrl.thread_wake_all();
     } else netSrc.asyCtrl.thread_sleep();
-    if (KokkoroStopVerify(netSrc)) break;
+    if (KokkoroTrainStopVerify(netSrc)) break;
 } }); }
 
-template <bool DeduceMode>
-void KokkoroResult(KokkoroCore<DeduceMode> &netSrc) {
+void KokkoroTrainResult(KokkoroCore &netSrc) {
     double   dRcRt  = 0;
     uint64_t iEpCnt = 0;
     while (dRcRt < 1) {
@@ -151,7 +148,7 @@ void KokkoroResult(KokkoroCore<DeduceMode> &netSrc) {
     for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.arrLayers[i]->SaveData();
 }
 
-kokkoro_matrix KokkoroDeduce(const KokkoroCore<true> &netSrc, const kokkoro_matrix &vecIn) {
+kokkoro_matrix KokkoroDeduce(const KokkoroCore &netSrc, const kokkoro_matrix &vecIn) {
     auto vecAns = vecIn;
     for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.arrLayers[i]->Deduce(vecAns);
     return vecAns;

@@ -111,7 +111,7 @@ void KokkoroTrain(KokkoroCore &netSrc, const kokkoro_set<kokkoro_matrix> &setTri
     if (i < netSrc.iTestBatSz) while (iDataIdx < setTestLbl.length) {
         auto iLbl  = setTestLbl[iDataIdx];
         auto vecIn = setTestData[iDataIdx];
-        for (auto j = 0ull; j < netSrc.iLayersCnt; ++j) netSrc.arrLayers[j]->Deduce(vecIn);
+        KokkoroDeduce(netSrc, vecIn);
         if (!vecIn.verify) netSrc.iStatus = kokkoro_err;
         if (KokkoroTrainAbort(netSrc)) break;
         kokkoro_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);
@@ -148,12 +148,6 @@ void KokkoroTrainResult(KokkoroCore &netSrc) {
         kokkoro_epoch_status(++iEpCnt, dAcc, dRcRt, (kokkoro_chrono_time_point - cEpTmPt));
     }
     for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.arrLayers[i]->SaveData();
-}
-
-kokkoro_matrix KokkoroDeduce(const KokkoroCore &netSrc, const kokkoro_matrix &vecIn) {
-    auto vecAns = vecIn;
-    for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.arrLayers[i]->Deduce(vecAns);
-    return vecAns;
 }
 
 KOKKORO_END

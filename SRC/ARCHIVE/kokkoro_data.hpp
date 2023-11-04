@@ -73,10 +73,14 @@ struct kokkoro_array_handle {
 
     #if kokkoro_data_save
     // array saving area
-    std::ofstream save_ofs;
+    std::ofstream save_data_ofs, save_lbl_ofs;
     #else
     // array max area
     kokkoro_queue<kokkoro_array> arr_que;
+    #endif
+
+    #if kokkoro_dcb_peak
+    kokkoro_queue<kokkoro_array> peak_cnt_que;
     #endif
 
     // control area
@@ -90,7 +94,8 @@ struct kokkoro_array_handle {
 
 bool kokkoro_array_shutdown(kokkoro_array_handle &kokkoro_handle) {
     #if kokkoro_data_save
-    kokkoro_handle.save_ofs.close();
+    kokkoro_handle.save_data_ofs.close();
+    kokkoro_handle.save_lbl_ofs.close();
     #endif
 
     return dcb_shutdown(kokkoro_handle.h_port);
@@ -98,18 +103,21 @@ bool kokkoro_array_shutdown(kokkoro_array_handle &kokkoro_handle) {
 
 bool kokkoro_array_startup(kokkoro_array_handle &kokkoro_handle
                            #if kokkoro_data_save
-                           ,const std::string &file_name
+                           ,const std::string &data_file_name
+                           ,const std::string &lbl_file_name
                            ,const std::string &file_dir = "SRC\\ARCHIVE\\"
                            #endif
                           ) {
     #if kokkoro_data_save
-    kokkoro_handle.save_ofs.open(file_dir + file_name + ".csv", std::ios::out | std::ios::trunc);
+    kokkoro_handle.save_data_ofs.open(file_dir + data_file_name + ".csv", std::ios::out | std::ios::trunc);
+    kokkoro_handle.save_lbl_ofs.open(file_dir + lbl_file_name + ".csv", std::ios::out | std::ios::trunc);
     #endif
 
     return dcb_startup(kokkoro_handle.h_port, kokkoro_handle.port_idx, kokkoro_handle.baudrate, kokkoro_handle.databits, kokkoro_handle.stopbits, kokkoro_handle.parity, kokkoro_handle.async_mode, kokkoro_handle.iobuf_sz, kokkoro_handle.iobuf_sz)
     
     #if kokkoro_data_save
-    && kokkoro_handle.save_ofs.is_open()
+    && kokkoro_handle.save_data_ofs.is_open()
+    && kokkoro_handle.save_lbl_ofs.is_open()
     #endif
 
     ;
@@ -150,9 +158,9 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     kokkoro_array max_tmp;
 
     #if kokkoro_dcb_peak
+    kokkoro_array peak_cnt;
     int dif_tmp[kokkoro_data_arrsz] = {0},
-        pre_tmp[kokkoro_data_arrsz] = {0},
-        peak_pt[kokkoro_data_arrsz] = {0};
+        pre_tmp[kokkoro_data_arrsz] = {0};
     #endif
 
     for (auto i = 0; i < kokkoro_handle.iobat_sz; ++i) {
@@ -184,7 +192,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
 
             #if kokkoro_dcb_peak
             auto curr_dif = arr_tmp.sen_arr[j] - pre_tmp[j];
-            if (curr_dif ^ dif_tmp[j] && curr_dif < 0) ++peak_pt[j];
+            if (curr_dif ^ dif_tmp[j] && curr_dif < 0) ++peak_cnt.sen_arr[j];
             pre_tmp[j] = arr_tmp.sen_arr[j];
             dif_tmp[j] = curr_dif;
             #endif
@@ -193,21 +201,16 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
 
     #if kokkoro_data_save
     // write to file stream
-    for (auto j = 0; j < kokkoro_data_arrsz; ++j) kokkoro_handle.save_ofs << std::to_string(max_tmp.sen_arr[j]) << csv_comma;
-    kokkoro_handle.save_ofs << kokkoro_handle.ctrl_key << csv_enter;
+    for (auto j = 0; j < kokkoro_data_arrsz; ++j) kokkoro_handle.save_data_ofs << std::to_string(max_tmp.sen_arr[j]) << csv_enter;
+    kokkoro_handle.save_lbl_ofs << kokkoro_handle.ctrl_key << csv_enter;
     #else
     kokkoro_handle.arr_que.en_queue(std::move(max_tmp));
     if (zero_arr) kokkoro_handle.arr_que.en_queue();
     #endif
 
-    // print peak
     #if kokkoro_dcb_peak
-    std::cout << "[Peak Count][";
-    for (auto i = 0; i < kokkoro_data_arrsz; ++i) {
-        std::cout << peak_pt[i];
-        if (i + 1 < kokkoro_data_arrsz) std::cout << ' ';
-    }
-    std::cout << ']' << std::endl;
+    // print peak
+    kokkoro_handle.peak_cnt_que.en_queue(peak_cnt);
     #endif
 } } ); }
 
@@ -221,6 +224,10 @@ void kokkoro_array_control_thread(kokkoro_array_handle &kokkoro_handle) { kokkor
         #if kokkoro_dcb_msg
         kokkoro_handle.msg_que.reset();
         #endif
+
+        #if !kokkoro_data_save
+        kokkoro_handle.arr_que.reset();
+        #endif
         
         while (kokkoro_handle.ctrl_sz < kokkoro_data_thdsz) _sleep(kokkoro_sleep_ms);
         return;
@@ -228,5 +235,19 @@ void kokkoro_array_control_thread(kokkoro_array_handle &kokkoro_handle) { kokkor
     default: break;
     }
 } }
+
+bool kokkoro_csv_data_load(kokkoro_set<kokkoro_matrix> &data_set, kokkoro_set<uint64_t> &lbl_set, const std::string &csv_data_path, const std::string &csv_lbl_path) {
+    auto data_tab = csv_in(csv_data_path),
+         lbl_tab  = csv_in(csv_lbl_path);
+    if (data_tab.length != lbl_tab.length) return false;
+    data_set.init(data_tab.length);
+    lbl_set.init(lbl_tab.length);
+    for (auto i = 0ull; i < data_set.length; ++i) {
+        data_set[i] = {kokkoro_data_arrsz, 1};
+        for (auto j = 0; j < kokkoro_data_arrsz; ++j) data_set[i].index(j) = std::atoi(data_tab[i][j].c_str());
+        lbl_set[i] = std::atoi(lbl_tab[i][0].c_str());
+    }
+    return true;
+}
 
 KOKKORO_END

@@ -216,6 +216,8 @@ public:
         for (auto row_tmp : src) for (auto col_tmp : row_tmp) proto.ptr[elem_cnt++] = col_tmp;
         if (proto.elem_cnt != elem_cnt) proto.reset();
     }
+    template <typename p_arg, typename = std::enable_if_t<std::is_arithmetic_v<p_arg>>>
+    kokkoro_matrix(const p_arg *p_src, uint64_t ln_cnt, uint64_t col_cnt) : kokkoro_matrix(ln_cnt, col_cnt) { std::copy(p_src, p_src + proto.elem_cnt, proto.ptr); }
 
     void elem_rand(double fst_rng = -1, double snd_rng = 1) { matrix_rand(proto, fst_rng, snd_rng); }
 

@@ -21,8 +21,6 @@ template <typename LayerType,
           typename...LayerArgs, typename = std::enable_if_t<std::is_base_of_v<Layer, LayerType>>>
 void KokkoroAddLayer(Kokkoro &netSrc, LayerArgs &&...argsLayerInit) { netSrc.arrLayers[netSrc.iLayersCnt++] = std::make_shared<LayerType>(std::forward<LayerArgs>(argsLayerInit)...); }
 
-void KokkoroDeduce(Kokkoro &netSrc, kokkoro_matrix &vecIn) { for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.arrLayers[i]->Deduce(vecIn); }
-
 struct KokkoroANN : Kokkoro {
     uint64_t iTrainBatSz   = 32,
              iTrainBatCnt  = 0,
@@ -111,7 +109,7 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
     if (i < netSrc.iTestBatSz) while (iDataIdx < setTestLbl.length) {
         auto iLbl  = setTestLbl[iDataIdx];
         auto vecIn = setTestData[iDataIdx];
-        KokkoroDeduce(netSrc, vecIn);
+        for (auto j = 0ull; j < netSrc.iLayersCnt; ++j) netSrc.arrLayers[j]->Deduce(vecIn);
         if (!vecIn.verify) netSrc.iStatus = kokkoro_err;
         if (KokkoroTrainAbort(netSrc)) break;
         kokkoro_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);

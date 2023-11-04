@@ -33,18 +33,23 @@
 #define kokkoro_max_pool    0x0001
 #define kokkoro_gag_pool    0x0002
 
+#ifndef kokkoro_len
+#define kokkoro_len         0x0080
+#endif
+
+#ifndef kokkoro_sleep_ms
+#define kokkoro_sleep_ms    0x0258
+#endif
+
 #include "kokkoro_async.hpp"
 #include "kokkoro_layer.hpp"
 
 #define kokkoro_layer_ptr   std::shared_ptr<kokkoro::Layer>
-#ifndef kokkoro_len
-#define kokkoro_len         0x0080
-#endif
 
 #define kokkoro_ok          0x0000
 #define kokkoro_err         0x0001
 #define kokkoro_fin         0x0002
 
-#include "kokkoro.hpp"
+#include "kokkoro_ann.hpp"
 
 #endif

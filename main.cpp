@@ -5,7 +5,7 @@
 #pragma once
 
 #include <iostream>
-#include "kokkoro_master"
+#include "kokkoro"
 
 using namespace std;
 

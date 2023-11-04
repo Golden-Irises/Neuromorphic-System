@@ -55,7 +55,7 @@ struct kokkoro_array_handle {
 
     bool async_mode = false;
 
-    dcb_hdl h_port;
+    dcb_hdl h_port {0};
 
     int iobat_sz = intrv_ms * baudrate / 1000 / kokkoro_data_bitcnt,
         start_pt = 0;

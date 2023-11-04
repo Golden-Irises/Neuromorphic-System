@@ -14,7 +14,7 @@
 #include <iostream>
 
 #include "../SRC/CSV/csv"
-#include "kokkoro"
+#include "kokkoro_ann"
 #include "../SRC/MNIST/mnist.h"
 
 #define LEARN_RATE       .4     // 1e-5
@@ -27,7 +27,7 @@ int main(int argc, char *argv[], char *envp[]) {
     auto chrono_begin = kokkoro_chrono_time_point;
     cout << "Kokkoro is working, my master..." << endl;
 
-    KokkoroCore kokkoro_core {125, 125};
+    KokkoroANN kokkoro_core {125, 125};
 
     string root = "SRC\\ARCHIVE\\";
     KokkoroAddLayer<LayerConv<20, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(kokkoro_core, root + "C0.csv");

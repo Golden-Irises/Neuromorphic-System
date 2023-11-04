@@ -1,6 +1,5 @@
 {
     "files.associations": {
-        "*.jsp": "html",
         "kokkoro_base": "cpp",
         "kokkoro_matrix": "cpp",
         "*.vt": "verilog",
@@ -10,6 +9,6 @@
         "diagram": "cpp",
         "kokkoro": "cpp",
         "kokkoro_data": "cpp",
-        "kokkoro_master": "cpp"
+        "kokkoro_ann": "cpp"
     }
 }

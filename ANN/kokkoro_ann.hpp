@@ -23,7 +23,7 @@ void KokkoroAddLayer(Kokkoro &netSrc, LayerArgs &&...argsLayerInit) { netSrc.arr
 
 void KokkoroDeduce(Kokkoro &netSrc, kokkoro_matrix &vecIn) { for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.arrLayers[i]->Deduce(vecIn); }
 
-struct KokkoroCore : Kokkoro {
+struct KokkoroANN : Kokkoro {
     uint64_t iTrainBatSz   = 32,
              iTrainBatCnt  = 0,
              iTestBatSz    = 32,
@@ -44,14 +44,14 @@ struct KokkoroCore : Kokkoro {
 
     async_pool asyPool;
 
-    KokkoroCore(uint64_t iTrainBatchSize = 32, uint64_t iTestBatchSize = 32, double dTrainPrecision = .1) :
+    KokkoroANN(uint64_t iTrainBatchSize = 32, uint64_t iTestBatchSize = 32, double dTrainPrecision = .1) :
         iTrainBatSz(iTrainBatchSize),
         iTestBatSz(iTestBatchSize),
         dTrainPrec(dTrainPrecision),
         asyPool((std::max)(iTrainBatchSize, iTestBatchSize)) {}
 };
 
-void KokkoroTrainInit(KokkoroCore &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt) {
+void KokkoroTrainInit(KokkoroANN &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt) {
     netSrc.iTrainBatCnt  = iTrainDataCnt / netSrc.iTrainBatSz;
     netSrc.iTestBatCnt   = iTestDataCnt / netSrc.iTestBatSz;
     netSrc.iTrainDataCnt = iTrainDataCnt;
@@ -62,7 +62,7 @@ void KokkoroTrainInit(KokkoroCore &netSrc, uint64_t iTrainDataCnt, uint64_t iTes
     }
 }
 
-bool KokkoroTrainAbort(KokkoroCore &netSrc) {
+bool KokkoroTrainAbort(KokkoroANN &netSrc) {
     if (netSrc.iStatus != kokkoro_err) return false;
     netSrc.queTestAcc.reset();
     netSrc.queTestRc.reset();
@@ -72,16 +72,16 @@ bool KokkoroTrainAbort(KokkoroCore &netSrc) {
     return true;
 }
 
-bool KokkoroTrainStopVerify(KokkoroCore &netSrc) { return netSrc.iStatus == kokkoro_fin || netSrc.iStatus == kokkoro_err; }
+bool KokkoroTrainStopVerify(KokkoroANN &netSrc) { return netSrc.iStatus == kokkoro_fin || netSrc.iStatus == kokkoro_err; }
 
-void KokkoroTrain(KokkoroCore &netSrc, const kokkoro_set<kokkoro_matrix> &setTrianData, const kokkoro_set<uint64_t> &setTrainLbl, kokkoro_set<uint64_t> &setTrainDataIdx, const kokkoro_set<kokkoro_matrix> &setTestData, const kokkoro_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == kokkoro_ok) {
+void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTrianData, const kokkoro_set<uint64_t> &setTrainLbl, kokkoro_set<uint64_t> &setTrainDataIdx, const kokkoro_set<kokkoro_matrix> &setTestData, const kokkoro_set<uint64_t> &setTestLbl, uint64_t iLblTypeCnt) { for (auto i = 0ull; i < netSrc.asyPool.size(); ++i) netSrc.asyPool.add_task([&netSrc, &setTrianData, &setTrainLbl, &setTestData, &setTestLbl, &setTrainDataIdx, iLblTypeCnt, i]{ while (netSrc.iStatus == kokkoro_ok) {
     auto bTaskVld = i < netSrc.iTrainBatSz;
     auto iDataIdx = bTaskVld ? i : 0;
     // train
     while (iDataIdx < setTrainLbl.length) {
         if (!bTaskVld) {
             iDataIdx += netSrc.iTrainBatSz;
-            netSrc.asyCtrl.thread_sleep();
+            netSrc.asyCtrl.thread_sleep(kokkoro_sleep_ms);
             if (KokkoroTrainStopVerify(netSrc)) break;
             else continue;
         }
@@ -103,7 +103,7 @@ void KokkoroTrain(KokkoroCore &netSrc, const kokkoro_set<kokkoro_matrix> &setTri
             netSrc.iRcCnt  = 0;
             netSrc.iBatCnt = 0;
             netSrc.asyCtrl.thread_wake_all();
-        } else netSrc.asyCtrl.thread_sleep();
+        } else netSrc.asyCtrl.thread_sleep(kokkoro_sleep_ms);
     }
     if (KokkoroTrainStopVerify(netSrc)) break;
     // test
@@ -125,11 +125,11 @@ void KokkoroTrain(KokkoroCore &netSrc, const kokkoro_set<kokkoro_matrix> &setTri
         netSrc.iBatCnt = 0;
         setTrainDataIdx.shuffle();
         netSrc.asyCtrl.thread_wake_all();
-    } else netSrc.asyCtrl.thread_sleep();
+    } else netSrc.asyCtrl.thread_sleep(kokkoro_sleep_ms);
     if (KokkoroTrainStopVerify(netSrc)) break;
 } }); }
 
-void KokkoroTrainResult(KokkoroCore &netSrc) {
+void KokkoroTrainResult(KokkoroANN &netSrc) {
     double   dRcRt  = 0;
     uint64_t iEpCnt = 0;
     while (dRcRt < 1) {

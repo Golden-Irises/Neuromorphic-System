@@ -413,7 +413,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
             this->iBatSzCnt.cnt = 0;
             asyForCtrl.thread_wake_all();
             BNMovAvg<dMovAvgDecay>(BdData);
-        } else while (this->iBatSzCnt.cnt) asyForCtrl.thread_sleep(kokkoro_sleep_ms);
+        } else while (this->iBatSzCnt.cnt) asyForCtrl.thread_sleep(kokkoro_ann_wait_ms);
         vecIn = std::move(this->setIO[iBatSzIdx]);
     }
 
@@ -424,7 +424,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
             iBackBatSzCnt.cnt = 0;
             asyBackCtrl.thread_wake_all();
             Update();
-        } else while (iBackBatSzCnt.cnt) asyBackCtrl.thread_sleep(kokkoro_sleep_ms);
+        } else while (iBackBatSzCnt.cnt) asyBackCtrl.thread_sleep(kokkoro_ann_wait_ms);
         vecGrad = std::move(this->setIO[iBatSzIdx]);
     }
 

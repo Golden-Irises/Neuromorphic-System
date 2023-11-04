@@ -81,7 +81,7 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
     while (iDataIdx < setTrainLbl.length) {
         if (!bTaskVld) {
             iDataIdx += netSrc.iTrainBatSz;
-            netSrc.asyCtrl.thread_sleep(kokkoro_sleep_ms);
+            netSrc.asyCtrl.thread_sleep(kokkoro_ann_wait_ms);
             if (KokkoroTrainStopVerify(netSrc)) break;
             else continue;
         }
@@ -103,7 +103,7 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
             netSrc.iRcCnt  = 0;
             netSrc.iBatCnt = 0;
             netSrc.asyCtrl.thread_wake_all();
-        } else netSrc.asyCtrl.thread_sleep(kokkoro_sleep_ms);
+        } else netSrc.asyCtrl.thread_sleep(kokkoro_ann_wait_ms);
     }
     if (KokkoroTrainStopVerify(netSrc)) break;
     // test
@@ -125,7 +125,7 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
         netSrc.iBatCnt = 0;
         setTrainDataIdx.shuffle();
         netSrc.asyCtrl.thread_wake_all();
-    } else netSrc.asyCtrl.thread_sleep(kokkoro_sleep_ms);
+    } else netSrc.asyCtrl.thread_sleep(kokkoro_ann_wait_ms);
     if (KokkoroTrainStopVerify(netSrc)) break;
 } }); }
 

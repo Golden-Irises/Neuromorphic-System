@@ -37,8 +37,8 @@
 #define kokkoro_len         0x0080
 #endif
 
-#ifndef kokkoro_sleep_ms
-#define kokkoro_sleep_ms    0x0258
+#ifndef kokkoro_ann_wait_ms
+#define kokkoro_ann_wait_ms 0x0258
 #endif
 
 #include "kokkoro_async.hpp"

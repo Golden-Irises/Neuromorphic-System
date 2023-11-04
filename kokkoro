@@ -25,8 +25,8 @@
 #define kokkoro_data_save   false
 
 #include <windows.h>
-#include "ANN/kokkoro"
+#include "ANN/kokkoro_ann"
 #include "SRC/ARCHIVE/kokkoro_data"
-#include "kokkoro_master.hpp"
+#include "kokkoro.hpp"
 
 #endif

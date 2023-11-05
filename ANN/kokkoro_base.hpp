@@ -79,6 +79,12 @@ kokkoro_set<kokkoro_matrix> im2col_to_tensor(const kokkoro_matrix &src, uint64_t
     return ans;
 }
 
+kokkoro_set<uint64_t> kokkoro_dataset_idx_init(uint64_t dataset_sz) {
+    kokkoro_set<uint64_t> ans(dataset_sz);
+    for (auto i = 0; i < dataset_sz; ++i) ans[i] = i;
+    return ans;
+}
+
 void kokkoro_train_progress(int curr_prog, int prog, double acc, double rc, int dur) { std::printf("\r[Train][%d/%d][Acc/Rc][%.2f/%.2f][%dms]", curr_prog, prog, acc, rc, dur); }
 
 void kokkoro_epoch_status(int epoch, double acc, double rc, int dur) {

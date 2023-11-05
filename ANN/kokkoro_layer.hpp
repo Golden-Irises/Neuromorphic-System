@@ -102,14 +102,14 @@ struct LayerBias : LayerWeight<dLearnRate,
 template <uint64_t iActFnType = kokkoro_null>
 struct LayerAct : LayerIO {
     virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
-        if constexpr (iActFnType == kokkoro_sigmoid || iActFnType == kokkoro_ReLU) setIO[iBatSzIdx] = vecIn;
+        if constexpr (iActFnType == kokkoro_Sigmoid || iActFnType == kokkoro_ReLU) setIO[iBatSzIdx] = vecIn;
         Deduce(vecIn);
     }
 
     virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
-        if constexpr (iActFnType == kokkoro_softmax) softmax_cec_grad(vecGrad, vecOrgn);
+        if constexpr (iActFnType == kokkoro_Softmax) softmax_cec_grad(vecGrad, vecOrgn);
         constexpr auto bActReLU = iActFnType == kokkoro_ReLU;
-        if constexpr (bActReLU || iActFnType == kokkoro_sigmoid) {
+        if constexpr (bActReLU || iActFnType == kokkoro_Sigmoid) {
             if constexpr (bActReLU) kokkoro_traverse(setIO[iBatSzIdx], ReLU_dv);
             else kokkoro_traverse(setIO[iBatSzIdx], sigmoid_dv);
             vecGrad.elem_wise_mul(setIO[iBatSzIdx]);
@@ -117,9 +117,9 @@ struct LayerAct : LayerIO {
     }
 
     virtual void Deduce(kokkoro_matrix &vecIn) {
-        if constexpr (iActFnType == kokkoro_sigmoid) kokkoro_traverse(vecIn, sigmoid);
+        if constexpr (iActFnType == kokkoro_Sigmoid) kokkoro_traverse(vecIn, sigmoid);
         if constexpr (iActFnType == kokkoro_ReLU) kokkoro_traverse(vecIn, ReLU);
-        if constexpr (iActFnType == kokkoro_softmax) softmax(vecIn);
+        if constexpr (iActFnType == kokkoro_Softmax) softmax(vecIn);
     }
 
     virtual constexpr uint64_t LayerType() const { return kokkoro_act; }

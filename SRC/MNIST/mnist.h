@@ -42,8 +42,6 @@ int mnist_col_cnt(mnist_stream *);
 
 void mnist_read(mnist_stream *, mnist_data *, int, int, uint64_t, bool);
 
-kokkoro_set<uint64_t> mnist_idx(const mnist_data *);
-
 bool mnist_save_image(const char *, const mnist_data *, int);
 
 KOKKORO_END

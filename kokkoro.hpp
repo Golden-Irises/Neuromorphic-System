@@ -1,6 +1,6 @@
 KOKKORO_BEGIN
 
-class KokkoroCore : Kokkoro {
+class KokkoroCore : public Kokkoro {
 public: static int MasterMachineBattery(const std::string &sBatteryReportSavePath = "") {
     // powercfg /batteryreport /output "..\sBatteryReportSavePath.html"
     if (sBatteryReportSavePath.length()) WinExec(("powercfg /batteryreport /output \"" + sBatteryReportSavePath + ".html\"").c_str(), NULL);

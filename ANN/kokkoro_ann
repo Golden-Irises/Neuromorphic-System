@@ -25,9 +25,9 @@
 #define kokkoro_pool        0x0007
 #define kokkoro_bn          0x0008
 
-#define kokkoro_softmax     0x0001
+#define kokkoro_Softmax     0x0001
 #define kokkoro_ReLU        0x0002
-#define kokkoro_sigmoid     0x0003
+#define kokkoro_Sigmoid     0x0003
 
 #define kokkoro_avg_pool    0x0000
 #define kokkoro_max_pool    0x0001

@@ -74,8 +74,8 @@ KOKKORO_BEGIN struct kokkoro_array { int sen_arr[kokkoro_data_arrsz] = {0}; }; K
 #include <bitset>
 #endif
 #include <conio.h>
-#include "../CSV/csv"
-#include "../../COM/dcb.h"
+#include "CSV/csv"
+#include "../COM/dcb.h"
 #include "kokkoro_data.hpp"
 
 #endif

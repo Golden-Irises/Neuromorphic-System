@@ -19,7 +19,7 @@
 #define kokkoro_data_save   true
 
 #include <iostream>
-#include "../../ANN/kokkoro_ann"
+#include "../ANN/kokkoro_ann"
 #include "kokkoro_data"
 
 using namespace kokkoro;

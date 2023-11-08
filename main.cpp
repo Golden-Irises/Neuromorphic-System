@@ -80,6 +80,7 @@ int main(int argc, char *argv[], char *envp[]) {
     cout << "Battery " << kkrCore.MasterMachineBattery("begin report") << endl;
     // deploy
     kkrCore.Run();
+    cout << "Battery " << kkrCore.MasterMachineBattery("end report") << endl;
     #else
     // TODO: load tain dataset
     kokkoro_set<kokkoro_matrix> setDataset, setTestset;
@@ -89,7 +90,7 @@ int main(int argc, char *argv[], char *envp[]) {
     // TODO: load test dataset
     kokkoro_csv_data_load(setTestset, setTestLbl, sCSVRoot + "data_test_v.csv", sCSVRoot + "lbl_test_v.csv");
     // train
-    KokkoroTrainInit(kkrCore, setLblset.length, setTestLbl.length, kokkoro_data_arrsz, 1, 1);
+    KokkoroTrainInit(kkrCore, setDataset.length, setTestset.length, kokkoro_data_arrsz, 1, 1);
 	KokkoroTrain(kkrCore, setDataset, setLblset, setDatasetIdx, setTestset, setTestLbl, kokkoro_syb_cnt);
     KokkoroTrainResult(kkrCore);
     #endif

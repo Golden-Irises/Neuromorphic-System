@@ -176,10 +176,13 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
             std::cout << kokkoro_handle.ctrl_key << std::endl;
             #endif
 
-        } } else if (!zero_arr) {
+        } } else if (zero_arr) {
+            --i;
+            continue;
+        } else {
             zero_arr = true;
             i        = kokkoro_handle.iobat_sz;
-        } else --i;
+        }
         if (kokkoro_array_read_stop(kokkoro_handle)) return;
 
         #if kokkoro_dcb_msg

@@ -2,6 +2,8 @@ int ipt = 0;
 //extern unsigned long timer0_millis;
 #define D6 6
 
+#include "v2f_v1.h"
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);

@@ -4,10 +4,11 @@
  * 主様、お任せします。
  */
 
+#pragma once
+// #pragma comment(lib, "Kernel32.lib")
+
 #ifndef _KOKKORO_MASTER_
 #define _KOKKORO_MASTER_
-
-#pragma comment(lib, "Kernel32.lib")
 
 // get DCB message
 #define kokkoro_dcb_msg     false

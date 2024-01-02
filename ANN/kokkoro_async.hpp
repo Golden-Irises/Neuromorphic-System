@@ -9,8 +9,9 @@ template <typename arg>
 class kokkoro_queue {
 protected: struct kokkoro_node {
     arg elem {};
+    
     kokkoro_node *next = nullptr,
-             *prev = next;
+                 *prev = next;
 };
 
 public:

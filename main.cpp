@@ -8,9 +8,9 @@
 #include "kokkoro"
 
 #define kokkoro_deduce_flag false
+#define kokkoro_eps         DBL_EPSILON
 #define kokkoro_learnrate   .4
 #define kokkoro_bnrate      1e-5
-#define kokkoro_eps         DBL_EPSILON
 #define kokkoro_len         0x0080
 
 using namespace std;

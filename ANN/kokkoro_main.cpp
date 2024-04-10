@@ -50,7 +50,7 @@ int main(int argc, char *argv[], char *envp[]) {
     // KokkoroAddLayer<LayerBias<LEARN_RATE>>(kokkoro_ann, root + "S5.csv");
     KokkoroAddLayer<LayerAct<kokkoro_Softmax>>(kokkoro_ann);
 
-    root = "E:\\VS Code project data\\MNIST\\";
+    root = "E:\\VSCode_project_data\\MNIST\\";
     auto train_elem = root + "train-images.idx3-ubyte",
          train_lbl  = root + "train-labels.idx1-ubyte",
          test_elem  = root + "t10k-images.idx3-ubyte",

@@ -283,13 +283,16 @@ public:
         ans.proto.col_cnt  = src[0].proto.col_cnt;
         ans.proto.elem_cnt = src[0].proto.elem_cnt;
 
+        if (ans.proto.elem_cnt != src[0].proto.elem_cnt)
+        auto pause = true;
+
         __m256d ans_reg[kokkoro_unroll];
         auto ans_ptr  = new double [ans.proto.elem_cnt];
         auto idx_temp = 0ull;
         while (idx_temp < ans.proto.elem_cnt) {
             auto idx_next = idx_temp + kokkoro_blk_sz;
 
-            if (idx_next > ans.proto.elem_cnt) {
+            if (idx_next >= ans.proto.elem_cnt) {
                 for (auto i = idx_temp; i < ans.proto.elem_cnt; ++i) {
                     ans_ptr[i] = src[0].proto.ptr[i];
                     for (auto j = 1ull; j < src.length; ++j) ans_ptr[i] += src[j].proto.ptr[i];

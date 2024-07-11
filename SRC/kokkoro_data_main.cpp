@@ -46,8 +46,6 @@ int main(int argc, char *argv[], char *envp[]) {
     kokkoro_array_read_thread(handle_v);
     // data save
     kokkoro_array_save_thread(handle_v);
-    // control
-    kokkoro_array_control_thread(handle_v);
     // end
     kokkoro_array_shutdown(handle_v);
 

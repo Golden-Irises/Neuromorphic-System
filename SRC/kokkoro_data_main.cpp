@@ -37,8 +37,8 @@ int main(int argc, char *argv[], char *envp[]) {
     // Debugging
     kokkoro_array_startup(handle_v
                           #if kokkoro_data_save
-                          ,"data_file_v"
-                          ,"lbl_file_v"
+                          ,"testcode_data_v"
+                          ,"testcode_lbl_v"
                           ,"SRC\\ARCHIVE\\"
                           #endif
                          );

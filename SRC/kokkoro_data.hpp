@@ -204,7 +204,11 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
 
     #if kokkoro_data_save
     // write to file stream
-    for (auto j = 0; j < kokkoro_data_arrsz; ++j) kokkoro_handle.save_data_ofs << std::to_string(max_tmp.sen_arr[j]) << csv_enter;
+    for (auto j = 0; j < kokkoro_data_arrsz; ++j) {
+        kokkoro_handle.save_data_ofs << std::to_string(max_tmp.sen_arr[j]);
+        if (j + 1 < kokkoro_data_arrsz) kokkoro_handle.save_data_ofs << csv_comma;
+    }
+    kokkoro_handle.save_data_ofs << csv_enter;
     kokkoro_handle.save_lbl_ofs << kokkoro_handle.ctrl_key << csv_enter;
     #else
     kokkoro_handle.arr_que.en_queue(std::move(max_tmp));

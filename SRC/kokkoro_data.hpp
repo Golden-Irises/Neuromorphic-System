@@ -164,8 +164,6 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_a
             
             #if kokkoro_data_save
             std::cout << "[Symbol][+(1) -(2) x(3) /(4)]: ";
-            std::cin.clear();
-            std::cin.ignore((std::numeric_limits<streamsize>::max)(), '\n');
             ctrl_key = std::cin.get();
             #endif
 

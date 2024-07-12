@@ -148,7 +148,7 @@ void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     #endif
 } } ); }
 
-void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_arr = true, char ctrl_key = 0) { kokkoro_loop {
+void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_arr = true, size_t ctrl_key = 0) { kokkoro_loop {
     kokkoro_array max_tmp;
 
     #if kokkoro_dcb_peak
@@ -206,7 +206,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_a
         kokkoro_handle.save_data_ofs << std::to_string(max_tmp.sen_arr[j]);
     }
     kokkoro_handle.save_data_ofs << csv_enter;
-    kokkoro_handle.save_lbl_ofs << ctrl_key << csv_enter;
+    kokkoro_handle.save_lbl_ofs << (ctrl_key + csv_ch0) << csv_enter;
     #else
     kokkoro_handle.arr_que.en_queue(std::move(max_tmp));
     if (zero_arr) kokkoro_handle.arr_que.en_queue();

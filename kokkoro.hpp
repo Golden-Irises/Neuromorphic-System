@@ -27,7 +27,6 @@ public:
     void Run() {
         kokkoro_array_read_thread(hArrayHandle);
         kokkoro_array_save_thread(hArrayHandle);
-        std::thread tdCtrl(kokkoro_array_control_thread, std::ref(hArrayHandle));
         kokkoro_loop {
             kokkoro_matrix vecIn {hArrayHandle.arr_que.de_queue().sen_arr, kokkoro_data_arrsz, 1};
             for (auto i = 0ull; i < iLayersCnt; ++i) arrLayers[i]->Deduce(vecIn);
@@ -41,7 +40,6 @@ public:
             }
             std::cout << "][Symbol][" << DeduceResult(vecIn) << ']' << std::endl;
         }
-        if (tdCtrl.joinable()) tdCtrl.join();
     }
 
     ~KokkoroCore() { kokkoro_array_shutdown(hArrayHandle); }

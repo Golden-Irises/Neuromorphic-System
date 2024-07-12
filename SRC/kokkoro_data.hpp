@@ -199,6 +199,11 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_a
         }
     }
 
+    if (!kokkoro_array_verify(max_tmp)) {
+        zero_arr = true;
+        continue;
+    }
+
     #if kokkoro_data_save
     // write to file stream
     for (auto j = 0; j < kokkoro_data_arrsz; ++j) {

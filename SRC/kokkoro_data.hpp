@@ -163,8 +163,8 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_a
             zero_arr = false;
             
             #if kokkoro_data_save
-            std::cout << "[Symbol][+(1) -(2) x(3) /(4)]: ";
-            ctrl_key = std::cin.get();
+            std::cout << "[Symbol][+(1) -(2) x(3) /(4)][Action][exit(5) reset(6)]: ";
+            std::cin >> ctrl_key;
             #endif
 
         } } else if (zero_arr) {

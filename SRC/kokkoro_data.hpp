@@ -107,8 +107,6 @@ bool kokkoro_array_startup(kokkoro_array_handle &kokkoro_handle
                            #endif
                           ) {
     #if kokkoro_data_save
-    if (kokkoro_handle.save_data_ofs.is_open()) kokkoro_handle.save_data_ofs.close();
-    if (kokkoro_handle.save_lbl_ofs.is_open()) kokkoro_handle.save_lbl_ofs.close();
     kokkoro_handle.save_data_ofs.open(file_dir + data_file_name + ".csv", std::ios::out | std::ios::trunc);
     kokkoro_handle.save_lbl_ofs.open(file_dir + lbl_file_name + ".csv", std::ios::out | std::ios::trunc);
     #endif

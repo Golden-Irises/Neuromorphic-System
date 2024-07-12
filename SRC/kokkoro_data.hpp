@@ -201,7 +201,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_a
 
     if (!kokkoro_array_verify(max_tmp)) {
         zero_arr = true;
-        continue;
+        ctrl_key = 0;
     }
 
     #if kokkoro_data_save

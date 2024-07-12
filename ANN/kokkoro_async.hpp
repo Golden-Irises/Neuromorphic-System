@@ -63,13 +63,10 @@ public:
         }
         return ret;
     }
-    
-    void reset() {
-        stop = true;
-        cond.notify_all();
-    }
 
-    ~kokkoro_queue() {
+    void clear() {
+        std::unique_lock<std::mutex> lk {td_mtx};
+        if (!len) return;
         while (tail) {
             auto tmp  = tail->prev;
             if (tmp) {
@@ -83,6 +80,13 @@ public:
         head = tail;
         len  = 0;
     }
+    
+    void reset() {
+        stop = true;
+        cond.notify_all();
+    }
+
+    ~kokkoro_queue() { clear(); }
     
 protected:
     std::mutex td_mtx;

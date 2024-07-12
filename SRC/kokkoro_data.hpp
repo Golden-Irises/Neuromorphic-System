@@ -129,6 +129,7 @@ void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     if (kokkoro_handle.reset_sgn) {
         kokkoro_handle.reset_sgn = false;
         kokkoro_handle.start_pt  = 0;
+        kokkoro_handle.data_que.clear();
     }
     if (kokkoro_handle.start_pt < kokkoro_data_segcnt) {
         char start_c = 0;

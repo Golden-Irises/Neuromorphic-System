@@ -25,8 +25,8 @@ int main(int argc, char *argv[], char *envp[]) {
     #if kokkoro_deduce_flag
     KokkoroCore kkrCore {};
     #else
-    uint64_t iTrainBatsz  = 100,
-             iDeduceBatsz = 100;
+    uint64_t iTrainBatsz  = 83,
+             iDeduceBatsz = 83;
     KokkoroANN kkrCore {iTrainBatsz, iDeduceBatsz};
     #endif
 

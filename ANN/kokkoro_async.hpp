@@ -45,7 +45,7 @@ public:
         kokkoro_node *tmp = nullptr;
         {
             std::unique_lock<std::mutex> lk {td_mtx};
-            if (!len) cond.wait(lk);
+            while (!len) cond.wait(lk);
             if (stop) return {};
             tmp  = head;
             head = head->next;

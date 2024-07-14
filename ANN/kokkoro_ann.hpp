@@ -100,6 +100,7 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
             netSrc.iAccCnt = 0;
             netSrc.iRcCnt  = 0;
             netSrc.iBatCnt = 0;
+            _sleep(5);
             netSrc.asyCtrl.thread_wake_all();
         } else netSrc.asyCtrl.thread_sleep(/*kokkoro_ann_wait_ms*/);
     }

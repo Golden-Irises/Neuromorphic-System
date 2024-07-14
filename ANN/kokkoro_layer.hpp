@@ -408,12 +408,14 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
     
     virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
         this->setIO[iBatSzIdx] = std::move(vecIn);
-        if (++this->iBatSzCnt == this->setIO.length) {
+        auto iBatSzCntTmp = ++this->iBatSzCnt;
+        if (iBatSzCntTmp == this->setIO.length) {
             BNOut(this->setIO, BdData, BNShiftRef(), BNScaleRef());
             this->iBatSzCnt = 0;
+            _sleep(5);
             asyForCtrl.thread_wake_all();
             BNMovAvg<dMovAvgDecay>(BdData);
-        } else while (this->iBatSzCnt) asyForCtrl.thread_sleep();
+        } else while (this->iBatSzCnt) asyForCtrl.thread_sleep(/*kokkoro_ann_wait_ms*/);
         vecIn = std::move(this->setIO[iBatSzIdx]);
     }
 
@@ -422,9 +424,10 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
         if (++iBackBatSzCnt == this->setIO.length) {
             BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNScaleRef());
             iBackBatSzCnt = 0;
+            _sleep(5);
             asyBackCtrl.thread_wake_all();
             Update();
-        } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep();
+        } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep(/*kokkoro_ann_wait_ms*/);
         vecGrad = std::move(this->setIO[iBatSzIdx]);
     }
 

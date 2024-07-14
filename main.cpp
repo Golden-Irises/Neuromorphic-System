@@ -25,8 +25,8 @@ int main(int argc, char *argv[], char *envp[]) {
     #if kokkoro_deduce_flag
     KokkoroCore kkrCore {};
     #else
-    uint64_t iTrainBatsz  = 83,
-             iDeduceBatsz = 83;
+    uint64_t iTrainBatsz  = 100,
+             iDeduceBatsz = 100;
     KokkoroANN kkrCore {iTrainBatsz, iDeduceBatsz};
     #endif
 
@@ -85,10 +85,11 @@ int main(int argc, char *argv[], char *envp[]) {
     // TODO: load tain dataset
     kokkoro_set<kokkoro_matrix> setDataset, setTestset;
     kokkoro_set<uint64_t> setLblset, setTestLbl;
-    kokkoro_csv_data_load(setDataset, setLblset, sCSVRoot + "data_file_v.csv", sCSVRoot + "lbl_file_v.csv");
+    kokkoro_csv_data_load(setDataset, setLblset, sCSVRoot + "testcode_data_v1.csv", sCSVRoot + "testcode_lbl_v1.csv");
     // TODO: load test dataset
-    kokkoro_csv_data_load(setTestset, setTestLbl, sCSVRoot + "data_test_v.csv", sCSVRoot + "lbl_test_v.csv");
+    kokkoro_csv_data_load(setTestset, setTestLbl, sCSVRoot + "testcode_data_v1.csv", sCSVRoot + "testcode_lbl_v1.csv");
     auto setDatasetIdx = kokkoro_dataset_idx_init(setDataset.length);
+    setDatasetIdx.shuffle();
     // train
     KokkoroTrainInit(kkrCore, setDataset.length, setTestset.length, kokkoro_data_arrsz, 1, 1);
 	KokkoroTrain(kkrCore, setDataset, setLblset, setDatasetIdx, setTestset, setTestLbl, kokkoro_syb_cnt);

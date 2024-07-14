@@ -10,7 +10,7 @@
 #define kokkoro_deduce_flag false
 #define kokkoro_eps         DBL_EPSILON
 #define kokkoro_learnrate   .4
-#define kokkoro_bnrate      1e-5
+#define kokkoro_bnrate      1e-10
 #define kokkoro_len         0x0080
 
 using namespace std;
@@ -25,8 +25,8 @@ int main(int argc, char *argv[], char *envp[]) {
     #if kokkoro_deduce_flag
     KokkoroCore kkrCore {};
     #else
-    uint64_t iTrainBatsz  = 100,
-             iDeduceBatsz = 100;
+    uint64_t iTrainBatsz  = 11,
+             iDeduceBatsz = 11;
     KokkoroANN kkrCore {iTrainBatsz, iDeduceBatsz};
     #endif
 

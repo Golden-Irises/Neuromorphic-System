@@ -25,7 +25,7 @@ struct LayerIO : virtual Layer {
 template <double dLearnRate = 0.,
           double dGradDecay = 0.9>
 struct LayerWeight : virtual LayerIO {
-    kokkoro_counter iBatSzCnt;
+    std::atomic_uint64_t iBatSzCnt;
 
     kokkoro_matrix vecWeight, vecWeightN, vecWeightT;
 
@@ -88,8 +88,8 @@ struct LayerBias : LayerWeight<dLearnRate,
 
     virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = vecGrad;
-        if (++this->iBatSzCnt.cnt == this->setIO.length) {
-            this->iBatSzCnt.cnt = 0;
+        if (++this->iBatSzCnt == this->setIO.length) {
+            this->iBatSzCnt = 0;
             this->Update();
         }
     }
@@ -218,8 +218,8 @@ struct LayerFC : LayerWeight<dLearnRate,
     virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = FCGradWeight(vecGrad, this->setIO[iBatSzIdx]);
         vecGrad                = FCGradIn(vecGrad, this->vecWeightT);
-        if (++this->iBatSzCnt.cnt == this->setIO.length) {
-            this->iBatSzCnt.cnt = 0;
+        if (++this->iBatSzCnt == this->setIO.length) {
+            this->iBatSzCnt = 0;
             this->Update<true>();
         }
     }
@@ -287,8 +287,8 @@ struct LayerConv : LayerWeight<dLearnRate,
     virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = ConvGradKernel(vecGrad, this->setIO[iBatSzIdx]);
         vecGrad                = CaffeGradIn(ConvGradCaffeOut(vecGrad, this->vecWeightT), this->setCaffeIdx, this->iElemCnt, this->iChannCnt);
-        if (++this->iBatSzCnt.cnt == this->setIO.length) {
-            this->iBatSzCnt.cnt = 0;
+        if (++this->iBatSzCnt == this->setIO.length) {
+            this->iBatSzCnt = 0;
             this->Update<true>();
         }
     }
@@ -354,7 +354,7 @@ template <double dShift          = 0.,
           double dMovAvgDecay    = .9>
 struct LayerBN : LayerWeight<dShiftLearnRate,
                              dShiftGradDecay> {
-    kokkoro_counter iBackBatSzCnt;
+    std::atomic_uint64_t iBackBatSzCnt;
 
     kokkoro_matrix vecScale, vecScaleN;
 
@@ -408,23 +408,23 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
     
     virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
         this->setIO[iBatSzIdx] = std::move(vecIn);
-        if (++this->iBatSzCnt.cnt == this->setIO.length) {
+        if (++this->iBatSzCnt == this->setIO.length) {
             BNOut(this->setIO, BdData, BNShiftRef(), BNScaleRef());
-            this->iBatSzCnt.cnt = 0;
+            this->iBatSzCnt = 0;
             asyForCtrl.thread_wake_all();
             BNMovAvg<dMovAvgDecay>(BdData);
-        } else while (this->iBatSzCnt.cnt) asyForCtrl.thread_sleep(kokkoro_ann_wait_ms);
+        } else while (this->iBatSzCnt) asyForCtrl.thread_sleep();
         vecIn = std::move(this->setIO[iBatSzIdx]);
     }
 
     virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = std::move(vecGrad);
-        if (++iBackBatSzCnt.cnt == this->setIO.length) {
+        if (++iBackBatSzCnt == this->setIO.length) {
             BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNScaleRef());
-            iBackBatSzCnt.cnt = 0;
+            iBackBatSzCnt = 0;
             asyBackCtrl.thread_wake_all();
             Update();
-        } else while (iBackBatSzCnt.cnt) asyBackCtrl.thread_sleep(kokkoro_ann_wait_ms);
+        } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep();
         vecGrad = std::move(this->setIO[iBatSzIdx]);
     }
 

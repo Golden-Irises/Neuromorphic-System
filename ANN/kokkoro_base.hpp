@@ -103,18 +103,6 @@ void kokkoro_out_acc_rc(const kokkoro_matrix &output, double train_acc, uint64_t
     if (output.index(lbl) > (1 - train_acc)) ++rc_cnt;
 }
 
-struct kokkoro_counter {
-    std::atomic_uint64_t cnt = 0;
-
-    kokkoro_counter() = default;
-    kokkoro_counter(const kokkoro_counter &src) { cnt = (uint64_t)src.cnt; }
-
-    uint64_t operator=(const kokkoro_counter &src) {
-        cnt = (uint64_t)src.cnt;
-        return cnt;
-    }
-};
-
 template <double rho = 0.9>
 struct ada_delta final {
 public:

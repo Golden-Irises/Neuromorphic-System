@@ -45,8 +45,7 @@ int main(int argc, char *argv[], char *envp[]) {
         sCSVRoot + "B1_scale.csv"
     );
     KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kkrCore);
-
-        // F2 12 neurons
+    // F2 12 neurons
     KokkoroAddLayer<LayerFC<12, kokkoro_learnrate>>(kkrCore,
         #if kokkoro_deduce_flag
         "",
@@ -61,7 +60,7 @@ int main(int argc, char *argv[], char *envp[]) {
         sCSVRoot + "B2_scale.csv"
     );
     KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kkrCore);
-    // F2 6 neurons
+    // F3 6 neurons
     KokkoroAddLayer<LayerFC<6, kokkoro_learnrate>>(kkrCore,
         #if kokkoro_deduce_flag
         "",
@@ -76,7 +75,7 @@ int main(int argc, char *argv[], char *envp[]) {
         sCSVRoot + "B3_scale.csv"
     );
     KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kkrCore);
-    // F3 5 neurons (Gaussian connections)
+    // F4 5 neurons (Gaussian connections)
     KokkoroAddLayer<LayerFC<5, kokkoro_learnrate>>(kkrCore,
         #if kokkoro_deduce_flag
         "",

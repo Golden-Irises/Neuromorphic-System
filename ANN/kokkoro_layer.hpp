@@ -25,7 +25,7 @@ struct LayerIO : virtual Layer {
 template <double dLearnRate = 0.,
           double dGradDecay = 0.9>
 struct LayerWeight : virtual LayerIO {
-    std::atomic_uint64_t iBatSzCnt;
+    async_counter iBatSzCnt;
 
     kokkoro_matrix vecWeight, vecWeightN, vecWeightT;
 
@@ -354,7 +354,7 @@ template <double dShift          = 0.,
           double dMovAvgDecay    = .9>
 struct LayerBN : LayerWeight<dShiftLearnRate,
                              dShiftGradDecay> {
-    std::atomic_uint64_t iBackBatSzCnt;
+    async_counter iBackBatSzCnt;
 
     kokkoro_matrix vecScale, vecScaleN;
 
@@ -412,7 +412,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
         if (iBatSzCntTmp == this->setIO.length) {
             BNOut(this->setIO, BdData, BNShiftRef(), BNScaleRef());
             this->iBatSzCnt = 0;
-            _sleep(5);
+            kokkoro_async_sleep(kokkoro_sleep_ms);
             asyForCtrl.thread_wake_all();
             BNMovAvg<dMovAvgDecay>(BdData);
         } else while (this->iBatSzCnt) asyForCtrl.thread_sleep(/*kokkoro_ann_wait_ms*/);
@@ -424,7 +424,7 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
         if (++iBackBatSzCnt == this->setIO.length) {
             BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNScaleRef());
             iBackBatSzCnt = 0;
-            _sleep(5);
+            kokkoro_async_sleep(kokkoro_sleep_ms);
             asyBackCtrl.thread_wake_all();
             Update();
         } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep(/*kokkoro_ann_wait_ms*/);

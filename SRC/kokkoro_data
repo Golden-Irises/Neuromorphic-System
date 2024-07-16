@@ -18,7 +18,6 @@
 
 #define kokkoro_loop        while (true)
 #define kokkoro_bytebitsz   0x08
-#define kokkoro_sleep_ms    0x0a
 #define kokkoro_syb_cnt     0x05
 
 #define kokkoro_key_exit    0x05

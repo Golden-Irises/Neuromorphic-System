@@ -18,7 +18,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
     std::thread set_data([&que_test, area]{ for (auto i = 0; i < 500; ++i) {
         que_test.en_queue(std::sin(i * area) * 20);
-        _sleep(50);
+        kokkoro_async_sleep(kokkoro_sleep_ms);
     } });
 
     diagram_scroll_info<20, '#'> info;

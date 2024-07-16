@@ -123,6 +123,33 @@ private:
     std::condition_variable cond;
 };
 
+struct async_counter {
+    std::atomic_uint64_t cnt{};
+
+    void value_assign(const async_counter &src) { cnt = uint64_t{src.cnt}; }
+
+    async_counter(uint64_t src = 0) : cnt(src) {}
+    async_counter(const async_counter &src) { value_assign(src); }
+    async_counter(async_counter &&src) : async_counter(src) { src.cnt = 0; }
+
+    async_counter &operator=(const async_counter &src) {
+        value_assign(src);
+        return *this;
+    }
+    async_counter &operator=(async_counter &&src) {
+        value_assign(src);
+        src.cnt = 0;
+        return *this;
+    }
+
+    auto operator++() { return ++cnt; }
+    auto operator++(int) { return cnt++; }
+    auto operator--() { return --cnt; }
+    auto operator--(int) { return cnt--; }
+
+    operator uint64_t() { return cnt; }
+};
+
 class async_pool final {
 public:
     async_pool(uint64_t thread_size = kokkoro_async_core) :

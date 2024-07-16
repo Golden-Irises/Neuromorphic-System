@@ -43,6 +43,8 @@ int main(int argc, char *argv[], char *envp[]) {
 
     file_close(file);
 
+    async_counter tmp = 7;
+
     cout << kokkoro_chrono_time_point - tm_start << "ms" << endl;
     return 0;
 }

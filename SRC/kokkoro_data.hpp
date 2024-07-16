@@ -178,7 +178,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_a
         if (ctrl_key == kokkoro_key_reset) kokkoro_handle.reset_sgn = true;
         if (ctrl_key == kokkoro_key_exit) {
             kokkoro_handle.read_stop = true;
-            while (!kokkoro_handle.read_end_sgn) _sleep(kokkoro_sleep_ms);
+            while (!kokkoro_handle.read_end_sgn) kokkoro_async_sleep(kokkoro_sleep_ms);
             return;
         }
 

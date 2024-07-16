@@ -408,26 +408,33 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
     
     virtual void ForProp(kokkoro_matrix &vecIn, uint64_t iBatSzIdx) {
         this->setIO[iBatSzIdx] = std::move(vecIn);
-        auto iBatSzCntTmp = ++this->iBatSzCnt;
-        if (iBatSzCntTmp == this->setIO.length) {
+        auto iForTmp = ++this->iBatSzCnt;
+        if (iForTmp == this->setIO.length) {
             BNOut(this->setIO, BdData, BNShiftRef(), BNScaleRef());
             this->iBatSzCnt = 0;
-            kokkoro_async_sleep(kokkoro_sleep_ms);
+            // kokkoro_async_sleep(kokkoro_async_sleep_ms);
             asyForCtrl.thread_wake_all();
             BNMovAvg<dMovAvgDecay>(BdData);
-        } else while (this->iBatSzCnt) asyForCtrl.thread_sleep(/*kokkoro_ann_wait_ms*/);
+        } else {
+            kokkoro_async_spin(this->iBatSzCnt, 10);
+            while (this->iBatSzCnt) asyForCtrl.thread_sleep();
+        }
         vecIn = std::move(this->setIO[iBatSzIdx]);
     }
 
     virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
         this->setIO[iBatSzIdx] = std::move(vecGrad);
-        if (++iBackBatSzCnt == this->setIO.length) {
+        auto iBackTmp = ++iBackBatSzCnt;
+        if (iBackTmp == this->setIO.length) {
             BNGradIn(this->setIO, BdData, this->vecWeightT, vecScaleN, BNScaleRef());
             iBackBatSzCnt = 0;
-            kokkoro_async_sleep(kokkoro_sleep_ms);
+            // kokkoro_async_sleep(kokkoro_async_sleep_ms);
             asyBackCtrl.thread_wake_all();
             Update();
-        } else while (iBackBatSzCnt) asyBackCtrl.thread_sleep(/*kokkoro_ann_wait_ms*/);
+        } else {
+            kokkoro_async_spin(iBackBatSzCnt, 10);
+            while (iBackBatSzCnt) asyBackCtrl.thread_sleep();
+        }
         vecGrad = std::move(this->setIO[iBatSzIdx]);
     }
 

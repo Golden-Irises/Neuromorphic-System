@@ -94,7 +94,7 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
             netSrc.iAccCnt = 0;
             netSrc.iRcCnt  = 0;
             netSrc.iBatCnt = 0;
-            kokkoro_async_sleep(kokkoro_sleep_ms);
+            kokkoro_async_sleep(kokkoro_async_sleep_ms);
             netSrc.asyTrainCtrl.thread_wake_all();
             if (iDataIdx >= setTrainLbl.length) netSrc.asyTestCtrl.thread_wake_all();
         } else netSrc.asyTrainCtrl.thread_sleep();

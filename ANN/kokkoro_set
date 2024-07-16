@@ -17,7 +17,8 @@
                                     std::chrono::system_clock::now()).time_since_epoch().count()
 #define kokkoro_async_core          std::thread::hardware_concurrency()
 #define kokkoro_async_sleep(t_ms)   std::this_thread::sleep_for(std::chrono::milliseconds(t_ms))
-#define kokkoro_sleep_ms            0x05
+#define kokkoro_async_sleep_ms      0x05
+#define kokkoro_async_spin(cond, n) for (auto i = 0ull; i < n && cond; ++i)
 
 #include "kokkoro_set.hpp"
 

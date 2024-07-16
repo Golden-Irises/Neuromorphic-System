@@ -107,7 +107,7 @@ public:
     async_controller(const async_controller &) {}
 
     void thread_sleep(uint64_t wait_ms = 0) {
-        std::unique_lock<std::mutex> lk(td_mtx);
+        std::unique_lock<std::mutex> lk{td_mtx};
         if (wait_ms) cond.wait_for(lk, std::chrono::milliseconds(wait_ms));
         else cond.wait(lk);
     }
@@ -125,6 +125,8 @@ private:
 
 struct async_counter {
     std::atomic_uint64_t cnt{};
+
+    mutable std::mutex mtx;
 
     void value_assign(const async_counter &src) { cnt = uint64_t{src.cnt}; }
 

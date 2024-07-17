@@ -43,6 +43,8 @@ struct KokkoroANN : Kokkoro {
 
     async_pool asyPool;
 
+    std::ofstream ofsAcc, ofsRc;
+
     KokkoroANN(uint64_t iTrainBatchSize = 32, uint64_t iTestBatchSize = 32, double dTrainPrecision = .1) :
         iTrainBatSz(iTrainBatchSize),
         iTestBatSz(iTestBatchSize),
@@ -50,7 +52,7 @@ struct KokkoroANN : Kokkoro {
         asyPool((std::max)(iTrainBatchSize, iTestBatchSize)) {}
 };
 
-void KokkoroTrainInit(KokkoroANN &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt) {
+void KokkoroTrainInit(KokkoroANN &netSrc, uint64_t iTrainDataCnt, uint64_t iTestDataCnt, uint64_t iInLnCnt, uint64_t iInColCnt, uint64_t iChannCnt, const std::string &sAccCSVPath = "", const std::string &sRcCSVPath = "") {
     netSrc.iTrainBatCnt  = iTrainDataCnt / netSrc.iTrainBatSz;
     netSrc.iTestBatCnt   = iTestDataCnt / netSrc.iTestBatSz;
     netSrc.iTrainDataCnt = iTrainDataCnt;
@@ -59,6 +61,8 @@ void KokkoroTrainInit(KokkoroANN &netSrc, uint64_t iTrainDataCnt, uint64_t iTest
         netSrc.arrLayers[i]->Batch(netSrc.iTrainBatSz, netSrc.iTrainBatCnt);
         netSrc.arrLayers[i]->Shape(iInLnCnt, iInColCnt, iChannCnt);
     }
+    if (sAccCSVPath.length()) netSrc.ofsAcc.open(sAccCSVPath, std::ios::out | std::ios::trunc);
+    if (sRcCSVPath.length()) netSrc.ofsAcc.open(sRcCSVPath, std::ios::out | std::ios::trunc);
 }
 
 bool KokkoroTrainAbort(KokkoroANN &netSrc) {
@@ -126,24 +130,28 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
 } }); }
 
 void KokkoroTrainResult(KokkoroANN &netSrc) {
-    double   dRcRt  = 0;
-    uint64_t iEpCnt = 0;
+    double   dRcRt{}, dAcc{};
+    uint64_t iEpCnt{};
     while (dRcRt < 1) {
         auto cEpTmPt = kokkoro_chrono_time_point;
         // train
         for (auto i = 0ull; i < netSrc.iTrainBatCnt; ++i) {
             auto cTrnTmPt = kokkoro_chrono_time_point;
-            auto dAcc     = netSrc.queTrainAcc.de_queue() / (netSrc.iTrainBatSz * 1.);
-                 dRcRt    = netSrc.queTrainRc.de_queue() / (netSrc.iTrainBatSz * 1.);
+            dAcc  = netSrc.queTrainAcc.de_queue() / (netSrc.iTrainBatSz * 1.);
+            dRcRt = netSrc.queTrainRc.de_queue() / (netSrc.iTrainBatSz * 1.);
             kokkoro_train_progress((i + 1), netSrc.iTrainBatCnt, dAcc, dRcRt, (kokkoro_chrono_time_point - cTrnTmPt));
         }
         // test
         std::printf("\r[Deducing]...");
-        auto dAcc  = netSrc.queTestAcc.de_queue() / (netSrc.iTestDataCnt * 1.);
-             dRcRt = netSrc.queTestRc.de_queue() / (netSrc.iTestDataCnt * 1.);
+        dAcc  = netSrc.queTestAcc.de_queue() / (netSrc.iTestDataCnt * 1.);
+        dRcRt = netSrc.queTestRc.de_queue() / (netSrc.iTestDataCnt * 1.);
         kokkoro_epoch_status(++iEpCnt, dAcc, dRcRt, (kokkoro_chrono_time_point - cEpTmPt));
+        if (netSrc.ofsAcc.is_open()) netSrc.ofsAcc << std::to_string(dAcc) << csv_enter;
+        if (netSrc.ofsRc.is_open()) netSrc.ofsRc << std::to_string(dRcRt) << csv_enter;
     }
     for (auto i = 0ull; i < netSrc.iLayersCnt; ++i) netSrc.arrLayers[i]->SaveData();
+    if (netSrc.ofsAcc.is_open()) netSrc.ofsAcc.close();
+    if (netSrc.ofsRc.is_open()) netSrc.ofsRc.close();
 }
 
 KOKKORO_END

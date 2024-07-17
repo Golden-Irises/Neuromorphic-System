@@ -124,9 +124,7 @@ private:
 };
 
 struct async_counter {
-    std::atomic_uint64_t cnt{};
-
-    mutable std::mutex mtx;
+    std::atomic_uint64_t cnt{0};
 
     void value_assign(const async_counter &src) { cnt = uint64_t{src.cnt}; }
 

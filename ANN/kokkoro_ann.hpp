@@ -29,10 +29,11 @@ struct KokkoroANN : Kokkoro {
              iTrainDataCnt = 0,
              iTestDataCnt  = 0;
 
-    std::atomic_uint64_t iBatCnt = 0,
-                         iAccCnt = 0,
-                         iRcCnt  = 0,
-                         iStatus = kokkoro_ok;
+    std::atomic_uint64_t iTrainBat    = 0,
+                         iTestBat     = 0,
+                         iAccCnt      = 0,
+                         iRcCnt       = 0,
+                         iStatus      = kokkoro_ok;
 
     double dTrainPrec = .1;
 
@@ -88,16 +89,16 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
         if (!vecIn.verify) netSrc.iStatus = kokkoro_err;
         if (KokkoroTrainAbort(netSrc)) break;
         iDataIdx += netSrc.iTrainBatSz;
-        if (++netSrc.iBatCnt == netSrc.iTrainBatSz) {
+        if (++netSrc.iTrainBat == netSrc.iTrainBatSz) {
             netSrc.queTrainAcc.en_queue(netSrc.iAccCnt);
             netSrc.queTrainRc.en_queue(netSrc.iRcCnt);
-            netSrc.iAccCnt = 0;
-            netSrc.iRcCnt  = 0;
-            netSrc.iBatCnt = 0;
-            kokkoro_async_sleep(kokkoro_async_sleep_ms);
+            netSrc.iAccCnt   = 0;
+            netSrc.iRcCnt    = 0;
+            // kokkoro_async_sleep(kokkoro_async_sleep_ms);
+            netSrc.iTrainBat = 0;
             netSrc.asyTrainCtrl.thread_wake_all();
             if (iDataIdx >= setTrainLbl.length) netSrc.asyTestCtrl.thread_wake_all();
-        } else netSrc.asyTrainCtrl.thread_sleep();
+        } else while (netSrc.iTrainBat) netSrc.asyTrainCtrl.thread_sleep(kokkoro_async_sleep_ms);
     } else netSrc.asyTestCtrl.thread_sleep();
     if (KokkoroTrainStopVerify(netSrc)) break;
     // test
@@ -111,15 +112,16 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
         kokkoro_out_acc_rc(vecIn, netSrc.dTrainPrec, iLbl, netSrc.iAccCnt, netSrc.iRcCnt);
         iDataIdx += netSrc.iTestBatSz;
     } else netSrc.asyTrainCtrl.thread_sleep();
-    if (++netSrc.iBatCnt == netSrc.iTestBatSz) {
+    if (++netSrc.iTestBat == netSrc.iTestBatSz) {
         netSrc.queTestAcc.en_queue(netSrc.iAccCnt);
         netSrc.queTestRc.en_queue(netSrc.iRcCnt);
-        netSrc.iAccCnt = 0;
-        netSrc.iRcCnt  = 0;
-        netSrc.iBatCnt = 0;
+        netSrc.iAccCnt  = 0;
+        netSrc.iRcCnt   = 0;
+        // kokkoro_async_sleep(kokkoro_async_sleep_ms);
+        netSrc.iTestBat = 0;
         setTrainDataIdx.shuffle();
         netSrc.asyTrainCtrl.thread_wake_all();
-    } else netSrc.asyTrainCtrl.thread_sleep();
+    } else while (netSrc.iTestBat) netSrc.asyTrainCtrl.thread_sleep(kokkoro_async_sleep_ms);
     if (KokkoroTrainStopVerify(netSrc)) break;
 } }); }
 

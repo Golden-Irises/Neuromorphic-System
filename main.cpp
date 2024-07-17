@@ -106,7 +106,7 @@ int main(int argc, char *argv[], char *envp[]) {
     auto setDatasetIdx = kokkoro_dataset_idx_init(setDataset.length);
     setDatasetIdx.shuffle();
     // train
-    KokkoroTrainInit(kkrCore, setDataset.length, setTestset.length, kokkoro_data_arrsz, 1, 1);
+    KokkoroTrainInit(kkrCore, setDataset.length, setTestset.length, kokkoro_data_arrsz, 1, 1, sCSVRoot + "acc_record.csv");
 	KokkoroTrain(kkrCore, setDataset, setLblset, setDatasetIdx, setTestset, setTestLbl, kokkoro_syb_cnt);
     KokkoroTrainResult(kkrCore);
     #endif

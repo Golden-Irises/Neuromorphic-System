@@ -29,11 +29,11 @@ struct KokkoroANN : Kokkoro {
              iTrainDataCnt = 0,
              iTestDataCnt  = 0;
 
-    std::atomic_uint64_t iTrainBat    = 0,
-                         iTestBat     = 0,
-                         iAccCnt      = 0,
-                         iRcCnt       = 0,
-                         iStatus      = kokkoro_ok;
+    std::atomic_uint64_t iTrainBat{0},
+                         iTestBat {0},
+                         iStatus  {kokkoro_ok},
+                         iAccCnt  {0},
+                         iRcCnt   {0};
 
     double dTrainPrec = .1;
 

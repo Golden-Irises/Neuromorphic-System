@@ -11,7 +11,7 @@ public: static int MasterMachineBattery(const std::string &sBatteryReportSavePat
 
 protected: static char DeduceResult(const kokkoro_matrix &vecOut) {
     auto iMaxIdx = 0ull;
-    for (auto i = 1ull; i < vecOut.element_count; ++i) if (vecOut.index(i) > iMaxIdx) iMaxIdx = i;
+    for (auto i = 1ull; i < vecOut.element_count; ++i) if (vecOut.index(i) > vecOut.index(iMaxIdx)) iMaxIdx = i;
     switch (iMaxIdx) {
     case 1: return '+';
     case 2: return '-';

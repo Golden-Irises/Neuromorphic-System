@@ -100,9 +100,9 @@ int main(int argc, char *argv[], char *envp[]) {
     // TODO: load tain dataset
     kokkoro_set<kokkoro_matrix> setDataset, setTestset;
     kokkoro_set<uint64_t> setLblset, setTestLbl;
-    kokkoro_csv_data_load(setDataset, setLblset, sCSVRoot + "testcode_data_v1.csv", sCSVRoot + "testcode_lbl_v1.csv");
+    kokkoro_csv_data_load(setDataset, setLblset, sCSVRoot + "train_data.csv", sCSVRoot + "train_lbl.csv");
     // TODO: load test dataset
-    kokkoro_csv_data_load(setTestset, setTestLbl, sCSVRoot + "testcode_data_v1.csv", sCSVRoot + "testcode_lbl_v1.csv");
+    kokkoro_csv_data_load(setTestset, setTestLbl, sCSVRoot + "test_data.csv", sCSVRoot + "test_lbl.csv");
     auto setDatasetIdx = kokkoro_dataset_idx_init(setDataset.length);
     setDatasetIdx.shuffle();
     // train

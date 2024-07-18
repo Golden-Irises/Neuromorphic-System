@@ -148,7 +148,14 @@ void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     #endif
 } } ); }
 
-void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_arr = true, size_t ctrl_key = 0) { kokkoro_loop {
+void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_arr = true, uint64_t ctrl_key = 0) { 
+#if !kokkoro_data_save
+
+kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle, &zero_arr, &ctrl_key] {
+
+#endif
+
+kokkoro_loop {
     kokkoro_array max_tmp;
 
     #if kokkoro_dcb_peak
@@ -221,7 +228,14 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_a
     // print peak
     kokkoro_handle.peak_cnt_que.en_queue(peak_cnt);
     #endif
-}}
+}
+
+#if !kokkoro_data_save
+
+});
+
+#endif
+}
 
 bool kokkoro_csv_data_load(kokkoro_set<kokkoro_matrix> &data_set, kokkoro_set<uint64_t> &lbl_set, const std::string &csv_data_path, const std::string &csv_lbl_path) {
     auto data_tab = csv_in(csv_data_path),

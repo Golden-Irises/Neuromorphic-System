@@ -38,6 +38,7 @@ public:
                 std::cout << iPeakCnt.sen_arr[i];
                 if (i + 1 < kokkoro_data_arrsz) std::cout << ' ';
             }
+            std::cout << ']' << std::endl;
             // std::cout << "][Symbol][" << DeduceResult(vecIn) << ']' << std::endl;
         }
     }

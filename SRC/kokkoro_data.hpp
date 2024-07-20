@@ -87,7 +87,11 @@ struct kokkoro_array_handle {
 
     async_pool ctrl_pool {kokkoro_data_thdsz};
 
+    #if kokkoro_data_save
+
     std::atomic_bool read_end_sgn = false;
+
+    #endif
 };
 
 bool kokkoro_array_shutdown(kokkoro_array_handle &kokkoro_handle) {
@@ -123,7 +127,9 @@ bool kokkoro_array_startup(kokkoro_array_handle &kokkoro_handle
 
 void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle] { kokkoro_loop {
     if (kokkoro_handle.read_stop) {
+        #if kokkoro_data_save
         kokkoro_handle.read_end_sgn = true;
+        #endif
         return;
     }
     if (kokkoro_handle.reset_sgn) {
@@ -148,11 +154,14 @@ void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     #endif
 } } ); }
 
-void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_arr = true, uint64_t ctrl_key = 0) { 
+void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_arr = true
+#if kokkoro_data_save
+, uint64_t ctrl_key = 0
+#endif
+) {
+
 #if !kokkoro_data_save
-
-kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle, &zero_arr, &ctrl_key] {
-
+kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle, &zero_arr] {
 #endif
 
 kokkoro_loop {
@@ -182,12 +191,15 @@ kokkoro_loop {
             zero_arr = true;
             i        = kokkoro_handle.iobat_sz;
         }
+
+        #if kokkoro_data_save
         if (ctrl_key == kokkoro_key_reset) kokkoro_handle.reset_sgn = true;
         if (ctrl_key == kokkoro_key_exit) {
             kokkoro_handle.read_stop = true;
             while (!kokkoro_handle.read_end_sgn) kokkoro_async_sleep(kokkoro_async_sleep_ms);
             return;
         }
+        #endif
 
         #if kokkoro_dcb_msg
         std::cout << kokkoro_handle.msg_que.de_queue() << std::endl;
@@ -208,7 +220,9 @@ kokkoro_loop {
 
     if (!kokkoro_array_verify(max_tmp)) {
         zero_arr = true;
+        #if kokkoro_data_save
         ctrl_key = 0;
+        #endif
     }
 
     #if kokkoro_data_save
@@ -231,6 +245,8 @@ kokkoro_loop {
 }
 
 #if !kokkoro_data_save
+
+    if (kokkoro_handle.read_stop) return;
 
 });
 

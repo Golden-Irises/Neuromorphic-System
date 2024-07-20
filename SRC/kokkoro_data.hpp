@@ -161,7 +161,7 @@ void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle
 ) {
 
 #if !kokkoro_data_save
-kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle] (bool zero_arr) {
+kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle] (bool zero_arr = true) {
 #endif
 
 kokkoro_loop {

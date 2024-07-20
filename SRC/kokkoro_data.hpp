@@ -154,14 +154,14 @@ void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     #endif
 } } ); }
 
-void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle, bool zero_arr = true
+void kokkoro_array_save_thread(kokkoro_array_handle &kokkoro_handle
 #if kokkoro_data_save
-, uint64_t ctrl_key = 0
+, bool zero_arr = true, uint64_t ctrl_key = 0
 #endif
 ) {
 
 #if !kokkoro_data_save
-kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle, &zero_arr] {
+kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle] (bool zero_arr) {
 #endif
 
 kokkoro_loop {

@@ -366,14 +366,27 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
 
     BNData BdData;
 
-    std::string sScaleSavePath {""};
+    std::string sScaleSavePath {""}, sExpMuBetaSavePath {""}, sExpSigmaEpsSavePath {""};
 
-    LayerBN(const std::string &sShiftFileSavePath = "", const std::string &sScaleFileSavePath = "", const std::string &sShiftFileLoadPath = "", const std::string &sScaleFileLoadPath = "") : LayerWeight<dShiftLearnRate, dShiftGradDecay>(sShiftFileSavePath, sShiftFileLoadPath),
-        sScaleSavePath(sScaleFileSavePath) {
-        if (!sScaleFileLoadPath.length()) return;
-        auto tabScale = csv_in(sScaleFileLoadPath);
-        vecScale      = {1, tabScale[0].length};
-        for (auto i = 0ull; i < vecScale.element_count; ++i) vecScale.index(i) = std::stod(tabScale[0][i]);
+    LayerBN(const std::string &sShiftFileSavePath = "", const std::string &sScaleFileSavePath = "", const std::string &sExpMuBetaFileSavePath = "", const std::string &sExpSigmaEpsFileSavePath = "", const std::string &sShiftFileLoadPath = "", const std::string &sScaleFileLoadPath = "", const std::string &sExpMuBetaFileLoadPath = "", const std::string &sExpSigmaEpsFileLoadPath = "") : LayerWeight<dShiftLearnRate, dShiftGradDecay>(sShiftFileSavePath, sShiftFileLoadPath),
+        sScaleSavePath(sScaleFileSavePath),
+        sExpMuBetaSavePath(sExpMuBetaFileSavePath),
+        sExpSigmaEpsSavePath(sExpSigmaEpsFileSavePath) {
+        if (sScaleFileLoadPath.length()) {
+            auto tabScale = csv_in(sScaleFileLoadPath);
+            vecScale      = {1, tabScale[0].length};
+            for (auto i = 0ull; i < vecScale.element_count; ++i) vecScale.index(i) = std::stod(tabScale[0][i]);
+        }
+        if (sExpMuBetaFileLoadPath.length()) {
+            auto tabExpMuBeta   = csv_in(sExpMuBetaFileLoadPath);
+            BdData.vecExpMuBeta = {tabExpMuBeta.length, tabExpMuBeta[0].length};
+            for (auto i = 0ull; i < tabExpMuBeta.length; ++i) for (auto j = 0ull; j < tabExpMuBeta[i].length; ++j) BdData.vecExpMuBeta[i][j] = std::stod(tabExpMuBeta[i][j]);
+        }
+        if (sExpSigmaEpsFileLoadPath.length()) {
+            auto tabExpSigmaEps   = csv_in(sExpSigmaEpsFileLoadPath);
+            BdData.vecExpSigmaEps = {tabExpSigmaEps.length, tabExpSigmaEps[0].length};
+            for (auto i = 0ull; i < tabExpSigmaEps.length; ++i) for (auto j = 0ull; j < tabExpSigmaEps[i].length; ++j) BdData.vecExpSigmaEps[i][j] = std::stod(tabExpSigmaEps[i][j]);
+        }
     }
 
     const kokkoro_matrix &BNScaleRef() {
@@ -433,11 +446,19 @@ struct LayerBN : LayerWeight<dShiftLearnRate,
     virtual void Deduce(kokkoro_matrix &vecIn) { BNOut(vecIn, BdData, this->vecWeight, vecScale); }
 
     virtual bool SaveData() const {
-        if (!LayerWeight<dShiftLearnRate, dShiftGradDecay>::SaveData()) return false;
         kokkoro_set<kokkoro_set<std::string>> tabScale(1);
         tabScale[0].init(vecScale.element_count);
         for (auto i = 0ull; i < vecScale.element_count; ++i) tabScale[0][i] = std::to_string(vecScale.index(i));
-        return csv_out(tabScale, sScaleSavePath);
+        kokkoro_set<kokkoro_set<std::string>> tabExpMuBeta(BdData.vecExpMuBeta.line_count), tabExpSigmaEps(BdData.vecExpSigmaEps.line_count);
+        for (auto i = 0ull; i < tabExpMuBeta.length; ++i) {
+            tabExpMuBeta[i].init(BdData.vecExpMuBeta.column_count);
+            tabExpSigmaEps[i].init(BdData.vecExpSigmaEps.column_count);
+            for (auto j = 0ull; j < tabExpSigmaEps[i].length; ++j) {
+                tabExpMuBeta[i][j]   = std::to_string(BdData.vecExpMuBeta[i][j]);
+                tabExpSigmaEps[i][j] = std::to_string(BdData.vecExpSigmaEps[i][j]);
+            }
+        }
+        return LayerWeight<dShiftLearnRate, dShiftGradDecay>::SaveData() && csv_out(tabScale, sScaleSavePath) && csv_out(tabExpMuBeta, sExpMuBetaSavePath) && csv_out(tabExpSigmaEps, sExpSigmaEpsSavePath);
     }
 
     virtual constexpr uint64_t LayerType() const { return kokkoro_bn; }

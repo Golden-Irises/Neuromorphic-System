@@ -29,28 +29,28 @@ int main(int argc, char *argv[], char *envp[]) {
 
     KokkoroANN kokkoro_ann {125, 125};
 
-    string root = "SRC\\ARCHIVE\\";
+    string root = "../SRC/ARCHIVE/";
     KokkoroAddLayer<LayerConv<20, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(kokkoro_ann, root + "C0.csv");
     KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_ann, root + "B0_shift.csv", root + "B0_scale.csv");
     // KokkoroAddLayer<LayerBias<LEARN_RATE>>(kokkoro_ann, root + "S0.csv");
     KokkoroAddLayer<LayerAct<kokkoro_ReLU>>(kokkoro_ann);
     KokkoroAddLayer<LayerPool<kokkoro_avg_pool, 2, 2, 2, 2>>(kokkoro_ann);
     KokkoroAddLayer<LayerConv<50, 5, 5, 1, 1, 0, 0, LEARN_RATE>>(kokkoro_ann, root + "C2.csv");
-    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_ann, root + "B2_shift.csv", root + "B2_scale.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_ann, root + "B2_shift.csv", root + "B2_scale.csv", root + "B2_exp_mubeta", root + "B2_exp_sigmaeps");
     // KokkoroAddLayer<LayerBias<LEARN_RATE>>(kokkoro_ann, root + "S2.csv");
     KokkoroAddLayer<LayerAct<kokkoro_ReLU>>(kokkoro_ann);
     KokkoroAddLayer<LayerPool<kokkoro_avg_pool, 2, 2, 2, 2>>(kokkoro_ann);
     KokkoroAddLayer<LayerFlat>(kokkoro_ann);
     KokkoroAddLayer<LayerFC<500, LEARN_RATE>>(kokkoro_ann, root + "F4.csv");
-    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_ann, root + "B4_shift.csv", root + "B4_scale.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_ann, root + "B4_shift.csv", root + "B4_scale.csv", root + "B4_exp_mubeta", root + "B4_exp_sigmaeps");
     // KokkoroAddLayer<LayerBias<LEARN_RATE>>(kokkoro_ann, root + "S4.csv");
     KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kokkoro_ann);
     KokkoroAddLayer<LayerFC<10, LEARN_RATE>>(kokkoro_ann, root + "F5.csv");
-    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_ann, root + "B5_shift.csv", root + "B5_scale.csv");
+    KokkoroAddLayer<LayerBN<0., 1., BN_LEARN_RATE, BN_LEARN_RATE>>(kokkoro_ann, root + "B5_shift.csv", root + "B5_scale.csv", root + "B5_exp_mubeta", root + "B5_exp_sigmaeps");
     // KokkoroAddLayer<LayerBias<LEARN_RATE>>(kokkoro_ann, root + "S5.csv");
     KokkoroAddLayer<LayerAct<kokkoro_Softmax>>(kokkoro_ann);
 
-    root = "E:\\VSCode_project_data\\MNIST\\";
+    root = "../SRC/MNIST/DATASET/";
     auto train_elem = root + "train-images.idx3-ubyte",
          train_lbl  = root + "train-labels.idx1-ubyte",
          test_elem  = root + "t10k-images.idx3-ubyte",

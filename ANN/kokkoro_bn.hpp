@@ -9,7 +9,7 @@ kokkoro_matrix BNBetaGammaInit(uint64_t iChannCnt) {
 
 struct BNData final {
     kokkoro_matrix vecMuBeta, vecSigmaSqr, vecSigmaEps,
-               vecExpMuBeta, vecExpSigmaSqr, vecExpSigmaEps;
+                   vecExpMuBeta, vecExpSigmaSqr, vecExpSigmaEps;
 
     uint64_t iBatCnt = 0,
              iBatIdx = 0;

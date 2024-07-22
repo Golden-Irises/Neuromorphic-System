@@ -39,10 +39,12 @@ int main(int argc, char *argv[], char *envp[]) {
     );
     KokkoroAddLayer<LayerBN<0., 1., kokkoro_bnrate, kokkoro_bnrate>>(kkrCore,
         #if kokkoro_deduce_flag
-        "", "",
+        "", "", "", "",
         #endif
         sCSVRoot + "B1_shift.csv",
-        sCSVRoot + "B1_scale.csv"
+        sCSVRoot + "B1_scale.csv",
+        sCSVRoot + "B1_exp_mubeta.csv",
+        sCSVRoot + "B1_exp_sigmaeps.csv"
     );
     KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kkrCore);
     // F2 12 neurons
@@ -54,10 +56,12 @@ int main(int argc, char *argv[], char *envp[]) {
     );
     KokkoroAddLayer<LayerBN<0., 1., kokkoro_bnrate, kokkoro_bnrate>>(kkrCore,
         #if kokkoro_deduce_flag
-        "", "",
+        "", "", "", "",
         #endif
         sCSVRoot + "B2_shift.csv",
-        sCSVRoot + "B2_scale.csv"
+        sCSVRoot + "B2_scale.csv",
+        sCSVRoot + "B2_exp_mubeta.csv",
+        sCSVRoot + "B2_exp_sigmaeps.csv"
     );
     KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kkrCore);
     // F3 6 neurons
@@ -69,10 +73,12 @@ int main(int argc, char *argv[], char *envp[]) {
     );
     KokkoroAddLayer<LayerBN<0., 1., kokkoro_bnrate, kokkoro_bnrate>>(kkrCore,
         #if kokkoro_deduce_flag
-        "", "",
+        "", "", "", "",
         #endif
         sCSVRoot + "B3_shift.csv",
-        sCSVRoot + "B3_scale.csv"
+        sCSVRoot + "B3_scale.csv",
+        sCSVRoot + "B3_exp_mubeta.csv",
+        sCSVRoot + "B3_exp_sigmaeps.csv"
     );
     KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kkrCore);
     // F4 5 neurons (Gaussian connections)
@@ -84,10 +90,12 @@ int main(int argc, char *argv[], char *envp[]) {
     );
     KokkoroAddLayer<LayerBN<0., 1., kokkoro_bnrate, kokkoro_bnrate>>(kkrCore,
         #if kokkoro_deduce_flag
-        "", "",
+        "", "", "", "",
         #endif
         sCSVRoot + "B4_shift.csv",
-        sCSVRoot + "B4_scale.csv"
+        sCSVRoot + "B4_scale.csv",
+        sCSVRoot + "B4_exp_mubeta.csv",
+        sCSVRoot + "B4_exp_sigmaeps.csv"
     );
     KokkoroAddLayer<LayerAct<kokkoro_Softmax>>(kkrCore);
 

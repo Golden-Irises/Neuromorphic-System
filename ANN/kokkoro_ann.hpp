@@ -62,7 +62,7 @@ void KokkoroTrainInit(KokkoroANN &netSrc, uint64_t iTrainDataCnt, uint64_t iTest
         netSrc.arrLayers[i]->Shape(iInLnCnt, iInColCnt, iChannCnt);
     }
     if (sAccCSVPath.length()) netSrc.ofsAcc.open(sAccCSVPath, std::ios::out | std::ios::trunc);
-    if (sRcCSVPath.length()) netSrc.ofsAcc.open(sRcCSVPath, std::ios::out | std::ios::trunc);
+    if (sRcCSVPath.length()) netSrc.ofsRc.open(sRcCSVPath, std::ios::out | std::ios::trunc);
 }
 
 bool KokkoroTrainAbort(KokkoroANN &netSrc) {
@@ -132,7 +132,7 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
 void KokkoroTrainResult(KokkoroANN &netSrc) {
     double   dRcRt{}, dAcc{};
     uint64_t iEpCnt{};
-    while (dAcc < 0.92) {
+    while (dRcRt < 1) {
         auto cEpTmPt = kokkoro_chrono_time_point;
         // train
         for (auto i = 0ull; i < netSrc.iTrainBatCnt; ++i) {

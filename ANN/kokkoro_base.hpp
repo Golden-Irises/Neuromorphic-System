@@ -99,10 +99,10 @@ kokkoro_matrix kokkoro_lbl_orgn(uint64_t lbl_val, uint64_t type_cnt) {
 }
 
 void kokkoro_out_acc_rc(const kokkoro_matrix &output, double train_acc, uint64_t lbl, std::atomic_uint64_t &acc_cnt, std::atomic_uint64_t &rc_cnt) {
-    auto max_idx = 0;
-    for (auto i = 1ull; i < output.element_count; ++i) if (output.index(i) > output.index(max_idx)) max_idx = i;
-    if (max_idx == lbl) ++acc_cnt;
-    // if (output.index(lbl) > 0.5) ++acc_cnt;
+    // auto max_idx = 0;
+    // for (auto i = 1ull; i < output.element_count; ++i) if (output.index(i) > output.index(max_idx)) max_idx = i;
+    // if (max_idx == lbl) ++acc_cnt;
+    if (output.index(lbl) > 0.5) ++acc_cnt;
     if (output.index(lbl) > (1 - train_acc)) ++rc_cnt;
 }
 

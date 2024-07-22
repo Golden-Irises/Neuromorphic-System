@@ -10,7 +10,7 @@
 #define kokkoro_deduce_flag false
 #define kokkoro_eps         DBL_EPSILON
 #define kokkoro_learnrate   .4
-#define kokkoro_bnrate      1e-10
+#define kokkoro_bnrate      1e-5
 #define kokkoro_len         0x0080
 
 using namespace std;
@@ -114,7 +114,7 @@ int main(int argc, char *argv[], char *envp[]) {
     auto setDatasetIdx = kokkoro_dataset_idx_init(setDataset.length);
     setDatasetIdx.shuffle();
     // train
-    KokkoroTrainInit(kkrCore, setDataset.length, setTestset.length, kokkoro_data_arrsz, 1, 1, sCSVRoot + "acc_record.csv");
+    KokkoroTrainInit(kkrCore, setDataset.length, setTestset.length, kokkoro_data_arrsz, 1, 1, sCSVRoot + "acc_record.csv", "rc_record.csv");
 	KokkoroTrain(kkrCore, setDataset, setLblset, setDatasetIdx, setTestset, setTestLbl, kokkoro_syb_cnt);
     KokkoroTrainResult(kkrCore);
     #endif

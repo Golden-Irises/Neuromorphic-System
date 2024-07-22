@@ -107,7 +107,7 @@ struct LayerAct : LayerIO {
     }
 
     virtual void BackProp(kokkoro_matrix &vecGrad, uint64_t iBatSzIdx, kokkoro_matrix &vecOrgn) {
-        if constexpr (iActFnType == kokkoro_Softmax) softmax_cec_grad(vecGrad, vecOrgn); // vecGrad = vecOrgn - setIO[iBatSzIdx];
+        if constexpr (iActFnType == kokkoro_Softmax) /* softmax_cec_grad(vecGrad, vecOrgn); */ vecGrad = vecGrad - vecOrgn;
         constexpr auto bActReLU = iActFnType == kokkoro_ReLU;
         if constexpr (bActReLU || iActFnType == kokkoro_Sigmoid) {
             if constexpr (bActReLU) kokkoro_traverse(setIO[iBatSzIdx], ReLU_dv);

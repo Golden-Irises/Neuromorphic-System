@@ -132,7 +132,7 @@ void KokkoroTrain(KokkoroANN &netSrc, const kokkoro_set<kokkoro_matrix> &setTria
 void KokkoroTrainResult(KokkoroANN &netSrc) {
     double   dRcRt{}, dAcc{};
     uint64_t iEpCnt{};
-    while (dAcc < 0.89) {
+    while (dAcc < 0.92) {
         auto cEpTmPt = kokkoro_chrono_time_point;
         // train
         for (auto i = 0ull; i < netSrc.iTrainBatCnt; ++i) {

@@ -39,11 +39,17 @@ public:
         kokkoro_array_save_thread(hArrayHandle);
         kokkoro_loop {
             kokkoro_matrix vecIn {hArrayHandle.arr_que.de_queue().sen_arr, kokkoro_data_arrsz, 1};
+            std::cout << "[Input][";
+            for (auto i = 0ull; i < kokkoro_data_arrsz; ++i) {
+                std::cout << vecIn.index(i);
+                if (i + 1 < kokkoro_data_arrsz) std::cout << ' ';
+            }
+
             for (auto i = 0ull; i < iLayersCnt; ++i) arrLayers[i]->Deduce(vecIn);
             auto iPeakCnt = hArrayHandle.peak_cnt_que.de_queue();
             // output result & peak count
 
-            std::cout << "[peak count][";
+            std::cout << "][Peak Count][";
             for (auto i = 0; i < kokkoro_data_arrsz; ++i) {
                 std::cout << iPeakCnt.sen_arr[i];
                 if (i + 1 < kokkoro_data_arrsz) std::cout << ' ';

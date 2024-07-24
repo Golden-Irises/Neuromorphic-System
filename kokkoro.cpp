@@ -17,7 +17,77 @@ int main(int argc, char *argv[], char *envp[]) {
     cout << "Welcome back home, my master." << endl;
     auto tm_start = kokkoro_chrono_time_point;
 
+    std::string sCSVRoot = "SRC\\ARCHIVE\\";
+
     KokkoroCore kkrCore;
+
+    KokkoroAddLayer<LayerFC<18>>(kkrCore,
+        #if kokkoro_deduce_flag
+        "",
+        #endif
+        sCSVRoot + "F1.csv"
+    );
+    KokkoroAddLayer<LayerBN<0., 1.>>(kkrCore,
+        #if kokkoro_deduce_flag
+        "", "", "", "",
+        #endif
+        sCSVRoot + "B1_shift.csv",
+        sCSVRoot + "B1_scale.csv",
+        sCSVRoot + "B1_exp_mubeta.csv",
+        sCSVRoot + "B1_exp_sigmaeps.csv"
+    );
+    KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kkrCore);
+    // F2 12 neurons
+    KokkoroAddLayer<LayerFC<12>>(kkrCore,
+        #if kokkoro_deduce_flag
+        "",
+        #endif
+        sCSVRoot + "F2.csv"
+    );
+    KokkoroAddLayer<LayerBN<0., 1.>>(kkrCore,
+        #if kokkoro_deduce_flag
+        "", "", "", "",
+        #endif
+        sCSVRoot + "B2_shift.csv",
+        sCSVRoot + "B2_scale.csv",
+        sCSVRoot + "B2_exp_mubeta.csv",
+        sCSVRoot + "B2_exp_sigmaeps.csv"
+    );
+    KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kkrCore);
+    // F3 6 neurons
+    KokkoroAddLayer<LayerFC<6>>(kkrCore,
+        #if kokkoro_deduce_flag
+        "",
+        #endif
+        sCSVRoot + "F3.csv"
+    );
+    KokkoroAddLayer<LayerBN<0., 1.>>(kkrCore,
+        #if kokkoro_deduce_flag
+        "", "", "", "",
+        #endif
+        sCSVRoot + "B3_shift.csv",
+        sCSVRoot + "B3_scale.csv",
+        sCSVRoot + "B3_exp_mubeta.csv",
+        sCSVRoot + "B3_exp_sigmaeps.csv"
+    );
+    KokkoroAddLayer<LayerAct<kokkoro_Sigmoid>>(kkrCore);
+    // F4 5 neurons (Gaussian connections)
+    KokkoroAddLayer<LayerFC<5>>(kkrCore,
+        #if kokkoro_deduce_flag
+        "",
+        #endif
+        sCSVRoot + "F4.csv"
+    );
+    KokkoroAddLayer<LayerBN<0., 1.>>(kkrCore,
+        #if kokkoro_deduce_flag
+        "", "", "", "",
+        #endif
+        sCSVRoot + "B4_shift.csv",
+        sCSVRoot + "B4_scale.csv",
+        sCSVRoot + "B4_exp_mubeta.csv",
+        sCSVRoot + "B4_exp_sigmaeps.csv"
+    );
+    KokkoroAddLayer<LayerAct<kokkoro_Softmax>>(kkrCore);
 
     kkrCore.Run();
 

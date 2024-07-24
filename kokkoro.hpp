@@ -22,14 +22,20 @@ protected: static char DeduceResult(const kokkoro_matrix &vecOut) {
 }
 
 public:
-    KokkoroCore() { kokkoro_array_startup(hArrayHandle); }
+    KokkoroCore(int port_idx = 3,
+        int baudrate = CBR_2400,
+        int intrv_ms = 400,
+        int iobuf_sz = 1024,
+        int databits = 6,
+        int stopbits = ONESTOPBIT,
+        int parity   = NOPARITY) { kokkoro_array_startup(hArrayHandle); }
 
     void Run() {
         kokkoro_array_read_thread(hArrayHandle);
         kokkoro_array_save_thread(hArrayHandle);
         kokkoro_loop {
             kokkoro_matrix vecIn {hArrayHandle.arr_que.de_queue().sen_arr, kokkoro_data_arrsz, 1};
-            // for (auto i = 0ull; i < iLayersCnt; ++i) arrLayers[i]->Deduce(vecIn);
+            for (auto i = 0ull; i < iLayersCnt; ++i) arrLayers[i]->Deduce(vecIn);
             auto iPeakCnt = hArrayHandle.peak_cnt_que.de_queue();
             // output result & peak count
 
@@ -38,8 +44,8 @@ public:
                 std::cout << iPeakCnt.sen_arr[i];
                 if (i + 1 < kokkoro_data_arrsz) std::cout << ' ';
             }
-            std::cout << ']' << std::endl;
-            // std::cout << "][Symbol][" << DeduceResult(vecIn) << ']' << std::endl;
+            // std::cout << ']' << std::endl;
+            std::cout << "][Symbol][" << DeduceResult(vecIn) << ']' << std::endl;
         }
     }
 

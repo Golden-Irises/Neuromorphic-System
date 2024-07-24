@@ -34,8 +34,11 @@ bool csv_out(const kokkoro_set<kokkoro_set<std::string>> &output_strings, const 
         of_file.close();
     }
     for(auto i = 0ull; i < output_strings.size(); ++i) {
-        for(auto j=0ull; j<output_strings[i].size(); ++j) of_file << output_strings[i][j] << csv_comma;
-        of_file << std::endl;
+        for(auto j = 0ull; j < output_strings[i].size(); ++j) {
+            of_file << output_strings[i][j];
+            if (j + 1 < output_strings[i].size()) of_file << csv_comma;
+        }
+        if (i + 1 < output_strings.size()) of_file << std::endl;
     }
     of_file.close();
     return true;

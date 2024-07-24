@@ -22,13 +22,17 @@ protected: static char DeduceResult(const kokkoro_matrix &vecOut) {
 }
 
 public:
-    KokkoroCore(int port_idx = 3,
-        int baudrate = CBR_2400,
-        int intrv_ms = 400,
-        int iobuf_sz = 1024,
-        int databits = 6,
-        int stopbits = ONESTOPBIT,
-        int parity   = NOPARITY) { kokkoro_array_startup(hArrayHandle); }
+    // COM DCB handle - No.3 port, 2400 baudrate, 400ms for each sampling, 6 databots, 1 stopbit, no parity
+    KokkoroCore(int port_idx = 3, int baudrate = CBR_2400, int intrv_ms = 400, int iobuf_sz = 1024, int databits = 6, int stopbits = ONESTOPBIT, int parity = NOPARITY) {
+        hArrayHandle.port_idx = port_idx;
+        hArrayHandle.baudrate = baudrate;
+        hArrayHandle.intrv_ms = intrv_ms;
+        hArrayHandle.iobuf_sz = iobuf_sz;
+        hArrayHandle.databits = databits;
+        hArrayHandle.stopbits = stopbits;
+        hArrayHandle.parity   = parity;
+        kokkoro_array_startup(hArrayHandle);
+    }
 
     void Run() {
         kokkoro_array_read_thread(hArrayHandle);
@@ -51,8 +55,7 @@ public:
 
     ~KokkoroCore() { kokkoro_array_shutdown(hArrayHandle); }
 
-// COM DCB handle - No.3 port, 2400 baudrate, 400ms for each sampling, 6 databots, 1 stopbit, no parity
-protected: kokkoro_array_handle hArrayHandle {3, CBR_2400, 400, 1024, 6, ONESTOPBIT, NOPARITY};
+protected: kokkoro_array_handle hArrayHandle {};
 };
 
 KOKKORO_END

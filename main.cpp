@@ -7,8 +7,7 @@
 #include <iostream>
 #include "kokkoro"
 
-#define kokkoro_deduce_flag false
-#define kokkoro_eps         DBL_EPSILON
+#define kokkoro_deduce_flag true
 #define kokkoro_learnrate   .4
 #define kokkoro_bnrate      1e-5
 #define kokkoro_len         0x0080
@@ -100,10 +99,10 @@ int main(int argc, char *argv[], char *envp[]) {
     KokkoroAddLayer<LayerAct<kokkoro_Softmax>>(kkrCore);
 
     #if kokkoro_deduce_flag
-    cout << "Battery " << kkrCore.MasterMachineBattery("begin report") << endl;
+    // cout << "Battery " << kkrCore.MasterMachineBattery("begin report") << endl;
     // deploy
     kkrCore.Run();
-    cout << "Battery " << kkrCore.MasterMachineBattery("end report") << endl;
+    // cout << "Battery " << kkrCore.MasterMachineBattery("end report") << endl;
     #else
     // TODO: load tain dataset
     kokkoro_set<kokkoro_matrix> setDataset, setTestset;

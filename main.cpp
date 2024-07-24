@@ -22,7 +22,13 @@ int main(int argc, char *argv[], char *envp[]) {
     std::string sCSVRoot = "SRC\\ARCHIVE\\";
 
     #if kokkoro_deduce_flag
-    KokkoroCore kkrCore {};
+    KokkoroCore kkrCore {3,          // No.3 COM
+                         CBR_2400,   // 2400 Baudrate
+                         400,        // 400ms interval time period
+                         1024,       // 1024 bits buffer size for COM
+                         6,          // 6 databits
+                         ONESTOPBIT, // 1 stopbit(s)
+                         NOPARITY};  // no parity};
     #else
     uint64_t iTrainBatsz  = 110,
              iDeduceBatsz = 110;

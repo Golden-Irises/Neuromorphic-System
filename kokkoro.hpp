@@ -60,7 +60,6 @@ public:
         } });
         kokkoro_loop { if (_getch() == VK_ESCAPE) {
             hArrayHandle.read_stop = true;
-            kokkoro_array_que_stop(hArrayHandle);
             ++hArrayHandle.th_cnt;
             while (hArrayHandle.th_cnt < kokkoro_data_thdsz) kokkoro_async_sleep(kokkoro_async_sleep_ms);
             return;

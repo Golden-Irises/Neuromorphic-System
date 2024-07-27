@@ -96,15 +96,6 @@ struct kokkoro_array_handle {
     #endif
 };
 
-void kokkoro_array_que_stop(kokkoro_array_handle &kokkoro_handle) {
-    #if kokkoro_dcb_msg
-    kokkoro_handle.msg_que.reset();
-    #endif
-    kokkoro_handle.arr_que.reset();
-    kokkoro_handle.data_que.reset();
-    kokkoro_handle.peak_cnt_que.reset();
-}
-
 bool kokkoro_array_shutdown(kokkoro_array_handle &kokkoro_handle) {
     #if kokkoro_data_save
     kokkoro_handle.save_data_ofs.close();
@@ -140,6 +131,10 @@ void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
     if (kokkoro_handle.read_stop) {
         #if kokkoro_data_save
         kokkoro_handle.read_end_sgn = true;
+        #endif
+        kokkoro_handle.data_que.reset();
+        #if kokkoro_dcb_msg
+        kokkoro_handle.msg_que.reset();
         #endif
         ++kokkoro_handle.th_cnt;
         return;
@@ -190,6 +185,8 @@ kokkoro_loop {
 
         #if !kokkoro_data_save
         if (kokkoro_handle.read_stop) {
+            kokkoro_handle.arr_que.reset();
+            kokkoro_handle.peak_cnt_que.reset();
             ++kokkoro_handle.th_cnt;
             return;
         }

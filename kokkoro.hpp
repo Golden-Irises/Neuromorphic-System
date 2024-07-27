@@ -39,6 +39,7 @@ public:
         kokkoro_array_save_thread(hArrayHandle);
         hArrayHandle.ctrl_pool.add_task([this] { kokkoro_loop {
             kokkoro_matrix vecIn {hArrayHandle.arr_que.de_queue().sen_arr, kokkoro_data_arrsz, 1};
+            if (hArrayHandle.read_stop) return;
             std::cout << "[Input][";
             for (auto i = 0ull; i < kokkoro_data_arrsz; ++i) {
                 std::cout << vecIn.index(i);
@@ -47,8 +48,8 @@ public:
 
             for (auto i = 0ull; i < iLayersCnt; ++i) arrLayers[i]->Deduce(vecIn);
             auto iPeakCnt = hArrayHandle.peak_cnt_que.de_queue();
+            if (hArrayHandle.read_stop) return;
             // output result & peak count
-
             std::cout << "][Peak Count][";
             for (auto i = 0; i < kokkoro_data_arrsz; ++i) {
                 std::cout << iPeakCnt.sen_arr[i];
@@ -59,6 +60,7 @@ public:
         } });
         kokkoro_loop { if (_getch() == VK_ESCAPE) {
             hArrayHandle.read_stop = true;
+            kokkoro_array_que_stop(hArrayHandle);
             ++hArrayHandle.th_cnt;
             while (hArrayHandle.th_cnt < kokkoro_data_thdsz) kokkoro_async_sleep(kokkoro_async_sleep_ms);
             return;

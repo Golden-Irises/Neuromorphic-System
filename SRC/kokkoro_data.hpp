@@ -96,6 +96,15 @@ struct kokkoro_array_handle {
     #endif
 };
 
+void kokkoro_array_que_stop(kokkoro_array_handle &kokkoro_handle) {
+    #if kokkoro_dcb_msg
+    kokkoro_handle.msg_que.reset();
+    #endif
+    kokkoro_handle.arr_que.reset();
+    kokkoro_handle.data_que.reset();
+    kokkoro_handle.peak_cnt_que.reset();
+}
+
 bool kokkoro_array_shutdown(kokkoro_array_handle &kokkoro_handle) {
     #if kokkoro_data_save
     kokkoro_handle.save_data_ofs.close();
@@ -179,6 +188,13 @@ kokkoro_loop {
     for (auto i = 0; i < kokkoro_handle.iobat_sz; ++i) {
         auto arr_tmp = kokkoro_handle.data_que.de_queue();
 
+        #if !kokkoro_data_save
+        if (kokkoro_handle.read_stop) {
+            ++kokkoro_handle.th_cnt;
+            return;
+        }
+        #endif
+
         if (kokkoro_array_verify(arr_tmp)) { if (zero_arr) {
             zero_arr = false;
             
@@ -248,14 +264,7 @@ kokkoro_loop {
 }
 
 #if !kokkoro_data_save
-
-    if (kokkoro_handle.read_stop) {
-        ++kokkoro_handle.th_cnt;
-        return;
-    }
-
 });
-
 #endif
 }
 

@@ -67,6 +67,8 @@ struct kokkoro_array_handle {
     std::atomic_bool read_stop = false,
                      reset_sgn = true;
 
+    std::atomic_uint64_t th_cnt{};
+
     #if kokkoro_dcb_msg // message queue
     kokkoro_queue<std::string> msg_que;
     #endif
@@ -130,6 +132,7 @@ void kokkoro_array_read_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_h
         #if kokkoro_data_save
         kokkoro_handle.read_end_sgn = true;
         #endif
+        ++kokkoro_handle.th_cnt;
         return;
     }
     if (kokkoro_handle.reset_sgn) {
@@ -246,7 +249,10 @@ kokkoro_loop {
 
 #if !kokkoro_data_save
 
-    if (kokkoro_handle.read_stop) return;
+    if (kokkoro_handle.read_stop) {
+        ++kokkoro_handle.th_cnt;
+        return;
+    }
 
 });
 
@@ -255,6 +261,7 @@ kokkoro_loop {
 
 bool kokkoro_array_ctrl_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle] { kokkoro_loop { if (_getch() == kokkoro_key_exit) {
     kokkoro_handle.read_stop = true;
+    ++kokkoro_handle.th_cnt;
     return;
 } } }); }
 

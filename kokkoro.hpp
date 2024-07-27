@@ -58,7 +58,10 @@ public:
             // std::cout << ']' << std::endl;
             std::cout << "][Symbol][" << DeduceResult(vecIn) << ']' << std::endl;
         }
-        if (hArrayHandle.read_stop) return;
+        if (hArrayHandle.read_stop) {
+            while (hArrayHandle.th_cnt < kokkoro_data_thdsz) kokkoro_async_sleep(kokkoro_async_sleep_ms);
+            return;
+        }
     }
 
     ~KokkoroCore() { kokkoro_array_shutdown(hArrayHandle); }

@@ -253,6 +253,11 @@ kokkoro_loop {
 #endif
 }
 
+bool kokkoro_array_ctrl_thread(kokkoro_array_handle &kokkoro_handle) { kokkoro_handle.ctrl_pool.add_task([&kokkoro_handle] { kokkoro_loop { if (_getch() == kokkoro_key_exit) {
+    kokkoro_handle.read_stop = true;
+    return;
+} } }); }
+
 bool kokkoro_csv_data_load(kokkoro_set<kokkoro_matrix> &data_set, kokkoro_set<uint64_t> &lbl_set, const std::string &csv_data_path, const std::string &csv_lbl_path) {
     auto data_tab = csv_in(csv_data_path),
          lbl_tab  = csv_in(csv_lbl_path);

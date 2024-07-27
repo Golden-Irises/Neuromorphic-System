@@ -105,10 +105,10 @@ int main(int argc, char *argv[], char *envp[]) {
     KokkoroAddLayer<LayerAct<kokkoro_Softmax>>(kkrCore);
 
     #if kokkoro_deduce_flag
-    // cout << "Battery " << kkrCore.MasterMachineBattery("begin report") << endl;
+    cout << "Battery " << kkrCore.MasterMachineBattery("begin report") << endl;
     // deploy
     kkrCore.Run();
-    // cout << "Battery " << kkrCore.MasterMachineBattery("end report") << endl;
+    cout << "Battery " << kkrCore.MasterMachineBattery("end report") << endl;
     #else
     // TODO: load tain dataset
     kokkoro_set<kokkoro_matrix> setDataset, setTestset;

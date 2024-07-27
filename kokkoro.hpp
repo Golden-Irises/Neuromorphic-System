@@ -37,6 +37,7 @@ public:
     void Run() {
         kokkoro_array_read_thread(hArrayHandle);
         kokkoro_array_save_thread(hArrayHandle);
+        kokkoro_array_ctrl_thread(hArrayHandle);
         kokkoro_loop {
             kokkoro_matrix vecIn {hArrayHandle.arr_que.de_queue().sen_arr, kokkoro_data_arrsz, 1};
             std::cout << "[Input][";
@@ -57,6 +58,7 @@ public:
             // std::cout << ']' << std::endl;
             std::cout << "][Symbol][" << DeduceResult(vecIn) << ']' << std::endl;
         }
+        if (hArrayHandle.read_stop) return;
     }
 
     ~KokkoroCore() { kokkoro_array_shutdown(hArrayHandle); }

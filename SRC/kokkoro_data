@@ -23,10 +23,10 @@
 #define kokkoro_key_exit    0x05
 #define kokkoro_key_reset   0x06
 
-#define kokkoro_data_thdsz  0x02
+#define kokkoro_data_thdsz  0x03
 
 #ifndef kokkoro_data_bitsz
-#define kokkoro_data_bitsz  kokkoro_data_thdsz
+#define kokkoro_data_bitsz  0x02
 #endif
 
 #ifndef kokkoro_data_segcnt

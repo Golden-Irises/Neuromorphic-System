@@ -19,7 +19,8 @@ int main(int argc, char *argv[], char *envp[]) {
     cout << "Welcome back home, my master." << endl;
     auto tm_start = kokkoro_chrono_time_point;
 
-    std::string sCSVRoot = "SRC\\ARCHIVE\\";
+    std::string sCSVRoot = "SRC\\ARCHIVE\\",
+                sAbsRoot = "E:\\VSCode_project_data\\Neuromorphic-System\\";
 
     #if kokkoro_deduce_flag
     KokkoroCore kkrCore {3,          // No.3 COM
@@ -105,11 +106,10 @@ int main(int argc, char *argv[], char *envp[]) {
     KokkoroAddLayer<LayerAct<kokkoro_Softmax>>(kkrCore);
 
     #if kokkoro_deduce_flag
-    std::string sBatterySaveDir = "E:\\VSCode_project_data\\Neuromorphic-System\\SRC\\ARCHIVE\\";
-    cout << "Battery " << kkrCore.MasterMachineBattery(sBatterySaveDir + "begin report") << endl;
+    cout << "Battery " << kkrCore.MasterMachineBattery(sAbsRoot + sCSVRoot + "begin report") << endl;
     // deploy
     kkrCore.Run();
-    cout << "Battery " << kkrCore.MasterMachineBattery(sBatterySaveDir + "end report") << endl;
+    cout << "Battery " << kkrCore.MasterMachineBattery(sAbsRoot + sCSVRoot + "end report") << endl;
     #else
     // TODO: load tain dataset
     kokkoro_set<kokkoro_matrix> setDataset, setTestset;

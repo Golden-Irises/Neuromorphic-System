@@ -20,7 +20,7 @@ int main(int argc, char *argv[], char *envp[]) {
     auto tm_start = kokkoro_chrono_time_point;
 
     std::string sCSVRoot = "SRC\\ARCHIVE\\",
-                sAbsRoot = "E:\\VSCode_project_data\\Neuromorphic-System\\";
+                sAbsRoot = "";// "E:\\VSCode_project_data\\Neuromorphic-System\\";
 
     #if kokkoro_deduce_flag
     KokkoroCore kkrCore {3,          // No.3 COM

@@ -29,7 +29,7 @@ int main(int argc, char *argv[], char *envp[]) {
                          1024,       // 1024 bits buffer size for COM
                          6,          // 6 databits
                          ONESTOPBIT, // 1 stopbit(s)
-                         NOPARITY};  // no parity};
+                         NOPARITY};  // no parity
     #else
     uint64_t iTrainBatsz  = 110,
              iDeduceBatsz = 110;

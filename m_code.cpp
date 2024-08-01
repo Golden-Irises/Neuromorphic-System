@@ -3,7 +3,6 @@
 #define kokkoro_learnrate   1e-2
 #define kokkoro_bnrate      1e-5
 #define kokkoro_len         0x80
-// #define kokkoro_ann_wait_ms 0x32
 
 #include <iostream>
 #include "kokkoro"

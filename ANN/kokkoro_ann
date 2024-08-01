@@ -15,30 +15,26 @@
 #include "kokkoro_conv.hpp"
 #include "kokkoro_bn.hpp"
 
-#define kokkoro_null        0x0000
-#define kokkoro_bias        0x0001
-#define kokkoro_act         0x0002
-#define kokkoro_pc          0x0003
-#define kokkoro_flat        0x0004
-#define kokkoro_fc          0x0005
-#define kokkoro_conv        0x0006
-#define kokkoro_pool        0x0007
-#define kokkoro_bn          0x0008
+#define kokkoro_null        0x00
+#define kokkoro_bias        0x01
+#define kokkoro_act         0x02
+#define kokkoro_pc          0x03
+#define kokkoro_flat        0x04
+#define kokkoro_fc          0x05
+#define kokkoro_conv        0x06
+#define kokkoro_pool        0x07
+#define kokkoro_bn          0x08
 
-#define kokkoro_Softmax     0x0001
-#define kokkoro_ReLU        0x0002
-#define kokkoro_Sigmoid     0x0003
+#define kokkoro_Softmax     0x01
+#define kokkoro_ReLU        0x02
+#define kokkoro_Sigmoid     0x03
 
-#define kokkoro_avg_pool    0x0000
-#define kokkoro_max_pool    0x0001
-#define kokkoro_gag_pool    0x0002
+#define kokkoro_avg_pool    0x00
+#define kokkoro_max_pool    0x01
+#define kokkoro_gag_pool    0x02
 
 #ifndef kokkoro_len
-#define kokkoro_len         0x0080
-#endif
-
-#ifndef kokkoro_ann_wait_ms
-#define kokkoro_ann_wait_ms 0x0258
+#define kokkoro_len         0x80
 #endif
 
 #include "kokkoro_async.hpp"
@@ -46,9 +42,9 @@
 
 #define kokkoro_layer_ptr   std::shared_ptr<kokkoro::Layer>
 
-#define kokkoro_ok          0x0000
-#define kokkoro_err         0x0001
-#define kokkoro_fin         0x0002
+#define kokkoro_ok          0x00
+#define kokkoro_err         0x01
+#define kokkoro_fin         0x02
 
 #include "kokkoro_ann.hpp"
 

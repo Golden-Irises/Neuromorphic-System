@@ -10,7 +10,7 @@
 #define kokkoro_deduce_flag true
 #define kokkoro_learnrate   .4
 #define kokkoro_bnrate      1e-5
-#define kokkoro_len         0x0080
+#define kokkoro_len         0x80
 
 using namespace std;
 using namespace kokkoro;

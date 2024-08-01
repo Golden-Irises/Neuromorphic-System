@@ -8,11 +8,11 @@
 #include "../ANN/kokkoro_set"
 
 #ifndef KOKKORO_DCB_BUF_SZ
-#define KOKKORO_DCB_BUF_SZ 0x0010
+#define KOKKORO_DCB_BUF_SZ 0x10
 #endif
 
 #ifndef KOKKORO_DCB_HDL_SZ
-#define KOKKORO_DCB_HDL_SZ 0x0010
+#define KOKKORO_DCB_HDL_SZ 0x10
 #endif
 
 KOKKORO_BEGIN 

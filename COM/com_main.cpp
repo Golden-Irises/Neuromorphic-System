@@ -1,7 +1,7 @@
 #pragma once
 
-#define KOKKORO_DCB_HDL_SZ 0x0010
-#define KOKKORO_DCB_BUF_SZ 0x0080
+#define KOKKORO_DCB_HDL_SZ 0x10
+#define KOKKORO_DCB_BUF_SZ 0x80
 
 #include <iostream>
 #include <bitset>

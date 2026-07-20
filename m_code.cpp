@@ -3,15 +3,14 @@
 #define kokkoro_learnrate   1e-2
 #define kokkoro_bnrate      1e-5
 #define kokkoro_len         0x80
+#define morse_lbl_sz        0x04
+#define morse_arr_sz        0x04
 
 #include <iostream>
 #include "kokkoro"
 
 using namespace std;
 using namespace kokkoro;
-
-#define morse_lbl_sz 0x04
-#define morse_arr_sz 0x04
 
 // return index set
 kokkoro_set<size_t> morse_load_data(kokkoro_set<kokkoro_matrix> &data, kokkoro_set<size_t> &lbl, const std::string &path) {

@@ -4,13 +4,14 @@
 
 #pragma once
 
-#include <iostream>
-#include "kokkoro"
-
 #define kokkoro_deduce_flag true
 #define kokkoro_learnrate   .4
 #define kokkoro_bnrate      1e-5
 #define kokkoro_len         0x80
+#define kokkoro_train_rc    0.8
+
+#include <iostream>
+#include "kokkoro"
 
 using namespace std;
 using namespace kokkoro;
